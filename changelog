@@ -1,0 +1,13 @@
+2012-02-14:
+- Changed dict storage of info values from tuple to list
+- Added highlighting of changed values
+- Added more values to person page
+- Added scrollbar to person tab
+- Improved the layout of the person tab
+- Added a menu
+- Added a menu populator that looks at XML files in the xmldir and lets users load them from the menu
+- Didn't do anything for VD
+
+2012-02-13:
+- Started project
+
