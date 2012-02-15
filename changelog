@@ -1,3 +1,9 @@
+2012-02-15:
+- Made listing menus widen if many items exist
+- Started handling of occupations
+- Built table for displaying occupations (buildanoccupation)
+- Expanded function of modified functions (checkForChange,markInfoChanged)
+
 2012-02-14:
 - Changed dict storage of info values from tuple to list
 - Added highlighting of changed values

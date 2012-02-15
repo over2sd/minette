@@ -16,7 +16,7 @@ class Base:
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
     self.window.set_border_width(3)
-    self.window.set_geometry_hints(None,570,440)
+    self.window.set_geometry_hints(None,790,440)
     self.window.show()
     self.box1 = gtk.VBox()
     self.window.add(self.box1)
@@ -38,6 +38,10 @@ class Base:
     self.mb.show()
 
   def main(self):
+    displayPerson("?","petekend",self.tabs)
+#    displayPerson("?","kanemela",self.tabs)
+#    displayPerson("?","mortgera",self.tabs)
+
     gtk.main()
 
   def makeMenus(self):

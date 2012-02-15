@@ -109,18 +109,48 @@ def loadPersonXML(fileid):
 
   ir = 0
   for i in range(len(root)):
-    if root[i].text is not None:
-      if root[i].tag != "relat":
-        dinf[root[i].tag] = [root[i].text.strip(), False]
-      else:
-        key = root[i].find("related").text
+    if root[i].tag is not None:
+      if root[i].tag == "relat":
+#        print "r",
+        key = None
         values = {}
-        for j in root[i]:
-          if j.text is not None:
-            values[j.tag] = [j.text,False]
-        drel[key] = values
+        if len(root[i]):
+          key = root[i].find("related").text
+          for j in root[i]:
+            if j.text is not None:
+              values[j.tag] = [j.text,False]
+        if key is not None:
+          drel[key] = values
 #        print drel[key]
-      if config['debug'] > 2: print str(i) + " ",
+      elif root[i].tag == "currocc":
+#        print ",",
+        dinf['currocc'] = {}
+        try:
+          dinf['currocc']['pos'] = [root[i].find("pos").text.strip(),False]
+        except AttributeError:
+          print "Position not found. Removing listing."
+          del dinf['currocc']
+        if dinf.get('currocc'):
+          events = {}
+          event = 0
+          for j in root[i]:
+            if j.tag is not None:
+              if j.tag == "events":
+                for k in j:
+                  if k.tag == "mstone":
+                    events[str(event)] = {}
+                    for m in k:
+                      if m.tag and m.text:
+                        events[str(event)][m.tag] = [m.text.strip(),False]
+                    event += 1
+#          print str(events)
+          dinf['currocc']['events'] = events
+        else:
+          print "no currocc"
+      elif root[i].text is not None:
+#        print ".",
+        dinf[root[i].tag] = [root[i].text.strip(), False]
+        if config['debug'] > 2: print str(i) + " ",
   return (dinf,drel)
 
 def populateWorldXML():
@@ -201,7 +231,8 @@ def populateWorldXML():
   worldList['c'] = cities
   worldList['s'] = states
   worldList['o'] = orgs
-  if config['uselistfile']:
+  fn = path.join(config['xmldir'],"myworld.conf")
+  if config['uselistfile'] and not path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."
     writeListFile()
   if config['debug'] > 1: print worldList

@@ -21,43 +21,236 @@ def getit(fileid,key):
   else:
     return ""
 
-def buildarow(name,fileid,key):
-  value = getit(fileid,key)
+def buildarow(name,fileid,key,style = 0):
   row = gtk.HBox()
   row.set_border_width(2)
   row.show()
   row.label = gtk.Label(name)
   row.label.set_width_chars(20)
   row.label.set_alignment(1,0.5)
-  row.e = gtk.Entry()
+  row.label.show()
   row.add(row.label)
   row.set_child_packing(row.label,0,0,2,gtk.PACK_START)
+  if style == 0:
+    value = getit(fileid,key)
+    row.e = gtk.Entry()
+    row.e.set_text(value)
+    activateEntry(row.e,fileid,key)
+  if style == 1:
+    row.e = buildanoccupation(fileid,key)
+  row.e.show()
   row.add(row.e)
   row.set_child_packing(row.e,1,1,2,gtk.PACK_START)
-  row.label.show()
-  row.e.set_text(value)
-  row.e.show()
-  activateEntry(row.e,fileid,key)
   return row
 
-def activateEntry(self, fileid, key):
-  self.connect("focus-out-event", checkForChange,fileid, key)
+def buildanoccupation(fileid,key):
+  t = gtk.Table()
+  t.show()
+  global people
+  data = {}
+  try:
+    data = people[fileid]['info']
+  except KeyError as e:
+    print "Error getting info from " + fileid + ": %s" % e
+    return ""
+  data = data.get(key,None)
+  if data.get("events"):
+    rows = len(data['events'])
+    cols = 4
+    if rows > 0:
+      t.resize(rows + 2,cols)
+#      t.set_geometry_hints(None,790,440)
+      t.phead = gtk.Label("Position")
+      t.phead.show()
+      t.attach(t.phead,0,1,0,1)
+      t.mhead = gtk.Label("Milestone")
+      t.mhead.show()
+      t.attach(t.mhead,1,4,0,1)
+      t.dhead = gtk.Label("Date")
+      t.dhead.show()
+      t.attach(t.dhead,1,2,1,2)
+      t.ehead = gtk.Label("Event")
+      t.ehead.show()
+      t.attach(t.ehead,2,3,1,2)
+      t.thead = gtk.Label("Type")
+      t.thead.show()
+      t.attach(t.thead,3,4,1,2)
+      for i in range(rows):
+        value = data['events'][str(i)].get("pos","")
+        if value: value = value[0]
+        rpos = gtk.Entry()
+        extraargs = ["events",str(i),"pos"]
+        activateEntry(rpos,fileid,key,len(extraargs),extraargs)
+        rpos.show()
+        rpos.set_text(value)
+        t.attach(rpos,0,1,i + 2,i + 3)
+        value = data['events'][str(i)].get("date","")
+        if value: value = value[0]
+        rda = gtk.Entry()
+        extraargs = ["events",str(i),"date"]
+        activateEntry(rda,fileid,key,len(extraargs),extraargs)
+        rda.show()
+        rda.set_text(value)
+        t.attach(rda,1,2,i + 2,i + 3)
+        value = data['events'][str(i)].get("event","")
+        if value: value = value[0]
+        rev = gtk.Entry()
+        extraargs = ["events",str(i),"event"]
+        activateEntry(rev,fileid,key,len(extraargs),extraargs)
+        rev.show()
+        rev.set_text(value)
+        t.attach(rev,2,3,i + 2,i + 3)
+        value = data['events'][str(i)].get("type","")
+        if value: value = value[0]
+        rty = gtk.Entry()
+        extraargs = ["events",str(i),"type"]
+        activateEntry(rty,fileid,key,len(extraargs),extraargs)
+        rty.show()
+        rty.set_text(value)
+        t.attach(rty,3,4,i + 2,i + 3)
+  return t
 
-def checkForChange(self,event,fileid, key):
-  if getit(fileid,key) != self.get_text():
-    markInfoChanged(self,fileid, key)
+def activateEntry(self, fileid, key, extra = 0, exargs = []):
+  self.connect("focus-out-event", checkForChange,fileid, key,extra,exargs)
 
-def markInfoChanged(self,fileid, key): # need some args here
+def checkForChange(self,event,fileid,key,extra = 0,exargs = []):
+  if extra == 0:
+    if getit(fileid,key) != self.get_text():
+      markInfoChanged(self,fileid, key)
+  elif extra > 0:
+    value = ""
+    NOGOOD = "There was a missing key "
+    if people.get(fileid,None) != None:
+      if people[fileid].get('info',None) != None:
+        if people[fileid]['info'].get(key,None) != None:
+          if people[fileid]['info'][key].get(exargs[0]) != None:
+            if extra == 1:
+              try:
+                value = people[fileid]['info'][key].get(exargs[0])
+              except KeyError:
+                value = ""
+            elif extra == 2:
+              try:
+                value = people[fileid]['info'][key][exargs[0]].get(exargs[1])
+              except KeyError:
+                value = ""
+            elif extra == 3:
+              try:
+                value = people[fileid]['info'][key][exargs[0]][exargs[1]].get(exargs[2])
+              except KeyError:
+                value = ""
+            elif extra == 4:
+              try:
+                value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]].get(exargs[3])
+              except KeyError:
+                value = ""
+            elif extra == 5:
+              try:
+                value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]].get(exargs[4])
+              except KeyError:
+                value = ""
+            else:
+              say("A counting error occurred. Oops.")
+            if value != self.get_text():
+              markInfoChanged(self,fileid, key,extra,exargs)
+          else: say(NOGOOD + exargs[0])
+        else: say(NOGOOD + key)
+      else: say(NOGOOD + "info")
+    else: say(NOGOOD + fileid)
+
+def markInfoChanged(self,fileid, key,extra = 0,exargs = []): # need some args here
+  if extra != len(exargs): say("Counting error! " + str(extra) + "/" + str(len(exargs)))
   global people
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
   goforit = False
   if people.get(fileid,None) != None:
     if people[fileid].get('info',None) != None:
-      if people[fileid]['info'].get(key,None) != None:
-        goforit = True
-      else:
-        people[fileid]['info'][key] = ["",False]
-        goforit = True
+        if people[fileid]['info'].get(key,None) == None:
+          people[fileid]['info'][key] = ["",False]
+        if len(exargs) == 0:
+          say("exargs empty!")
+          return
+        if people[fileid]['info'].get(key,None) == None:
+          people[fileid]['info'][key] = {}
+        if people[fileid]['info'][key].get(exargs[0]) != None:
+          if extra >= 1:
+            try:
+              value = people[fileid]['info'][key].get(exargs[0])
+            except KeyError:
+              people[fileid]['info'][key][exargs[0]] = {}
+            if extra == 1:
+              try:
+                people[fileid]['info'][key][exargs[0]] = ["",False]
+                people[fileid]['info'][key][exargs[0]][1] = True
+                people[fileid]['info'][key][exargs[0]][0] = self.get_text()
+                print "Value set: " + str(people[fileid]['info'][key][exargs[0]][0])
+                return
+              except KeyError:
+                print "Could not mark " + exargs[0] + " as changed."
+                return
+            elif extra > 1:
+              try:
+                value = people[fileid]['info'][key][exargs[0]].get(exargs[1])
+              except KeyError:
+                people[fileid]['info'][key][exargs[0]][exargs[1]] = {}
+              if extra == 2:
+                try:
+                  people[fileid]['info'][key][exargs[0]][exargs[1]] = ["",False]
+                  people[fileid]['info'][key][exargs[0]][exargs[1]][1] = True
+                  people[fileid]['info'][key][exargs[0]][exargs[1]][0] = self.get_text()
+                  print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][0])
+                  return
+                except KeyError:
+                  print "Could not mark " + exargs[1] + " as changed."
+                  return
+              elif extra > 2:
+                try:
+                  value = people[fileid]['info'][key][exargs[0]][exargs[1]].get(exargs[2])
+                except KeyError:
+                  people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = {}
+                if extra == 3:
+                  try:
+                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = ["",False]
+                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][1] = True
+                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][0] = self.get_text()
+                    print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][0])
+                    return
+                  except KeyError:
+                    print "Could not mark " + exargs[2] + " as changed."
+                    return
+                elif extra > 3:
+                  try:
+                    value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]].get(exargs[3])
+                  except KeyError:
+                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = {}
+                  if extra == 4:
+                    try:
+                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]] = ["",False]
+                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][1] = True
+                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][0] = self.get_text()
+                      print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][0])
+                      return
+                    except KeyError:
+                      print "Could not mark " + exargs[3] + " as changed."
+                      return
+                  elif extra > 4:
+                    try:
+                      value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]].get(exargs[4])
+                    except KeyError:
+                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]] = {}
+                    if extra == 5:
+                      try:
+                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]] = ["",False]
+                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]][1] = True
+                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]][0] = self.get_text()
+                        print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[3]][exargs[4]][0])
+                        return
+                      except KeyError:
+                        print "Could not mark " + exargs[3] + " as changed."
+                        return
+                    else:
+                      say("Arguments out of bounds")
+                      return
     else:
       print "info not found in " + fileid; return
   else:
@@ -193,7 +386,7 @@ def initPinfo(self, fileid):
   self.add(self.speech)
   self.formocc = buildarow("Former Occupation:",fileid,'formocc')
   self.add(self.formocc)
-  self.curocc = buildarow("Former Occupation:",fileid,'curocc')
+  self.curocc = buildarow("Current Occupation:",fileid,'currocc',1)
   self.add(self.curocc)
   self.strength = buildarow("Strengths:",fileid,'strength')
   self.add(self.strength)
@@ -210,7 +403,7 @@ def initPinfo(self, fileid):
   self.s4 = gtk.HSeparator()
   self.add(self.s4)
   self.s4.show()
-  self.misc = buildarow("Misc:",fileid,'misc')
+  self.misc = buildarow("Misc:",fileid,'misc') # make a textbox
   self.add(self.misc)
   self.ethnic = buildarow("Ethnic background:",fileid,'ethnic')
   self.add(self.ethnic)
@@ -271,11 +464,46 @@ def addPersonMenu(self):
   pl = gtk.Menu()
   pl.show()
   itemPL.set_submenu(pl)
-  persons = worldList['p']
+  persons = sorted(worldList['p'])
+  num = len(persons)
+  cols = 1
+  if num > 20:
+    cols = 2
+    if num > 40:
+      cols = 3
+      if num > 60:
+        cols = 4
+  every = int(num / cols) - 1
+  pos = 0
+  countitem = gtk.MenuItem("Total Entries: " + str(num))
+  pl.append(countitem)
+  countitem.show()
+  addPersonSubmenu(self.tabs,pl,persons[pos:pos + every])
+  if num > every:
+    pos += every
+    lsm = addPersonSubmenuItem(pl, num - pos)
+    for i in range(cols):
+      addPersonSubmenu(self.tabs,lsm,persons[pos:pos + every])
+      pos += every
+      if num > pos + 1:
+        lsm = addPersonSubmenuItem(lsm, num - pos)
+      elif num == pos:
+        addPersonSubmenu(self.tabs,lsm,persons[-1:])
+
+def addPersonSubmenuItem(pl, num):
+  itemMore = gtk.MenuItem(str(num) + " _More",True)
+  pl.append(itemMore)
+  itemMore.show()
+  molo = gtk.Menu()
+  molo.show()
+  itemMore.set_submenu(molo)
+  return molo
+
+def addPersonSubmenu(tabs,pl,persons):
   for i in persons:
     menu_items = gtk.MenuItem(i)
     pl.append(menu_items)
-    menu_items.connect("activate",displayPerson,i,self.tabs)
+    menu_items.connect("activate",displayPerson,i,tabs)
     menu_items.show()
 
 def getFileid(callingWidget,fileid,tabs):
