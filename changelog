@@ -1,8 +1,13 @@
 2012-02-15:
 - Made listing menus widen if many items exist
-- Started handling of occupations
-- Built table for displaying occupations (buildanoccupation)
+- Added handling of occupations to row builder (buildarow)
+- Built table for displaying occupations (buildaposition)
 - Expanded function of modified functions (checkForChange,markInfoChanged)
+- Added defaulter for occupations to loadPerson
+- Renamed backends module
+- Added generic text entry dialog
+- Added capability to make a new record
+- Added capability to clear listfile
 
 2012-02-14:
 - Changed dict storage of info values from tuple to list

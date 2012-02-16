@@ -4,7 +4,8 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from chardb_backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList)
+from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
+from common import (say,bsay,askBox,validateFileid)
 people = {}
 
 def getit(fileid,key):
@@ -27,7 +28,9 @@ def buildarow(name,fileid,key,style = 0):
   row.show()
   row.label = gtk.Label(name)
   row.label.set_width_chars(20)
-  row.label.set_alignment(1,0.5)
+  value = 0.5
+  if style == 1: value = 0.03
+  row.label.set_alignment(1,value)
   row.label.show()
   row.add(row.label)
   row.set_child_packing(row.label,0,0,2,gtk.PACK_START)
@@ -37,14 +40,15 @@ def buildarow(name,fileid,key,style = 0):
     row.e.set_text(value)
     activateEntry(row.e,fileid,key)
   if style == 1:
-    row.e = buildanoccupation(fileid,key)
+    row.e = buildaposition(fileid,key)
   row.e.show()
   row.add(row.e)
   row.set_child_packing(row.e,1,1,2,gtk.PACK_START)
   return row
 
-def buildanoccupation(fileid,key):
-  t = gtk.Table()
+def buildaposition(fileid,key):
+  t = gtk.Table(1,4) # TODO: Move this out into the buildarow so we can pu multiple positions in the same table?
+  # or do we want them separated so we have the headers and separation?
   t.show()
   global people
   data = {}
@@ -54,42 +58,46 @@ def buildanoccupation(fileid,key):
     print "Error getting info from " + fileid + ": %s" % e
     return ""
   data = data.get(key,None)
+  value = data.get("pos")
+  if value: value = value[0]
   if data.get("events"):
     rows = len(data['events'])
     cols = 4
+#    t.addpos = gtk.Button("Add Position")
+    t.addmile = gtk.Button("Add milestone")
+    t.addmile.show()
+    t.attach(t.addmile,3,4,1,2)
+    t.addmile.connect("clicked",bsay,"This button does nothing yet.")
     if rows > 0:
-      t.resize(rows + 2,cols)
+      t.resize(rows + 3,cols)
 #      t.set_geometry_hints(None,790,440)
       t.phead = gtk.Label("Position")
       t.phead.show()
       t.attach(t.phead,0,1,0,1)
       t.mhead = gtk.Label("Milestone")
       t.mhead.show()
-      t.attach(t.mhead,1,4,0,1)
+      t.attach(t.mhead,1,3,0,1)
       t.dhead = gtk.Label("Date")
       t.dhead.show()
       t.attach(t.dhead,1,2,1,2)
       t.ehead = gtk.Label("Event")
       t.ehead.show()
       t.attach(t.ehead,2,3,1,2)
-      t.thead = gtk.Label("Type")
-      t.thead.show()
-      t.attach(t.thead,3,4,1,2)
+      rpos = gtk.Entry()
+      extraargs = ["pos",]
+      activateEntry(rpos,fileid,key,len(extraargs),extraargs)
+      rpos.show()
+      rpos.set_text(value)
+      rpos.set_width_chars(12)
+      t.attach(rpos,0,1,1,2)
       for i in range(rows):
-        value = data['events'][str(i)].get("pos","")
-        if value: value = value[0]
-        rpos = gtk.Entry()
-        extraargs = ["events",str(i),"pos"]
-        activateEntry(rpos,fileid,key,len(extraargs),extraargs)
-        rpos.show()
-        rpos.set_text(value)
-        t.attach(rpos,0,1,i + 2,i + 3)
         value = data['events'][str(i)].get("date","")
         if value: value = value[0]
         rda = gtk.Entry()
         extraargs = ["events",str(i),"date"]
         activateEntry(rda,fileid,key,len(extraargs),extraargs)
         rda.show()
+        rda.set_width_chars(12)
         rda.set_text(value)
         t.attach(rda,1,2,i + 2,i + 3)
         value = data['events'][str(i)].get("event","")
@@ -98,16 +106,10 @@ def buildanoccupation(fileid,key):
         extraargs = ["events",str(i),"event"]
         activateEntry(rev,fileid,key,len(extraargs),extraargs)
         rev.show()
+        rev.set_width_chars(10)
         rev.set_text(value)
         t.attach(rev,2,3,i + 2,i + 3)
-        value = data['events'][str(i)].get("type","")
-        if value: value = value[0]
-        rty = gtk.Entry()
-        extraargs = ["events",str(i),"type"]
-        activateEntry(rty,fileid,key,len(extraargs),extraargs)
-        rty.show()
-        rty.set_text(value)
-        t.attach(rty,3,4,i + 2,i + 3)
+#        print str(t.size_request())
   return t
 
 def activateEntry(self, fileid, key, extra = 0, exargs = []):
@@ -151,7 +153,7 @@ def checkForChange(self,event,fileid,key,extra = 0,exargs = []):
                 value = ""
             else:
               say("A counting error occurred. Oops.")
-            if value != self.get_text():
+            if value[0] != self.get_text():
               markInfoChanged(self,fileid, key,extra,exargs)
           else: say(NOGOOD + exargs[0])
         else: say(NOGOOD + key)
@@ -384,7 +386,7 @@ def initPinfo(self, fileid):
   self.add(self.pers)
   self.speech = buildarow("Distinct Speech:",fileid,'asmell')
   self.add(self.speech)
-  self.formocc = buildarow("Former Occupation:",fileid,'formocc')
+  self.formocc = buildarow("Former Occupation:",fileid,'formocc',1)
   self.add(self.formocc)
   self.curocc = buildarow("Current Occupation:",fileid,'currocc',1)
   self.add(self.curocc)
@@ -396,7 +398,7 @@ def initPinfo(self, fileid):
   self.add(self.mole)
   self.hobby = buildarow("Hobby:",fileid,'hobby')
   self.add(self.hobby)
-  self.l9 = gtk.Label("Personality Traits")
+  self.l9 = gtk.Label("Miscellany")
   self.l9.set_alignment(0,1)
   self.l9.show()
   self.add(self.l9)
@@ -458,6 +460,11 @@ def addPersonMenu(self):
   p.append(itemPN)
   itemPN.show()
   itemPN.connect("activate",getFileid,self.tabs)
+  if config['uselistfile']:
+    itemPC = gtk.MenuItem("_Clear list file",True)
+    p.append(itemPC)
+    itemPC.show()
+    itemPC.connect("activate",killListFile)
   itemPL = gtk.MenuItem("_Load",True)
   p.append(itemPL)
   itemPL.show()
@@ -506,8 +513,13 @@ def addPersonSubmenu(tabs,pl,persons):
     menu_items.connect("activate",displayPerson,i,tabs)
     menu_items.show()
 
-def getFileid(callingWidget,fileid,tabs):
-  say("Haven't written this function.") # TODO: Write this text entry box.
+def getFileid(caller,tabs):
+  fileid = askBox(None,"Please enter a new unique filing identifier.","Fileid:","This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".")
+  fileid = validateFileid(fileid)
+  if len(fileid) > 0:
+    mkPerson(caller,fileid,tabs)
+  else:
+    say("New person cancelled")
 
 def mkPerson(callingWidget,fileid,tabs):
   global worldList
@@ -515,6 +527,7 @@ def mkPerson(callingWidget,fileid,tabs):
     say("Existing fileid! Loading instead...")
   else:
     worldList['p'].append(fileid)
-    if config['uselistfile'] == True:
-      writeListFile()
+### This should go in the save function, check for its value in file?
+#    if config['uselistfile'] == True:
+#      writeListFile()
   displayPerson(callingWidget,fileid,tabs)

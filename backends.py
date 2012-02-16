@@ -6,13 +6,10 @@ worldList = {}
 
 import codecs
 import re
+import os
 from linecache import getline
-from os import (path,listdir)
 from status import status
-
-def say(text):
-  print text # TODO: Make this a GTK dialog box.
-
+from common import say
 
 def loadConfig(fn = None):
   """Returns a dict containing the config options in the CCOW config file."""
@@ -47,6 +44,7 @@ def validateConfig(config):
 # Person options
   config['familyfirst'] = config.get("familyfirst",False) # Does the family name come first?
   config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?
+  config['startnew'] = config.get("startnew",False) # Start by opening a new person file?
 # XML file options
   config['uselistfile'] = config.get("uselistfile",True) # Whether to...
   """ save/load a list file instead of walking through each XML file
@@ -62,7 +60,6 @@ def loadPerson(fileid):
   if config['informat'] == "sql":
     return loadPersonSQL(fileid)
   else:
-    fileid = path.join(config['xmldir'],fileid + ".xml")
     return loadPersonXML(fileid)
 
 def savePerson(fileid,data,rels):
@@ -94,11 +91,67 @@ def loadPersonXML(fileid):
   directory, loads the tree from the file and pushes its data into
   two dictionaries, which it returns as a tuple.
   """
-  status.push(0,"loading person from XML... '" + fileid + "'")
   dinf = {}
   drel = {}
   root = Element("person")
   text = None
+  if not idExistsXML(fileid):
+    status.push(0,"creating new person... '" + fileid + "'")
+    dinf['abil'] = ["",False]
+    dinf['age'] = ["",False]
+    dinf['appear1ch'] = ["",False]
+    dinf['appear1wr'] = ["",False]
+    dinf['asmell'] = ["",False]
+    dinf['attposs'] = ["",False]
+    dinf['backstory'] = ["",False]
+    dinf['bday'] = ["",False]
+    dinf['bodytyp'] = ["",False]
+    dinf['commonname'] = ["",False]
+    dinf['conflict'] = ["",False]
+    dinf['ctitle'] = ["",False]
+    dinf['dday'] = ["",False]
+    dinf['dress'] = ["",False]
+    dinf['ethnic'] = ["",False]
+    dinf['eyes'] = ["",False]
+    dinf['gname'] = ["",False]
+    dinf['gender'] = ["",False]
+    dinf['hair'] = ["",False]
+    dinf['hobby'] = ["",False]
+    dinf['leadrel'] = ["",False]
+    dinf['fname'] = ["",False]
+    dinf['dmarks'] = ["",False]
+    dinf['file'] = ["",False]
+    dinf['mention'] = ["",False]
+    dinf['minchar'] = ["",False]
+    dinf['misc'] = ["",False]
+    dinf['mname'] = ["",False]
+    dinf['mole'] = ["",False]
+    dinf['nname'] = ["",False]
+    dinf['origin'] = ["",False]
+    dinf['other'] = ["",False]
+    dinf['personality'] = ["",False]
+    dinf['residence'] = ["",False]
+    dinf['sgoal'] = ["",False]
+    dinf['skin'] = ["",False]
+    dinf['speech'] = ["",False]
+    dinf['stories'] = ["",False]
+    dinf['strength'] = ["",False]
+    dinf['talent'] = ["",False]
+    dinf['weak'] = ["",False]
+    dinf['update'] = ["",False]
+    dinf['currocc'] = {}
+    dinf['currocc']['pos'] = ["",False]
+    dinf['formocc'] = {}
+    dinf['formocc']['pos'] = ["",False]
+    events = {}
+    events['0'] = {}
+    events['0']['date'] = ["",False]
+    events['0']['event'] = ["",False]
+    dinf['currocc']['events'] = events
+    dinf['formocc']['events'] = events
+    return (dinf,drel)
+  fileid = os.path.join(config['xmldir'],fileid + ".xml")
+  status.push(0,"loading person from XML... '" + fileid + "'")
   try:
     with codecs.open(fileid,'rU','utf-8') as f:
       tree = parse(f)
@@ -128,29 +181,75 @@ def loadPersonXML(fileid):
         try:
           dinf['currocc']['pos'] = [root[i].find("pos").text.strip(),False]
         except AttributeError:
-          print "Position not found. Removing listing."
           del dinf['currocc']
         if dinf.get('currocc'):
           events = {}
-          event = 0
-          for j in root[i]:
-            if j.tag is not None:
-              if j.tag == "events":
-                for k in j:
-                  if k.tag == "mstone":
-                    events[str(event)] = {}
-                    for m in k:
-                      if m.tag and m.text:
-                        events[str(event)][m.tag] = [m.text.strip(),False]
-                    event += 1
-#          print str(events)
+          if len(root[i]) > 1:
+            for j in root[i]:
+              if j.tag is not None:
+                if j.tag == "events":
+                  for k in j:
+                    if k.tag == "mstone":
+                      le = str(len(events))
+                      events[le] = {}
+                      events[le]['date'] = ["",False]
+                      events[le]['event'] = ["",False]
+                      for m in k:
+                        if m.tag and m.text:
+                          events[le][m.tag] = [m.text.strip(),False]
+          else:
+            events['0'] = {}
+            events['0']['date'] = ["",False]
+            events['0']['event'] = ["",False]
           dinf['currocc']['events'] = events
         else:
-          print "no currocc"
+          dinf['currocc'] = {}
+          dinf['currocc']['pos'] = ["",False]
+          events = {}
+          events['0'] = {}
+          events['0']['date'] = ["",False]
+          events['0']['event'] = ["",False]
+          dinf['currocc']['events'] = events
+      elif root[i].tag == "formocc":
+#        print ",",
+        dinf['formocc'] = {}
+        try:
+          dinf['formocc']['pos'] = [root[i].find("pos").text.strip(),False]
+        except AttributeError:
+          del dinf['formocc']
+        if dinf.get('formocc'):
+          events = {}
+          if len(root[i]) > 1:
+            for j in root[i]:
+              if j.tag is not None:
+                if j.tag == "events":
+                  for k in j:
+                    if k.tag == "mstone":
+                      le = str(len(events))
+                      events[le] = {}
+                      events[le]['date'] = ["",False]
+                      events[le]['event'] = ["",False]
+                      for m in k:
+                        if m.tag and m.text:
+                          events[le][m.tag] = [m.text.strip(),False]
+          else:
+            events['0'] = {}
+            events['0']['date'] = ["",False]
+            events['0']['event'] = ["",False]
+          dinf['formocc']['events'] = events
+        else:
+          dinf['formocc'] = {}
+          dinf['formocc']['pos'] = ["",False]
+          events = {}
+          events['0'] = {}
+          events['0']['date'] = ["",False]
+          events['0']['event'] = ["",False]
+          dinf['formocc']['events'] = events
       elif root[i].text is not None:
 #        print ".",
         dinf[root[i].tag] = [root[i].text.strip(), False]
         if config['debug'] > 2: print str(i) + " ",
+#  print str(dinf)
   return (dinf,drel)
 
 def populateWorldXML():
@@ -159,14 +258,14 @@ def populateWorldXML():
   """
   global config
   global worldList
-  fn = path.join(config['xmldir'],"myworld.conf")
+  fn = os.path.join(config['xmldir'],"myworld.cfg")
   persons = []
   places = []
   cities = []
   states = []
   orgs = []
   # other data types.
-  if config['uselistfile'] and path.exists(fn):
+  if config['uselistfile'] and os.path.exists(fn):
     print "Loading worldList from file..."
     lines = []
     try:
@@ -197,15 +296,15 @@ def populateWorldXML():
         print "There was an error in the configuration file: %s" % e
   else:
     print "Generating worldList from directory..."
-    olist = listdir(config['xmldir'])
+    olist = os.listdir(config['xmldir'])
     nlist = []
     ilist = []
     for i in range(len(olist)):
       if re.search(r'.[Xx][Mm][Ll]',olist[i]):
-        ilist.append(path.splitext(olist[i])[0])
+        ilist.append(os.path.splitext(olist[i])[0])
         nlist.append(olist[i])
     for i in range(len(nlist)):
-      fn = path.join(config['xmldir'],nlist[i])
+      fn = os.path.join(config['xmldir'],nlist[i])
       line = getline(fn,2)
       match = line.find("SYSTEM")
       if match == -1:
@@ -231,11 +330,11 @@ def populateWorldXML():
   worldList['c'] = cities
   worldList['s'] = states
   worldList['o'] = orgs
-  fn = path.join(config['xmldir'],"myworld.conf")
-  if config['uselistfile'] and not path.exists(fn):
+  fn = os.path.join(config['xmldir'],"myworld.cfg")
+  if config['uselistfile'] and not os.path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."
     writeListFile()
-  if config['debug'] > 1: print worldList
+  if config['debug'] > 3: print worldList
 
 def writeListFile():
   global worldList
@@ -245,7 +344,7 @@ def writeListFile():
   cities = worldList['c']
   states = worldList['s']
   orgs = worldList['o']
-  fn = path.join(config['xmldir'],"myworld.conf")
+  fn = os.path.join(config['xmldir'],"myworld.cfg")
   try:
     with codecs.open(fn,'wU','utf-8') as conf:
       puts = []
@@ -265,12 +364,17 @@ def writeListFile():
     print " Could not write worldlist file: %s" % e
     exit(1)
 
+def killListFile(caller = None):
+  os.remove(os.path.join(os.path.abspath(config['xmldir']),"myworld.cfg"))
+  say("WorldList destroyed!")
+
 def savePersonXML(fileid,data,rels):
   """Given a filename and two dictionaries, saves a person's values to an "id" XML file.
   """
 
 def idExistsXML(fileid):
   global config
-  return path.exists(path.join(config['xmldir'],fileid + ".xml"))
+  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml") + "...",
+  return os.path.exists(os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml"))
 
 ### SQL Backend

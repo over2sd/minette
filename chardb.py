@@ -5,7 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from chardb_backends import (config,worldList,loadConfig,populateWorld)
+from backends import (config,worldList,loadConfig,populateWorld)
 from person import (displayPerson, addPersonMenu)
 from status import status
 
@@ -16,7 +16,7 @@ class Base:
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
     self.window.set_border_width(3)
-    self.window.set_geometry_hints(None,790,440)
+    self.window.set_geometry_hints(None,620,440)
     self.window.show()
     self.box1 = gtk.VBox()
     self.window.add(self.box1)
@@ -38,7 +38,10 @@ class Base:
     self.mb.show()
 
   def main(self):
-    displayPerson("?","petekend",self.tabs)
+    status.push(0,"Load a record from the menus to begin.")
+    if config['startnew']: getFileid(self,self.tabs)
+
+#    displayPerson("?","petekend",self.tabs)
 #    displayPerson("?","kanemela",self.tabs)
 #    displayPerson("?","mortgera",self.tabs)
 
@@ -62,8 +65,8 @@ class Base:
     addPersonMenu(self)
 
   def delete_event(self,widget,event,data=None):
-#    print self.window.get_size()
-    print "delete event occurred"
+    if config['debug'] > 0: print self.window.get_size()
+#    print "delete event occurred"
     return False
 
   def destroy(self,widget,data=None):
