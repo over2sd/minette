@@ -6,6 +6,7 @@ pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from common import (say,bsay,askBox,validateFileid)
+from status import status
 people = {}
 
 def getit(fileid,key):
@@ -268,6 +269,7 @@ def markInfoChanged(self,fileid, key,extra = 0,exargs = []): # need some args he
 
 def initPinfo(self, fileid):
   global people
+  global config
   info = {}
   try:
     info = people[fileid]['info']
@@ -321,7 +323,7 @@ def initPinfo(self, fileid):
   self.l3.show()
   self.l4.show()
   self.l5.show()
-  self.cname = buildarow("Common Name:",fileid,'commonname')
+  self.cname = buildarow("Common Name:",fileid,'commonname') # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
   self.add(self.cname)
   self.nname = buildarow("Nickname:",fileid,'nname')
   self.add(self.nname)
@@ -426,28 +428,105 @@ def initPinfo(self, fileid):
   self.other = buildarow("Other notes:",fileid,'other') # textbox someday
   self.add(self.other)
 
+def initPrels(self, fileid):
+  global people
+  global config
+  name = []
+  rels = {}
+  nameperson = ""
+  try:
+    name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
+  except KeyError as e:
+    print "An error occurred accessing " + fileid + ": %s" % e
+#    print str(people[fileid]['info'].get(e,None))
+    return
+  if people[fileid].get("rels"):
+    rels = people[fileid]['rels']
+  if len(name[0]) > 2:
+    nameperson = name[0]
+  elif config['familyfirst']:
+    nameperson = name[2] + " " + name[1]
+  else:
+    nameperson = name[1] + " " + name[2]
+  self.l1 = gtk.Label(nameperson + " - Character's Relationships")
+  self.l1.show()
+  self.l1.set_alignment(0,0)
+  self.b1 = gtk.HBox()
+  self.b1.show()
+  self.addbutton = gtk.Button("Add a Related Character")
+  self.addbutton.show()
+  self.addbutton.connect("clicked",bsay,"This button does nothing yet.")
+  self.b1.add(self.l1)
+  self.b1.add(self.addbutton)
+  self.add(self.b1)
+  self.b1.set_child_packing(self.l1,1,1,2,gtk.PACK_START)
+  self.b1.set_child_packing(self.addbutton,0,0,2,gtk.PACK_START)
+  self.set_child_packing(self.b1,0,0,2,gtk.PACK_START)
+  if not len(rels):
+    self.norels = gtk.Label("No relations found at load time.")
+    self.norels.show()
+    self.add(self.norels)
+#  self.show_all()
+
 
 def displayPerson(callingWidget,fileid, tabrow):
   global people
-  p = loadPerson(fileid)
-  people[fileid] = {}
-  people[fileid]['info'] = p[0]
-  people[fileid]['relat'] = p[1]
-  tabrow.sw = gtk.ScrolledWindow()
-  tabrow.sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.sw.show()
-  tabrow.sw.personpage = gtk.VBox()
-  tabrow.sw.personpage.show()
-  tabrow.sw.add_with_viewport(tabrow.sw.personpage)
-  tabrow.sw.personpage.set_border_width(5)
+  warnme = False
+  if people.get(fileid,None):
+    warnme = True
+    if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+      status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+      for i in range(len(tabrow)):
+        if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
+          tabrow.set_current_page(i)
+      return # No need to load again. If revert needed, use a different function
+  else:
+    p = loadPerson(fileid)
+    people[fileid] = {}
+    people[fileid]['info'] = p[0]
+    people[fileid]['relat'] = p[1]
+  tabrow.ptabs = gtk.Notebook()
+  tabrow.ptabs.show()
   tabrow.labelname = gtk.Label(fileid)
   tabrow.labelname.show()
   tabrow.label = gtk.HBox()
   tabrow.label.add(tabrow.labelname)
   tabrow.label.show()
-  tabrow.append_page(tabrow.sw,tabrow.label)
-  initPinfo(tabrow.sw.personpage, fileid)
-  tabrow.set_current_page(tabrow.page_num(tabrow.sw))
+  tabrow.append_page(tabrow.ptabs,tabrow.label)
+  tabrow.set_tab_label_text(tabrow.ptabs,fileid)
+#  if warnme and config['openduplicatetabs']:
+#    tabrow.ptabs.<function to change background color as warning>
+#    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
+#    Here, attach ptabs to warning VBox
+#  else:
+#    Here, attach ptabs to tabrow
+
+  tabrow.labeli = gtk.Label("Information")
+  tabrow.labelr = gtk.Label("Relationships")
+  tabrow.ptabs.swi = gtk.ScrolledWindow()
+  tabrow.ptabs.swr = gtk.ScrolledWindow()
+  tabrow.ptabs.swi.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  tabrow.ptabs.swr.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  tabrow.ptabs.swi.show()
+  tabrow.ptabs.swr.show()
+  tabrow.ptabs.append_page(tabrow.ptabs.swi,tabrow.labeli)
+  tabrow.ptabs.append_page(tabrow.ptabs.swr,tabrow.labelr)
+  tabrow.ptabs.set_tab_label_packing(tabrow.ptabs.swi,True,True,gtk.PACK_START)
+  tabrow.ptabs.set_tab_label_packing(tabrow.ptabs.swr,True,True,gtk.PACK_START)
+  tabrow.ptabs.swi.infpage = gtk.VBox()
+  tabrow.ptabs.swr.relpage = gtk.VBox()
+  tabrow.ptabs.swi.infpage.show()
+  tabrow.ptabs.swr.relpage.show()
+  tabrow.ptabs.swi.add_with_viewport(tabrow.ptabs.swi.infpage)
+  tabrow.ptabs.swr.add_with_viewport(tabrow.ptabs.swr.relpage)
+  tabrow.ptabs.swi.infpage.set_border_width(5)
+  tabrow.ptabs.swr.relpage.set_border_width(5)
+  if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.ptabs)
+  initPinfo(tabrow.ptabs.swi.infpage, fileid)
+  initPrels(tabrow.ptabs.swr.relpage, fileid)
+  tabrow.set_current_page(tabrow.page_num(tabrow.ptabs))
+#  tabrow.show_all()
+#  print "I got here, too!"
 
 def addPersonMenu(self):
   itemP = gtk.MenuItem("_Person",True)

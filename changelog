@@ -1,3 +1,10 @@
+2012-02-16:
+- loadPerson now starts with a new record filled with empty strings
+- displayPerson now switches to existing tab if already loaded, unless config option allows duplication
+- Added subtabs to person tabs, info and relationships
+- Added a first-run tab that will give a tutorial on how to use the program (shows if default.cfg missing)
+- Started relationship processing
+
 2012-02-15:
 - Made listing menus widen if many items exist
 - Added handling of occupations to row builder (buildarow)

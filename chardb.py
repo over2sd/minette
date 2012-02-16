@@ -5,12 +5,14 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+from os import path
 from backends import (config,worldList,loadConfig,populateWorld)
 from person import (displayPerson, addPersonMenu)
 from status import status
+import sys
 
 class Base:
-  def __init__(self):
+  def __init__(self,configfile):
     global status
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.connect("delete_event", self.delete_event)
@@ -22,6 +24,8 @@ class Base:
     self.window.add(self.box1)
     self.box1.show()
     self.tabs = gtk.Notebook()
+    self.tabs.set_scrollable(True)
+    if not path.exists(path.abspath(fn)): Base.firstRunTab(self,self.tabs)
     Base.makeMenus(self)
     self.box1.add(self.mb)
     self.box1.add(self.tabs)
@@ -46,6 +50,28 @@ class Base:
 #    displayPerson("?","mortgera",self.tabs)
 
     gtk.main()
+
+  def firstRunTab(base,tabrow):
+    tabrow.fr = gtk.VBox()
+    tabrow.fr.show()
+    tabrow.append_page(tabrow.fr,gtk.Label("First Run Tutorial"))
+    tabrow.tut = gtk.TextBuffer()
+    tabrow.tutv = gtk.TextView(tabrow.tut)
+    tabrow.tutv.set_border_width(1)
+    tabrow.tutv.set_left_margin(5)
+    tabrow.tutv.set_right_margin(5)
+    tabrow.tutv.show()
+    tabrow.tutv.set_wrap_mode(gtk.WRAP_WORD)
+    tabrow.tutv.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#D4D4D4"))
+    tabrow.tutv.set_editable(False)
+    tabrow.tut.set_text("\n\t\
+This tutorial will only display as long as you do not use a configuration \
+file. Load with a configuration file as the first argument, or create \
+'default.cfg' in the program's directory to stop seeing this welcome tab.\
+\n\tTo begin, Use the Person menu to load an existing record or make a new\
+ record.")
+    tabrow.fr.add(tabrow.tutv)
+
 
   def makeMenus(self):
     self.mb = gtk.MenuBar()
@@ -73,8 +99,12 @@ class Base:
     gtk.main_quit()
 
 if __name__ == "__main__":
-  fn = None # TODO: take config file argument
+  fn = None
+  if len(sys.argv) > 1:
+    fn = sys.argv[1] # for now, config must be first argument
+  if fn is None:
+    fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
   loadConfig(fn)
   populateWorld()
-  base = Base()
+  base = Base(fn)
   base.main()

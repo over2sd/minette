@@ -17,14 +17,14 @@ def loadConfig(fn = None):
   global config
   config['debug'] = 1
   if fn is None:
-    fn = "default.conf"
-  try:
-    with codecs.open(fn,'rU','utf-8') as conf:
-      lines = conf.readlines()
-      conf.close()
-  except IOError as e:
-    print " Could not open configuration file: %s" % e
-
+    fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
+  if os.path.exists(os.path.abspath(fn)):
+    try:
+      with codecs.open(fn,'rU','utf-8') as conf:
+        lines = conf.readlines()
+        conf.close()
+    except IOError as e:
+      print " Could not open configuration file: %s" % e
   for line in lines:
     try:
       line = line.strip()
@@ -41,6 +41,7 @@ def validateConfig(config):
   config['debug'] = config.get("debug","0")
   config['informat'] = config.get("informat","xml") # How are people stored initially?
   config['outformat'] = config.get("outformat","xml") # how will we save data?
+  config['openduplicatetabs'] = config.get('openduplicatetabs',False) # Should we open duplicate tabs?
 # Person options
   config['familyfirst'] = config.get("familyfirst",False) # Does the family name come first?
   config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?
@@ -95,60 +96,61 @@ def loadPersonXML(fileid):
   drel = {}
   root = Element("person")
   text = None
+  dinf['abil'] = ["",False]
+  dinf['age'] = ["",False]
+  dinf['appear1ch'] = ["",False]
+  dinf['appear1wr'] = ["",False]
+  dinf['asmell'] = ["",False]
+  dinf['attposs'] = ["",False]
+  dinf['backstory'] = ["",False]
+  dinf['bday'] = ["",False]
+  dinf['bodytyp'] = ["",False]
+  dinf['commonname'] = ["",False]
+  dinf['conflict'] = ["",False]
+  dinf['ctitle'] = ["",False]
+  dinf['dday'] = ["",False]
+  dinf['dress'] = ["",False]
+  dinf['ethnic'] = ["",False]
+  dinf['eyes'] = ["",False]
+  dinf['gname'] = ["",False]
+  dinf['gender'] = ["",False]
+  dinf['hair'] = ["",False]
+  dinf['hobby'] = ["",False]
+  dinf['leadrel'] = ["",False]
+  dinf['fname'] = ["",False]
+  dinf['dmarks'] = ["",False]
+  dinf['file'] = ["",False]
+  dinf['mention'] = ["",False]
+  dinf['minchar'] = ["",False]
+  dinf['misc'] = ["",False]
+  dinf['mname'] = ["",False]
+  dinf['mole'] = ["",False]
+  dinf['nname'] = ["",False]
+  dinf['origin'] = ["",False]
+  dinf['other'] = ["",False]
+  dinf['personality'] = ["",False]
+  dinf['residence'] = ["",False]
+  dinf['sgoal'] = ["",False]
+  dinf['skin'] = ["",False]
+  dinf['speech'] = ["",False]
+  dinf['stories'] = ["",False]
+  dinf['strength'] = ["",False]
+  dinf['talent'] = ["",False]
+  dinf['weak'] = ["",False]
+  dinf['update'] = ["",False]
+  dinf['currocc'] = {}
+  dinf['currocc']['pos'] = ["",False]
+  dinf['formocc'] = {}
+  dinf['formocc']['pos'] = ["",False]
+  events = {}
+  events['0'] = {}
+  events['0']['date'] = ["",False]
+  events['0']['event'] = ["",False]
+  dinf['currocc']['events'] = events
+  dinf['formocc']['events'] = events
+  
   if not idExistsXML(fileid):
-    status.push(0,"creating new person... '" + fileid + "'")
-    dinf['abil'] = ["",False]
-    dinf['age'] = ["",False]
-    dinf['appear1ch'] = ["",False]
-    dinf['appear1wr'] = ["",False]
-    dinf['asmell'] = ["",False]
-    dinf['attposs'] = ["",False]
-    dinf['backstory'] = ["",False]
-    dinf['bday'] = ["",False]
-    dinf['bodytyp'] = ["",False]
-    dinf['commonname'] = ["",False]
-    dinf['conflict'] = ["",False]
-    dinf['ctitle'] = ["",False]
-    dinf['dday'] = ["",False]
-    dinf['dress'] = ["",False]
-    dinf['ethnic'] = ["",False]
-    dinf['eyes'] = ["",False]
-    dinf['gname'] = ["",False]
-    dinf['gender'] = ["",False]
-    dinf['hair'] = ["",False]
-    dinf['hobby'] = ["",False]
-    dinf['leadrel'] = ["",False]
-    dinf['fname'] = ["",False]
-    dinf['dmarks'] = ["",False]
-    dinf['file'] = ["",False]
-    dinf['mention'] = ["",False]
-    dinf['minchar'] = ["",False]
-    dinf['misc'] = ["",False]
-    dinf['mname'] = ["",False]
-    dinf['mole'] = ["",False]
-    dinf['nname'] = ["",False]
-    dinf['origin'] = ["",False]
-    dinf['other'] = ["",False]
-    dinf['personality'] = ["",False]
-    dinf['residence'] = ["",False]
-    dinf['sgoal'] = ["",False]
-    dinf['skin'] = ["",False]
-    dinf['speech'] = ["",False]
-    dinf['stories'] = ["",False]
-    dinf['strength'] = ["",False]
-    dinf['talent'] = ["",False]
-    dinf['weak'] = ["",False]
-    dinf['update'] = ["",False]
-    dinf['currocc'] = {}
-    dinf['currocc']['pos'] = ["",False]
-    dinf['formocc'] = {}
-    dinf['formocc']['pos'] = ["",False]
-    events = {}
-    events['0'] = {}
-    events['0']['date'] = ["",False]
-    events['0']['event'] = ["",False]
-    dinf['currocc']['events'] = events
-    dinf['formocc']['events'] = events
+    status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
   fileid = os.path.join(config['xmldir'],fileid + ".xml")
   status.push(0,"loading person from XML... '" + fileid + "'")
