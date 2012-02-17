@@ -1,0 +1,43 @@
+/* abil, age, appear1ch, appear1wr, asmell, attposs, backstory, bday, bodytyp, commonname, conflict, ctitle, currocc, date, dday, dress, ethnic, event, events, mstone, eyes, formocc, gender, hair, hobby, leadrel, dmarks, mention, minchar, misc, mole, nname, origin, other, person, personality, relat, relation, related, residence, sgoal, skin, speech, stories, strength, talent, type, weak { display: inline; position: relative; }
+mname, fname, lname { display: inline; position: relative; } */
+div.con { float: left; width: 75%; display: block; }
+div.nam { width: 24%; text-align: right; float: left; clear: left; margin-right: 0.5em; }
+h1 { width: 50%; left: 25%; top: 5px; position: relative; display: block; text-align: center; border-top: solid; border-bottom: solid; font-size: 1.3em; font-weight: normal; margin-top: 1.25em; clear: left; }
+h1:before { content: "-=- "; font-family: monospace; }
+h1:after { content: " -=-"; font-family: monospace; }
+h2 { width: 40%; left: 26%; position: relative; display: block; text-align: center; border-bottom-style: solid; border-bottom-width: thin; font-size: 1.1em; font-weight: normal; clear: left; }
+h2:before { content: "** "; }
+h2:after { content: " **"; }
+h3 { width: 30%; left: 27%; position: relative; display: block; text-align: center; border-bottom-style: solid; border-bottom-width: thin; font-size: 1em; font-weight: normal; clear: left; }
+h3:before { content: "\00AB \0020"; }
+h3:after { content: "\0020 \00BB"; }
+.person { color: #093; }
+.place { color: #039; }
+.city { color: #930; }
+.story { color: #390; }
+.relat { color: #099; }
+.realm { float: right; clear: right; color: #093; margin-right: 15%; position: relative; top: -1px; }
+.realm:before { content: "("; }
+.realm:after {content: ")"; }
+.testcol {
+  column-count: 3;
+  column-width: 15em;
+  column-gap: 2em;   /* shown in yellow */            
+  column-rule: 4px solid green;
+  padding: 5px;      /* shown in blue */
+}
+.row { height: 14em; display: block; }
+.col { display: block; float: left; top: 0px; margin: 0px; padding: 0% 0% 0% 0.5%; list-style-position: inside; font-size: 1.2em; width: 24%; }
+.ncon { margin-left: 21%; width: 75%; }
+.qcon { width: 24%; float: left; text-align: center; }
+div.relat { width: 14%; text-align: right; float: left; clear: left; margin-right: 0.5em; }
+div.relat:after { content: ": " }
+.event { color: #909; font-weight: bold; }
+span.event:before { content: " (" }
+span.event:after { content: ") " }
+div.event { padding-left: 11%; display: block; }
+.date { color: #909; font-weight: bold; }
+div.date { width: 10%; text-align: right; float: left; clear: left; margin-right: 0.5em; }
+div.date:before { content: "* " }
+div.date:after { content: ": " }
+.spacer { display: block; height: 3em; clear: both; }

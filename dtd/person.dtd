@@ -1,0 +1,58 @@
+<!ELEMENT abil ( #PCDATA ) >
+<!ELEMENT age ( #PCDATA ) >
+<!ELEMENT appear1ch ( #PCDATA ) >
+<!ELEMENT appear1wr ( #PCDATA ) >
+<!ELEMENT asmell ( #PCDATA ) >
+<!ELEMENT attposs ( #PCDATA ) >
+<!ELEMENT backstory ( #PCDATA ) >
+<!ELEMENT bday ( #PCDATA ) >
+<!ELEMENT bodytyp ( #PCDATA ) >
+<!ELEMENT commonname ( #PCDATA ) >
+<!ELEMENT conflict ( #PCDATA ) >
+<!ELEMENT ctitle ( #PCDATA ) >
+<!ELEMENT currocc ( pos, events* ) >
+<!ELEMENT date ( #PCDATA ) >
+<!ELEMENT dday ( #PCDATA ) >
+<!ELEMENT dress ( #PCDATA ) >
+<!ELEMENT ethnic ( #PCDATA ) >
+<!ELEMENT event ( #PCDATA ) >
+<!ELEMENT events ( mstone* ) >
+<!ELEMENT mstone ( date, event, type? ) >
+<!ELEMENT eyes ( #PCDATA ) >
+<!ELEMENT fname ( #PCDATA ) >
+<!ELEMENT formocc ( pos, events* ) >
+<!ELEMENT gender ( #PCDATA ) >
+<!ELEMENT hair ( #PCDATA ) >
+<!ELEMENT hobby ( #PCDATA ) >
+<!ELEMENT leadrel ( #PCDATA ) >
+<!ELEMENT lname ( #PCDATA ) >
+<!ELEMENT dmarks ( #PCDATA ) >
+<!ELEMENT file (#CDATA ) >
+<!ELEMENT mention ( #PCDATA ) >
+<!ELEMENT minchar ( #PCDATA ) >
+<!ELEMENT misc ( #PCDATA ) >
+<!ELEMENT mname ( #PCDATA ) >
+<!ELEMENT mole ( #PCDATA ) >
+<!ELEMENT nname ( #PCDATA ) >
+<!ELEMENT origin ( #PCDATA ) >
+<!ELEMENT other ( #PCDATA ) >
+<!ELEMENT person ( commonname?, ctitle?, fname?, mname?, lname?, nname?, gender?, bday?, dday?, stories?, mention?, appear1ch?, appear1wr?, conflict?, leadrel?, bodytyp?, age?, skin?, eyes?, hair?, dmarks?, dress?, attposs?, asmell?, personality?, speech?, formocc?, currocc?, strength?, weak?, mole?, hobby?, misc?, ethnic?, origin?, backstory?, residence?, minchar?, talent?, abil?, sgoal?, other?, realm*, relat*, update? ) >
+<!ELEMENT personality ( #PCDATA ) >
+<!ELEMENT pos ( #PCDATA ) >
+<!ELEMENT relat ( related, relation, file?, rtype, events*, cat ) >
+<!ELEMENT realm ( rname, relat+ ) >
+<!ELEMENT rname ( #PCDATA )>
+<!ELEMENT cat ( #CDATA ) >
+<!ELEMENT rtype ( #CDATA ) >
+<!ELEMENT relation ( #PCDATA ) >
+<!ELEMENT related ( #PCDATA ) >
+<!ELEMENT residence ( #PCDATA ) >
+<!ELEMENT sgoal ( #PCDATA ) >
+<!ELEMENT skin ( #PCDATA ) >
+<!ELEMENT speech ( #PCDATA ) >
+<!ELEMENT stories ( #PCDATA ) >
+<!ELEMENT strength ( #PCDATA ) >
+<!ELEMENT talent ( #PCDATA ) >
+<!ELEMENT type ( #PCDATA ) >
+<!ELEMENT weak ( #PCDATA ) >
+<!ELEMENT update ( #PCDATA )>

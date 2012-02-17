@@ -1,0 +1,11 @@
+<!ELEMENT city ( name, state, statefile, start?, scue?, end?, ecue?, place* ) >
+<!ELEMENT state ( #PCDATA )>
+<!ELEMENT statefile ( #PCDATA )>
+<!ELEMENT start ( #PCDATA )>
+<!ELEMENT scue ( #PCDATA )>
+<!ELEMENT end ( #PCDATA )>
+<!ELEMENT ecue ( #PCDATA )>
+<!ELEMENT place ( name, file, note? ) >
+<!ELEMENT name ( #PCDATA )>
+<!ELEMENT file ( #PCDATA )>
+<!ELEMENT note ( #PCDATA )>

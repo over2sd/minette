@@ -53,6 +53,9 @@ def validateConfig(config):
   keeping the list file up to date).
   """
   config['xmldir'] = config.get("xmldir","./") # Where should I look for XML files?
+  config['dtddir'] = config.get("dtddir","dtd/") # Where are doctype defs kept?
+  config['dtdurl'] = config.get("dtdurl",os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
+  config['xslurl'] = config.get("xslurl",os.path.abspath("xsl/")) # What reference goes in the XML files?
   return config
 
 ### Wrappers
@@ -148,7 +151,7 @@ def loadPersonXML(fileid):
   events['0']['event'] = ["",False]
   dinf['currocc']['events'] = events
   dinf['formocc']['events'] = events
-  
+  # if no relations, leave blank
   if not idExistsXML(fileid):
     status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
@@ -166,17 +169,21 @@ def loadPersonXML(fileid):
   for i in range(len(root)):
     if root[i].tag is not None:
       if root[i].tag == "relat":
-#        print "r",
-        key = None
-        values = {}
-        if len(root[i]):
-          key = root[i].find("related").text
-          for j in root[i]:
-            if j.text is not None:
-              values[j.tag] = [j.text,False]
-        if key is not None:
-          drel[key] = values
-#        print drel[key]
+        node = root[i].find("file").text.strip()
+        drel[node] = {}
+        for j in root[i]:
+          if j.tag == "events":
+            if not drel[node].get('events'): drel[node]['events'] = {}
+            for k in j:
+              stone = len(drel[node]['events'])
+              drel[node]['events'][stone] = {}
+              for m in k:
+                if m.tag and m.text:
+                  drel[node]['events'][stone][m.tag] = [m.text.strip(),False]
+          else: # elif j.tag != "file":
+            if j.tag and j.text:
+              drel[node][j.tag] = [j.text.strip(),False]
+        if config['debug'] > 3: print drel[node]
       elif root[i].tag == "currocc":
 #        print ",",
         dinf['currocc'] = {}

@@ -4,6 +4,7 @@
 - Added subtabs to person tabs, info and relationships
 - Added a first-run tab that will give a tutorial on how to use the program (shows if default.cfg missing)
 - Started relationship processing
+- Added clicking through to a relation's record
 
 2012-02-15:
 - Made listing menus widen if many items exist

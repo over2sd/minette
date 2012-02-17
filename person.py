@@ -39,7 +39,7 @@ def buildarow(name,fileid,key,style = 0):
     value = getit(fileid,key)
     row.e = gtk.Entry()
     row.e.set_text(value)
-    activateEntry(row.e,fileid,key)
+    activateInfoEntry(row.e,fileid,key)
   if style == 1:
     row.e = buildaposition(fileid,key)
   row.e.show()
@@ -86,7 +86,7 @@ def buildaposition(fileid,key):
       t.attach(t.ehead,2,3,1,2)
       rpos = gtk.Entry()
       extraargs = ["pos",]
-      activateEntry(rpos,fileid,key,len(extraargs),extraargs)
+      activateInfoEntry(rpos,fileid,key,len(extraargs),extraargs)
       rpos.show()
       rpos.set_text(value)
       rpos.set_width_chars(12)
@@ -96,7 +96,7 @@ def buildaposition(fileid,key):
         if value: value = value[0]
         rda = gtk.Entry()
         extraargs = ["events",str(i),"date"]
-        activateEntry(rda,fileid,key,len(extraargs),extraargs)
+        activateInfoEntry(rda,fileid,key,len(extraargs),extraargs)
         rda.show()
         rda.set_width_chars(12)
         rda.set_text(value)
@@ -105,7 +105,7 @@ def buildaposition(fileid,key):
         if value: value = value[0]
         rev = gtk.Entry()
         extraargs = ["events",str(i),"event"]
-        activateEntry(rev,fileid,key,len(extraargs),extraargs)
+        activateInfoEntry(rev,fileid,key,len(extraargs),extraargs)
         rev.show()
         rev.set_width_chars(10)
         rev.set_text(value)
@@ -113,10 +113,10 @@ def buildaposition(fileid,key):
 #        print str(t.size_request())
   return t
 
-def activateEntry(self, fileid, key, extra = 0, exargs = []):
-  self.connect("focus-out-event", checkForChange,fileid, key,extra,exargs)
+def activateInfoEntry(self, fileid, key, extra = 0, exargs = []):
+  self.connect("focus-out-event", checkInfoForChange,fileid, key,extra,exargs)
 
-def checkForChange(self,event,fileid,key,extra = 0,exargs = []):
+def checkInfoForChange(self,event,fileid,key,extra = 0,exargs = []):
   if extra == 0:
     if getit(fileid,key) != self.get_text():
       markInfoChanged(self,fileid, key)
@@ -256,6 +256,7 @@ def markInfoChanged(self,fileid, key,extra = 0,exargs = []): # need some args he
                       return
     else:
       print "info not found in " + fileid; return
+    people[fileid]['changed'] = True
   else:
     print fileid + " not found in people"; return
   if goforit:
@@ -428,7 +429,7 @@ def initPinfo(self, fileid):
   self.other = buildarow("Other notes:",fileid,'other') # textbox someday
   self.add(self.other)
 
-def initPrels(self, fileid):
+def initPrels(self, fileid,tabs):
   global people
   global config
   name = []
@@ -440,8 +441,8 @@ def initPrels(self, fileid):
     print "An error occurred accessing " + fileid + ": %s" % e
 #    print str(people[fileid]['info'].get(e,None))
     return
-  if people[fileid].get("rels"):
-    rels = people[fileid]['rels']
+  if people[fileid].get("relat"):
+    rels = people[fileid]['relat']
   if len(name[0]) > 2:
     nameperson = name[0]
   elif config['familyfirst']:
@@ -463,11 +464,17 @@ def initPrels(self, fileid):
   self.b1.set_child_packing(self.addbutton,0,0,2,gtk.PACK_START)
   self.set_child_packing(self.b1,0,0,2,gtk.PACK_START)
   if not len(rels):
-    self.norels = gtk.Label("No relations found at load time.")
+    self.norels = gtk.Label("No relations found at load time. New relations added will be sorted in the next load.")
     self.norels.show()
     self.add(self.norels)
+  else:
+#    print str(rels)
+    keys = rels.keys()
+    keys.sort()
+    for key in keys:
+      r = rels[key]
+      listRel(self,r,fileid,key,tabs)
 #  self.show_all()
-
 
 def displayPerson(callingWidget,fileid, tabrow):
   global people
@@ -523,7 +530,7 @@ def displayPerson(callingWidget,fileid, tabrow):
   tabrow.ptabs.swr.relpage.set_border_width(5)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.ptabs)
   initPinfo(tabrow.ptabs.swi.infpage, fileid)
-  initPrels(tabrow.ptabs.swr.relpage, fileid)
+  initPrels(tabrow.ptabs.swr.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.ptabs))
 #  tabrow.show_all()
 #  print "I got here, too!"
@@ -552,6 +559,7 @@ def addPersonMenu(self):
   itemPL.set_submenu(pl)
   persons = sorted(worldList['p'])
   num = len(persons)
+  every = num
   cols = 1
   if num > 20:
     cols = 2
@@ -559,7 +567,7 @@ def addPersonMenu(self):
       cols = 3
       if num > 60:
         cols = 4
-  every = int(num / cols) - 1
+    every = int(num / cols) - 1
   pos = 0
   countitem = gtk.MenuItem("Total Entries: " + str(num))
   pl.append(countitem)
@@ -610,3 +618,125 @@ def mkPerson(callingWidget,fileid,tabs):
 #    if config['uselistfile'] == True:
 #      writeListFile()
   displayPerson(callingWidget,fileid,tabs)
+
+def listRel(self,r,fileid,relid,target = None):
+  if not r.get("related"): return
+  name = r['related'][0]
+  if not target: target = self.get_parent().get_parent().get_parent().get_parent() #Which is better?
+  namebutton = gtk.Button(fileid)
+  namebutton.connect("clicked",displayPerson,fileid,target) # passing the target or figuring it from parentage?
+  row1 = gtk.HBox()
+  self.pack_start(row1,0,0,2)
+  row1.pack_start(namebutton,1,1,2)
+  row1.show()
+  namebutton.show()
+  namebutton.set_alignment(0.75,0.05)
+  namebutton.set_size_request(75,10)
+  namelabel = gtk.Label("Name: ")
+  namelabel.show()
+  row1.pack_start(namelabel,0,0,2)
+  namelabel.set_width_chars(6)
+  nameentry = gtk.Entry()
+  nameentry.show()
+  nameentry.set_text(name)
+  activateRelEntry(nameentry,fileid,relid,"related")
+  row1.pack_start(nameentry,1,1)
+  relation = gtk.Label(r['relation'][0])
+  relation.show()
+  relation.set_width_chars(8)
+  row1.pack_start(relation,1,1)
+  relset = gtk.Button("Set")
+  relset.show()
+  relset.set_alignment(0.5,0.5)
+  relset.set_size_request(36,24)
+  row1.pack_start(relset,0,0,5)
+  row2 = gtk.HBox()
+  self.pack_start(row2,0,0,2)
+  row2.show()
+  mileadd = gtk.Button("New Milestone")
+  mileadd.show()
+  mileadd.set_alignment(0.75,0.05)
+  mileadd.set_size_request(150,24)
+  row2.pack_start(mileadd,0,0,5)
+  row2.pack_start(gtk.Label("Date"),1,1,3)
+  row2.pack_start(gtk.Label("Event"),1,1,3)
+  row2.show_all()
+  row3 = gtk.VBox()
+  row3.show()
+  self.pack_start(row3,0,0,2)
+  if r.get("events"):
+    for i in r['events']:
+      showMile(row3,r,i,fileid,relid)
+
+def showMile(row3,r,i,fileid,relid):
+  events = r['events'][i]
+#  print str(events)
+  if events.get("date") and events.get("event"):
+    rowmile = gtk.HBox()
+    rowmile.show()
+    blank = gtk.Label()
+    blank.show()
+    blank.set_width_chars(10)
+    rowmile.pack_start(blank,1,1,2)
+    d = gtk.Entry()
+    d.show()
+    d.set_text(events['date'][0])
+    activateRelEntry(d,fileid,relid,"date",i)
+    rowmile.pack_start(d,1,1,2)
+    e = gtk.Entry()
+    e.show()
+    e.set_text(events['event'][0])
+    activateRelEntry(e,fileid,relid,"event",i)
+    rowmile.pack_start(e,1,1,2)
+    row3.add(rowmile)
+
+def activateRelEntry(self, fileid,relid,key,event = None):
+  self.connect("focus-out-event", checkRelForChange,fileid,relid,key,event)
+
+def checkRelForChange(self,signal,fileid,relid,key,event = None):
+  print str(getrel(fileid,relid,key,event)) + " vs " + self.get_text()
+  if getrel(fileid,relid,key,event) != self.get_text():
+    markRelChanged(self,fileid,relid,key,event)
+
+def getrel(fileid,relid,key,event = None):
+# TODO: This is broken, but I can't figure it out tonight. I'll tackle it later.
+  if event:
+    try:
+      value = people[fileid]['relat'][relid]['events'][event][key][0]
+    except KeyError as e:
+      return ""
+  else:
+    try:
+      value = people[fileid]['relat'][relid][key][0]
+    except KeyError as e:
+      return ""
+
+def markRelChanged(self,fileid,relid,key,event = None): # need some args here
+  global people
+  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
+  if people.get(fileid,None) != None:
+    if people[fileid].get('relat',None) != None:
+      if people[fileid]['relat'][relid].get(relid,None) == None:
+        people[fileid]['relat'][relid] = {}
+        if event:
+          if people[fileid]['relat'][relid].get(event,None) == None:
+            people[fileid]['relat'][relid][event] = {}
+          try:
+            value = people[fileid]['relat'][relid][event].get(key)
+          except KeyError:
+            people[fileid]['relat'][relid][event][key] = {}
+            try:
+              people[fileid]['relat'][relid][event][key] = ["",False]
+              people[fileid]['relat'][relid][event][key][1] = True
+              people[fileid]['relat'][relid][event][key][0] = self.get_text()
+              print "Value set: " + str(people[fileid]['relat'][relid][event][key][0])
+              return
+            except KeyError:
+              print "Could not mark " + key + " as changed."
+              return
+        else:
+          if people[fileid]['relat'][relid].get(key,None) == None:
+            people[fileid]['relat'][relid][key] = ["",False]
+
+def addMilestone(caller,target):
+  print str(target)
