@@ -5,7 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
-from common import (say,bsay,askBox,validateFileid)
+from common import (say,bsay,askBox,validateFileid,recordSelectBox)
 from status import status
 people = {}
 
@@ -516,7 +516,7 @@ def initPrels(self, fileid,tabs):
         for key in keys:
           r = rels[key]
           listRel(uncatbox,r,fileid,key,tabs)
-  self.addbutton.connect("clicked",bsay,"This button will some day add a relationship to the uncatbox.")
+  self.addbutton.connect("clicked",connectToPerson,uncatbox,fileid,"Connect to " + nameperson)
   self.add(uncatbox)
 #  self.show_all()
 
@@ -831,3 +831,15 @@ def addMilestone(caller,target,fileid,relid,boxwidth):
     activateRelEntry(e,fileid,relid,"event",i)
     rowmile.pack_start(e,1,1,2)
     target.add(rowmile)
+
+def connectToPerson(parent,target,fileid,title = None):
+  global status
+  relid = recordSelectBox(None,fileid,title)
+  if len(relid[1]):
+    addRelToBox(target,relid,fileid)
+    status.push(0,"Added connection to %s on %s" % (relid,fileid))
+  else:
+    status.push(0,"Adding connection on %s cancelled" % fileid)
+
+def addRelToBox(target,relid,fileid):
+    print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.

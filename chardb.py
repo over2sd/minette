@@ -9,6 +9,7 @@ from os import path
 from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
 from person import (displayPerson, addPersonMenu)
 from status import status
+from common import recordSelectBox
 import sys
 
 class Base:
@@ -44,13 +45,13 @@ class Base:
 #    self.button1.set_border_width(2)
     self.mb.show()
 
+
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
     if config['startnew']: getFileid(self,self.tabs)
-
 #    displayPerson("?","petekend",self.tabs)
 #    displayPerson("?","kanemela",self.tabs)
-#    displayPerson("?","mortgera",self.tabs)
+    displayPerson("?","chamiren",self.tabs)
 
     gtk.main()
 

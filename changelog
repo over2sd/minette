@@ -3,6 +3,8 @@
 - Fixed bug in relationship change tracking
 - Added function to add milestones to a relationship
 - Added storing/restoring window placement
+- Started building connection functions
+- Made a selection box that lists all known records. Will try to pretty it up later.
 
 2012-02-16:
 - loadPerson now starts with a new record filled with empty strings
