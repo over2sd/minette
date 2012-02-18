@@ -1,3 +1,9 @@
+2012-02-17:
+- Split relations display into categories
+- Fixed bug in relationship change tracking
+- Added function to add milestones to a relationship
+- Added storing/restoring window placement
+
 2012-02-16:
 - loadPerson now starts with a new record filled with empty strings
 - displayPerson now switches to existing tab if already loaded, unless config option allows duplication

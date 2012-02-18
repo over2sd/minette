@@ -454,26 +454,70 @@ def initPrels(self, fileid,tabs):
   self.l1.set_alignment(0,0)
   self.b1 = gtk.HBox()
   self.b1.show()
-  self.addbutton = gtk.Button("Add a Related Character")
+  self.addbutton = gtk.Button("Connect to a Related Record")
   self.addbutton.show()
-  self.addbutton.connect("clicked",bsay,"This button does nothing yet.")
   self.b1.add(self.l1)
   self.b1.add(self.addbutton)
   self.add(self.b1)
   self.b1.set_child_packing(self.l1,1,1,2,gtk.PACK_START)
   self.b1.set_child_packing(self.addbutton,0,0,2,gtk.PACK_START)
   self.set_child_packing(self.b1,0,0,2,gtk.PACK_START)
+  uncatbox = gtk.VBox()
+  uncatbox.show()
   if not len(rels):
     self.norels = gtk.Label("No relations found at load time. New relations added will be sorted in the next load.")
     self.norels.show()
     self.add(self.norels)
   else:
 #    print str(rels)
+    typed = {}
+    typed['uncat'] = []
     keys = rels.keys()
-    keys.sort()
     for key in keys:
-      r = rels[key]
-      listRel(self,r,fileid,key,tabs)
+      t = ""
+      if rels[key].get("rtype"):
+        t = rels[key]['rtype'][0]
+      else:
+        typed['uncat'].append(key)
+      if not typed.get(t):
+        typed[t] = []
+      typed[t].append(key)
+    types = ["fam","friend","work","place"]
+    typedesc = ["Family","Friends","Work","Places"]
+    for i in range(len(types)):
+      if typed.get(types[i]):
+        t = types[i]
+        if len(typed[t]):
+          if config['debug'] > 1: print t + ": " + str(len(typed[t]))
+          label = gtk.Label("*** " + typedesc[i] + " ***")
+          label.show()
+          label.set_alignment(0.05,0.5)
+          self.pack_start(label,0,0,2)
+          rule = gtk.HSeparator()
+          rule.show()
+          self.pack_start(rule,0,0,1)
+        keys = typed[t]
+        keys.sort()
+        for key in keys:
+          r = rels[key]
+          listRel(self,r,fileid,key,tabs)
+      if typed.get("uncat"):
+        if len(typed['uncat']):
+          if config['debug'] > 1: print 'uncat' + ": " + str(len(typed['uncat']))
+          label = gtk.Label("*** Uncategorized/New ***")
+          label.show()
+          label.set_alignment(0.05,0.5)
+          uncatbox.pack_start(label,0,0,2)
+          rule = gtk.HSeparator()
+          rule.show()
+          uncatbox.pack_start(rule,0,0,1)
+        keys = typed['uncat']
+        keys.sort()
+        for key in keys:
+          r = rels[key]
+          listRel(uncatbox,r,fileid,key,tabs)
+  self.addbutton.connect("clicked",bsay,"This button will some day add a relationship to the uncatbox.")
+  self.add(uncatbox)
 #  self.show_all()
 
 def displayPerson(callingWidget,fileid, tabrow):
@@ -623,15 +667,15 @@ def listRel(self,r,fileid,relid,target = None):
   if not r.get("related"): return
   name = r['related'][0]
   if not target: target = self.get_parent().get_parent().get_parent().get_parent() #Which is better?
-  namebutton = gtk.Button(fileid)
-  namebutton.connect("clicked",displayPerson,fileid,target) # passing the target or figuring it from parentage?
+  namebutton = gtk.Button(relid)
+  namebutton.connect("clicked",displayPerson,relid,target) # passing the target or figuring it from parentage?
   row1 = gtk.HBox()
   self.pack_start(row1,0,0,2)
   row1.pack_start(namebutton,1,1,2)
   row1.show()
   namebutton.show()
   namebutton.set_alignment(0.75,0.05)
-  namebutton.set_size_request(75,10)
+  namebutton.set_size_request(int(self.size_request()[0] * 0.20),10)
   namelabel = gtk.Label("Name: ")
   namelabel.show()
   row1.pack_start(namelabel,0,0,2)
@@ -656,7 +700,7 @@ def listRel(self,r,fileid,relid,target = None):
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-  mileadd.set_size_request(150,24)
+  mileadd.set_size_request(int(self.size_request()[0] * 0.25),24)
   row2.pack_start(mileadd,0,0,5)
   row2.pack_start(gtk.Label("Date"),1,1,3)
   row2.pack_start(gtk.Label("Event"),1,1,3)
@@ -664,42 +708,45 @@ def listRel(self,r,fileid,relid,target = None):
   row3 = gtk.VBox()
   row3.show()
   self.pack_start(row3,0,0,2)
+  boxwidth = self.size_request()[0]
+  mileadd.connect("clicked",addMilestone,row3,fileid,relid,boxwidth)
   if r.get("events"):
     for i in r['events']:
-      showMile(row3,r,i,fileid,relid)
+#      showMile(row3,r,i,fileid,relid)
 
-def showMile(row3,r,i,fileid,relid):
-  events = r['events'][i]
+#def showMile(row3,r,i,fileid,relid):
+      events = r['events'][i]
 #  print str(events)
-  if events.get("date") and events.get("event"):
-    rowmile = gtk.HBox()
-    rowmile.show()
-    blank = gtk.Label()
-    blank.show()
-    blank.set_width_chars(10)
-    rowmile.pack_start(blank,1,1,2)
-    d = gtk.Entry()
-    d.show()
-    d.set_text(events['date'][0])
-    activateRelEntry(d,fileid,relid,"date",i)
-    rowmile.pack_start(d,1,1,2)
-    e = gtk.Entry()
-    e.show()
-    e.set_text(events['event'][0])
-    activateRelEntry(e,fileid,relid,"event",i)
-    rowmile.pack_start(e,1,1,2)
-    row3.add(rowmile)
+      if events.get("date") and events.get("event"):
+        rowmile = gtk.HBox()
+        rowmile.show()
+        blank = gtk.Label()
+        blank.show()
+        blank.set_size_request(int(boxwidth * 0.20),10)
+        rowmile.pack_start(blank,1,1,2)
+        d = gtk.Entry()
+        d.show()
+        d.set_text(events['date'][0])
+        activateRelEntry(d,fileid,relid,"date",i)
+        rowmile.pack_start(d,1,1,2)
+        e = gtk.Entry()
+        e.show()
+        e.set_text(events['event'][0])
+        activateRelEntry(e,fileid,relid,"event",i)
+        rowmile.pack_start(e,1,1,2)
+        row3.add(rowmile)
 
 def activateRelEntry(self, fileid,relid,key,event = None):
   self.connect("focus-out-event", checkRelForChange,fileid,relid,key,event)
 
 def checkRelForChange(self,signal,fileid,relid,key,event = None):
-  print str(getrel(fileid,relid,key,event)) + " vs " + self.get_text()
   if getrel(fileid,relid,key,event) != self.get_text():
+    print str(getrel(fileid,relid,key,event)) + " vs " + self.get_text()
     markRelChanged(self,fileid,relid,key,event)
 
 def getrel(fileid,relid,key,event = None):
 # TODO: This is broken, but I can't figure it out tonight. I'll tackle it later.
+  value = ""
   if event:
     try:
       value = people[fileid]['relat'][relid]['events'][event][key][0]
@@ -710,6 +757,7 @@ def getrel(fileid,relid,key,event = None):
       value = people[fileid]['relat'][relid][key][0]
     except KeyError as e:
       return ""
+  return value
 
 def markRelChanged(self,fileid,relid,key,event = None): # need some args here
   global people
@@ -719,24 +767,67 @@ def markRelChanged(self,fileid,relid,key,event = None): # need some args here
       if people[fileid]['relat'][relid].get(relid,None) == None:
         people[fileid]['relat'][relid] = {}
         if event:
-          if people[fileid]['relat'][relid].get(event,None) == None:
-            people[fileid]['relat'][relid][event] = {}
+          if people[fileid]['relat'][relid].get("events",None) == None:
+            people[fileid]['relat'][relid]['events'] = {}
+            if people[fileid]['relat'][relid]['events'].get(event,None) == None:
+              people[fileid]['relat'][relid]['events'][event] = {}
           try:
-            value = people[fileid]['relat'][relid][event].get(key)
+            value = people[fileid]['relat'][relid]['events'][event].get(key)
           except KeyError:
-            people[fileid]['relat'][relid][event][key] = {}
-            try:
-              people[fileid]['relat'][relid][event][key] = ["",False]
-              people[fileid]['relat'][relid][event][key][1] = True
-              people[fileid]['relat'][relid][event][key][0] = self.get_text()
-              print "Value set: " + str(people[fileid]['relat'][relid][event][key][0])
-              return
-            except KeyError:
-              print "Could not mark " + key + " as changed."
-              return
+            people[fileid]['relat'][relid]['events'][event][key] = {}
+          try:
+            people[fileid]['relat'][relid]['events'][event][key] = ["",False]
+            people[fileid]['relat'][relid]['events'][event][key][1] = True
+            people[fileid]['relat'][relid]['events'][event][key][0] = self.get_text()
+            print "Value set: " + str(people[fileid]['relat'][relid]['events'][event][key][0])
+            return
+          except KeyError:
+            print "Could not mark " + key + " as changed."
+            return
         else:
           if people[fileid]['relat'][relid].get(key,None) == None:
             people[fileid]['relat'][relid][key] = ["",False]
+          people[fileid]['relat'][relid][key] = [self.get_text(),True]
+          print "Value set: " + str(people[fileid]['relat'][relid][key][0])
 
-def addMilestone(caller,target):
-  print str(target)
+def addMilestone(caller,target,fileid,relid,boxwidth):
+  global people
+  i = 0
+  err = False
+  if people.get(fileid):
+    if people[fileid].get("relat"):
+      if people[fileid]['relat'].get(relid):
+        if not people[fileid]['relat'][relid].get("events"):
+          people[fileid]['relat'][relid]["events"] = {}
+        i = str(len(people[fileid]['relat'][relid]['events']))
+        people[fileid]['relat'][relid]['events'][i] = {}
+        people[fileid]['relat'][relid]['events'][i]['date'] = ["",False]
+        people[fileid]['relat'][relid]['events'][i]['event'] = ["",False]
+      else:
+        print "Could not find related person " + relid + "!"
+        err = True
+    else:
+      print "Person " + fileid + " has no relations!"
+      err = True
+  else:
+    print "Could not find person " + fileid + "!"
+    err = True
+  if config['debug'] > 0: print str(target)
+  if not err:
+    rowmile = gtk.HBox()
+    rowmile.show()
+    blank = gtk.Label()
+    blank.show()
+    blank.set_size_request(int(boxwidth * 0.20),10)
+    rowmile.pack_start(blank,1,1,2)
+    d = gtk.Entry()
+    d.show()
+    d.set_text(people[fileid]['relat'][relid]['events'][i]['date'][0])
+    activateRelEntry(d,fileid,relid,"date",i)
+    rowmile.pack_start(d,1,1,2)
+    e = gtk.Entry()
+    e.show()
+    e.set_text(people[fileid]['relat'][relid]['events'][i]['event'][0])
+    activateRelEntry(e,fileid,relid,"event",i)
+    rowmile.pack_start(e,1,1,2)
+    target.add(rowmile)

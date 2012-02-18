@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (config,worldList,loadConfig,populateWorld)
+from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
 from person import (displayPerson, addPersonMenu)
 from status import status
 import sys
@@ -14,12 +14,15 @@ import sys
 class Base:
   def __init__(self,configfile):
     global status
+    global config
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
     self.window.set_border_width(3)
-    self.window.set_geometry_hints(None,620,440)
     self.window.show()
+    if not config.get("nowindowstore"):
+      self.window.set_geometry_hints(None,config['size'][0],config['size'][1])
+      self.window.move(config['pos'][0],config['pos'][1])
     self.box1 = gtk.VBox()
     self.window.add(self.box1)
     self.box1.show()
@@ -86,12 +89,12 @@ file. Load with a configuration file as the first argument, or create \
     itemFQ = gtk.MenuItem("_Quit",True)
     itemFQ.show()
     f.append(itemFQ)
-    itemFQ.connect("activate", gtk.main_quit)
+    itemFQ.connect("activate", storeWindowExit,self.window)
 # Person
     addPersonMenu(self)
 
   def delete_event(self,widget,event,data=None):
-    if config['debug'] > 0: print self.window.get_size()
+    if config['debug'] > 3: print self.window.get_size()
 #    print "delete event occurred"
     return False
 
