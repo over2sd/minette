@@ -36,7 +36,7 @@ def buildarow(name,fileid,key,style = 0):
   row.add(row.label)
   row.set_child_packing(row.label,0,0,2,gtk.PACK_START)
   if style == 0:
-    value = getit(fileid,key)
+    value = getInf([fileid,"info",key])
     row.e = gtk.Entry()
     row.e.set_text(value)
     activateInfoEntry(row.e,fileid,key)
@@ -68,7 +68,7 @@ def buildaposition(fileid,key):
     t.addmile = gtk.Button("Add milestone")
     t.addmile.show()
     t.attach(t.addmile,3,4,1,2)
-    t.addmile.connect("clicked",bsay,"This button does nothing yet.")
+    t.addmile.connect("clicked",addOccMilestone,t,fileid,key)
     if rows > 0:
       t.resize(rows + 3,cols)
 #      t.set_geometry_hints(None,790,440)
@@ -117,156 +117,59 @@ def activateInfoEntry(self, fileid, key, extra = 0, exargs = []):
   self.connect("focus-out-event", checkInfoForChange,fileid, key,extra,exargs)
 
 def checkInfoForChange(self,event,fileid,key,extra = 0,exargs = []):
-  if extra == 0:
-    if getit(fileid,key) != self.get_text():
-      markInfoChanged(self,fileid, key)
-  elif extra > 0:
-    value = ""
-    NOGOOD = "There was a missing key "
-    if people.get(fileid,None) != None:
-      if people[fileid].get('info',None) != None:
-        if people[fileid]['info'].get(key,None) != None:
-          if people[fileid]['info'][key].get(exargs[0]) != None:
-            if extra == 1:
-              try:
-                value = people[fileid]['info'][key].get(exargs[0])
-              except KeyError:
-                value = ""
-            elif extra == 2:
-              try:
-                value = people[fileid]['info'][key][exargs[0]].get(exargs[1])
-              except KeyError:
-                value = ""
-            elif extra == 3:
-              try:
-                value = people[fileid]['info'][key][exargs[0]][exargs[1]].get(exargs[2])
-              except KeyError:
-                value = ""
-            elif extra == 4:
-              try:
-                value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]].get(exargs[3])
-              except KeyError:
-                value = ""
-            elif extra == 5:
-              try:
-                value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]].get(exargs[4])
-              except KeyError:
-                value = ""
-            else:
-              say("A counting error occurred. Oops.")
-            if value[0] != self.get_text():
-              markInfoChanged(self,fileid, key,extra,exargs)
-          else: say(NOGOOD + exargs[0])
-        else: say(NOGOOD + key)
-      else: say(NOGOOD + "info")
-    else: say(NOGOOD + fileid)
+  path = [fileid,"info",key]
+  for i in range(len(exargs)): path.append(exargs[i])
+  print "Checking " + str(path)
+  if getInf(path) != self.get_text():
+    if config['debug'] > 0 : print str(getInf(path)) + " vs " + self.get_text()
+    markInfoChanged(self,path)
 
-def markInfoChanged(self,fileid, key,extra = 0,exargs = []): # need some args here
-  if extra != len(exargs): say("Counting error! " + str(extra) + "/" + str(len(exargs)))
+def markInfoChanged(self,path):
   global people
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
-  goforit = False
-  if people.get(fileid,None) != None:
-    if people[fileid].get('info',None) != None:
-        if people[fileid]['info'].get(key,None) == None:
-          people[fileid]['info'][key] = ["",False]
-        if len(exargs) == 0:
-          say("exargs empty!")
-          return
-        if people[fileid]['info'].get(key,None) == None:
-          people[fileid]['info'][key] = {}
-        if people[fileid]['info'][key].get(exargs[0]) != None:
-          if extra >= 1:
-            try:
-              value = people[fileid]['info'][key].get(exargs[0])
-            except KeyError:
-              people[fileid]['info'][key][exargs[0]] = {}
-            if extra == 1:
-              try:
-                people[fileid]['info'][key][exargs[0]] = ["",False]
-                people[fileid]['info'][key][exargs[0]][1] = True
-                people[fileid]['info'][key][exargs[0]][0] = self.get_text()
-                print "Value set: " + str(people[fileid]['info'][key][exargs[0]][0])
-                return
-              except KeyError:
-                print "Could not mark " + exargs[0] + " as changed."
-                return
-            elif extra > 1:
-              try:
-                value = people[fileid]['info'][key][exargs[0]].get(exargs[1])
-              except KeyError:
-                people[fileid]['info'][key][exargs[0]][exargs[1]] = {}
-              if extra == 2:
-                try:
-                  people[fileid]['info'][key][exargs[0]][exargs[1]] = ["",False]
-                  people[fileid]['info'][key][exargs[0]][exargs[1]][1] = True
-                  people[fileid]['info'][key][exargs[0]][exargs[1]][0] = self.get_text()
-                  print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][0])
-                  return
-                except KeyError:
-                  print "Could not mark " + exargs[1] + " as changed."
-                  return
-              elif extra > 2:
-                try:
-                  value = people[fileid]['info'][key][exargs[0]][exargs[1]].get(exargs[2])
-                except KeyError:
-                  people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = {}
-                if extra == 3:
-                  try:
-                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = ["",False]
-                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][1] = True
-                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][0] = self.get_text()
-                    print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][0])
-                    return
-                  except KeyError:
-                    print "Could not mark " + exargs[2] + " as changed."
-                    return
-                elif extra > 3:
-                  try:
-                    value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]].get(exargs[3])
-                  except KeyError:
-                    people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]] = {}
-                  if extra == 4:
-                    try:
-                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]] = ["",False]
-                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][1] = True
-                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][0] = self.get_text()
-                      print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][0])
-                      return
-                    except KeyError:
-                      print "Could not mark " + exargs[3] + " as changed."
-                      return
-                  elif extra > 4:
-                    try:
-                      value = people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]].get(exargs[4])
-                    except KeyError:
-                      people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]] = {}
-                    if extra == 5:
-                      try:
-                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]] = ["",False]
-                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]][1] = True
-                        people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[4]][0] = self.get_text()
-                        print "Value set: " + str(people[fileid]['info'][key][exargs[0]][exargs[1]][exargs[2]][exargs[3]][exargs[3]][exargs[4]][0])
-                        return
-                      except KeyError:
-                        print "Could not mark " + exargs[3] + " as changed."
-                        return
-                    else:
-                      say("Arguments out of bounds")
-                      return
+  end = len(path)
+  goforit = preReadp(True,path[:-1],end)
+  value = ["",False]
+  value[1] = True
+  value[0] = self.get_text()
+  if goforit:
+    if end == 3:
+      try:
+        people[path[0]][path[1]][path[2]] = value
+      except KeyError:
+        print "Could not mark " + path[2] + " as changed."
+        return
+    elif end == 4:
+      try:
+        people[path[0]][path[1]][path[2]][path[3]] = value
+      except KeyError:
+        print "Could not mark " + path[3] + " as changed."
+        return
+    elif end == 5:
+      try:
+        people[path[0]][path[1]][path[2]][path[3]][path[4]] = value
+      except KeyError:
+        print "Could not mark " + path[4] + " as changed."
+        return
+    elif end == 6:
+      try:
+        people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
+      except KeyError:
+        print "Could not mark " + path[5] + " as changed."
+        return
+    elif end == 7:
+      try:
+        people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
+      except KeyError:
+        print "Could not mark " + path[6] + " as changed."
+        return
     else:
-      print "info not found in " + fileid; return
+      say("Path too long")
+      return
     people[fileid]['changed'] = True
   else:
-    print fileid + " not found in people"; return
-  if goforit:
-    try:
-      people[fileid]['info'][key][1] = True
-      people[fileid]['info'][key][0] = self.get_text()
-      print "Value set: " + str(people[fileid]['info'][key][0])
-    except KeyError:
-      print "Could not mark " + key + " in " + fileid + " as changed."
-      return
+    print "Invalid path"
+    return
 
 def initPinfo(self, fileid):
   global people
@@ -840,6 +743,127 @@ def connectToPerson(parent,target,fileid,title = None):
     status.push(0,"Added connection to %s on %s" % (relid,fileid))
   else:
     status.push(0,"Adding connection on %s cancelled" % fileid)
+
+def addOccMilestone(caller,target,fileid,key):
+  global people
+  i = 0
+  err = False
+  if people.get(fileid):
+    if people[fileid].get("info"):
+      if people[fileid]['info'].get(key):
+        if not people[fileid]['info'][key].get("events"):
+          people[fileid]['info'][key]['events'] = {}
+        i = len(people[fileid]['info'][key]['events'])
+        people[fileid]['info'][key]['events'][str(i)] = {}
+        people[fileid]['info'][key]['events'][str(i)]['date'] = ["",False]
+        people[fileid]['info'][key]['events'][str(i)]['event'] = ["",False]
+      else:
+        print "Person " + fileid + " has no " + key + "!"
+        err = True
+    else:
+      print "Person " + fileid + " has no info!"
+      err = True
+  else:
+    print "Could not find person " + fileid + "!"
+    err = True
+  if config['debug'] > 0: print "Target: " + str(target)
+  if not err:
+    data = people[fileid]['info'][key] # we checked each step this far earlier, so no error check here
+    value = data['events'][str(i)].get("date","")
+    if value: value = value[0]
+    rda = gtk.Entry()
+    extraargs = ["events",str(i),"date"]
+    activateInfoEntry(rda,fileid,key,len(extraargs),extraargs)
+    rda.show()
+    rda.set_width_chars(12)
+    rda.set_text(value)
+    target.attach(rda,1,2,i + 2,i + 3)
+    value = data['events'][str(i)].get("event","")
+    if value: value = value[0]
+    rev = gtk.Entry()
+    extraargs = ["events",str(i),"event"]
+    activateInfoEntry(rev,fileid,key,len(extraargs),extraargs)
+    rev.show()
+    rev.set_width_chars(10)
+    rev.set_text(value)
+    target.attach(rev,2,3,i + 2,i + 3)
+
+def preReadp(force,path,depth = 0):
+  """Using the global dict 'people' and given a list of keys 'path' and an integer 'depth', prepares a path
+  in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function will build missing
+  tree branches, to allow you to write to the endpoint. Do not call force with a path/depth ending in a list,
+  tuple, or something other than a dict, which this function produces. Call force on one path higher.
+  """
+  global people
+  if depth > len(path): depth = len(path)
+  if depth > 7: depth = 7
+  if people.get(path[0]):
+    if depth <= 1:
+      return True
+    if people[path[0]].get(path[1]):
+      if depth <= 2:
+        return True
+      if people[path[0]][path[1]].get(path[2]):
+        if depth <= 3:
+          return True
+        if people[path[0]][path[1]][path[2]].get(path[3]):
+          if depth <= 4:
+            return True
+          if people[path[0]][path[1]][path[2]][path[3]].get(path[4]):
+            if depth <= 5:
+              return True
+            if people[path[0]][path[1]][path[2]][path[3]][path[4]].get(path[5]):
+              if depth <= 6:
+                return True
+              if people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]].get(path[6]):
+                return True # Maximum depth reached
+              elif force:
+                people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = {}
+                return preReadp(force,path,depth)
+              else: # Not found, and not forcing it to be found
+                return False
+            elif force:
+              people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = {}
+              return preReadp(force,path,depth)
+            else: # Not found, and not forcing it to be found
+              return False
+          elif force:
+            people[path[0]][path[1]][path[2]][path[3]][path[4]] = {}
+            return preReadp(force,path,depth)
+          else: # Not found, and not forcing it to be found
+            return False
+        elif force:
+          people[path[0]][path[1]][path[2]][path[3]] = {}
+          return preReadp(force,path,depth)
+        else: # Not found, and not forcing it to be found
+          return False
+      elif force:
+        people[path[0]][path[1]][path[2]] = {}
+        return preReadp(force,path,depth)
+      else: # Not found, and not forcing it to be found
+        return False
+    elif force:
+      people[path[0]][path[1]] = {}
+      return preReadp(force,path,depth)
+    else: # Not found, and not forcing it to be found
+      return False
+  else: # First level (fileid) can't be generated.
+    return False
+
+def getInf(path):
+  """Returns the value of a key path, or an empty string."""
+  global people
+  end = len(path) - 1
+  data = people[path[0]]
+  i = 1
+  while i < end:
+    if data.get(path[i]):
+      data = data[path[i]]
+      i += 1
+    else:
+      return ""
+  (value,mod) = data.get(path[-1],("",False))
+  return value
 
 def addRelToBox(target,relid,fileid):
     print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
