@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="person.xsl"?>
+<!DOCTYPE person SYSTEM "person.dtd">
+<person>
+	<commonname>John Doe</commonname>
+  <ctitle>Mr.</ctitle>
+	<gname>John</gname>
+	<fname>Doe</fname>
+	<nname>Johnny</nname>
+	<gender>Male</gender>
+	<bday>1977/1/1b</bday>
+	<dday></dday>
+	<stories>My Tale, My Tale 2</stories>
+	<mention>MT, ch 1, s 1</mention>
+	<appear1ch>MT 1.2</appear1ch>
+	<appear1wr>MT 1.3</appear1wr>
+	<conflict></conflict>
+	<leadrel>Self</leadrel>
+	<bodytyp>average height, average build</bodytyp>
+	<age>40 (2017)</age>
+	<skin>tanned</skin>
+	<eyes>green, hard</eyes>
+	<hair>brown</hair>
+	<dmarks>star-shaped birthmark on his chin</dmarks>
+	<dress>always seen in a blue suit and tie</dress>
+	<attposs>carries a briefcase</attposs>
+	<asmell>New Spice cologne</asmell>
+	<personality>easy-going</personality>
+	<speech></speech>
+	<formocc><pos>Office Drone</pos></formocc>
+	<currocc><pos>Office Manager</pos></currocc>
+	<strength>pattern recognition</strength>
+	<weak>gambling</weak>
+	<mole>None (Lead)</mole>
+	<hobby>reading, fantasy football</hobby>
+	<misc></misc>
+	<ethnic>mixed</ethnic>
+	<origin>Florida</origin>
+	<backstory></backstory>
+	<residence>a small apartment on 15th street</residence>
+	<minchar>brother</minchar>
+	<talent>drawing</talent>
+	<abil></abil>
+	<sgoal>To find the lost sword Excalibur</sgoal>
+	<other></other>
+	<relat>
+		<related>Jane Doe</related>
+		<relation>Wife</relation>
+		<file>doe-jane</file>
+		<events>
+			<mstone>
+				<date>2005/1/2b</date>
+				<event>Married</event>
+			</mstone>
+			<mstone>
+				<date>2004/6/1b</date>
+				<event>First date</event>
+			</mstone>
+		</events>
+		<rtype>fam</rtype>
+		<cat>person</cat>
+	</relat>
+	<relat>
+		<related>Jim Smith</related>
+		<relation>Friend</relation>
+		<file>smitjim</file>
+		<rtype>friend</rtype>
+		<cat>person</cat>
+	</relat>
+	<relat>
+		<related>James Noseworthy</related>
+		<relation>Boss</relation>
+		<file>nosejame</file>
+		<rtype>work</rtype>
+		<cat>person</cat>
+		<realm>ThisCorp</realm>
+	</relat>
+	<relat>
+		<related>Sam Nohbody</related>
+		<relation>Subordinate</relation>
+		<file>nohbsamu</file>
+		<events>
+			<mstone>
+				<date>2001/3/5b</date>
+				<event>Assigned</event>
+			</mstone>
+			<mstone>
+				<date>2002/10/22b</date>
+				<event>Promoted</event>
+			</mstone>
+		</events>
+		<rtype>work</rtype>
+		<cat>person</cat>
+		<realm>ThisCorp</realm>
+	</relat>
+	<update>09/06/09b</update>
+</person>

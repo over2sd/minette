@@ -11,6 +11,7 @@ from math import floor
 people = {}
 
 def getit(fileid,key):
+  """deprecated function. will be removed eventually."""
   global people
   data = {}
   try:
@@ -25,6 +26,7 @@ def getit(fileid,key):
     return ""
 
 def buildarow(name,fileid,key,style = 0):
+  """Returns a row containing the given key description and value in a GTK HBox."""
   row = gtk.HBox()
   row.set_border_width(2)
   row.show()
@@ -49,6 +51,7 @@ def buildarow(name,fileid,key,style = 0):
   return row
 
 def buildaposition(fileid,key):
+  """Returns a GTK table containing the data values of the given position."""
   t = gtk.Table(1,4) # TODO: Move this out into the buildarow so we can pu multiple positions in the same table?
   # or do we want them separated so we have the headers and separation?
   t.show()
@@ -608,7 +611,7 @@ def listRel(self,r,fileid,relid,target = None):
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-  mileadd.set_size_request(int(self.size_request()[0] * 0.25),24)
+#  mileadd.set_size_request(int(self.size_request()[0] * 0.25),24)
   row2.pack_start(mileadd,0,0,5)
   row2.pack_start(gtk.Label("Date"),1,1,3)
   row2.pack_start(gtk.Label("Event"),1,1,3)

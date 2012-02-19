@@ -6,6 +6,9 @@
 - combined several backend functions
 - Added function that adds a relationship connection to the relationships page
 - Minor cosmetic improvements
+- Moved default storage location to its own subdirectory
+- Updated worldList file format
+- fixed handling of empty relat (missing file) tag
 
 2012-02-17:
 - Split relations display into categories

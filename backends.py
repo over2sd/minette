@@ -119,7 +119,7 @@ def validateConfig(config):
   to determine its class (saves load time/disk writes, but requires
   keeping the list file up to date).
   """
-  config['xmldir'] = config.get("xmldir","./") # Where should I look for XML files?
+  config['xmldir'] = config.get("xmldir","worlds/default/") # Where should I look for XML files?
   config['dtddir'] = config.get("dtddir","dtd/") # Where are doctype defs kept?
   config['dtdurl'] = config.get("dtdurl",os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
   config['xslurl'] = config.get("xslurl",os.path.abspath("xsl/")) # What reference goes in the XML files?
@@ -236,7 +236,11 @@ def loadPersonXML(fileid):
   for i in range(len(root)):
     if root[i].tag is not None:
       if root[i].tag == "relat":
-        node = root[i].find("file").text.strip()
+        node = ""
+        try:
+          node = root[i].find("file").text.strip()
+        except AttributeError:
+          bsay("?","XML formatting error in %s! Probably an empty relat tag." % fileid)
         drel[node] = {}
         for j in root[i]:
           if j.tag == "events":
@@ -356,7 +360,22 @@ def populateWorldXML():
         line = line.strip()
         if line:
           values = [x.strip() for x in line.split('=')]
-          if values[0] == "person":
+          if values[0] == "persons":
+            y = values[1]
+            persons.extend(y.split(','))
+          elif values[0] == "places":
+            y = values[1]
+            places.extend(y.split(','))
+          elif values[0] == "cities":
+            y = values[1]
+            cities.extend(y.split(','))
+          elif values[0] == "states":
+            y = values[1]
+            states.extend(y.split(','))
+          elif values[0] == "orgs":
+            y = values[1]
+            orgs.extend(y.split(','))
+          elif values[0] == "person":
             persons.append(values[1])
           elif values[0] == "place":
             places.append(values[1])
@@ -401,6 +420,7 @@ def populateWorldXML():
           orgs.append(ilist[i])
         else:
           print "Unknown type " + line + " found"
+  if config['debug'] > 2: print "\nPersons: %s\nPlaces: %s\nCities: %s\nStates: %s\nOrgs: %s\n" % (persons,places,cities,states,orgs)
   worldList['p'] = persons
   worldList['l'] = places
   worldList['c'] = cities
@@ -424,16 +444,12 @@ def writeListFile():
   try:
     with codecs.open(fn,'wU','utf-8') as conf:
       puts = []
-      for i in persons:
-        puts.append("person = " + i + "\n")
-      for i in places:
-        puts.append("place = " + i + "\n")
-      for i in cities:
-        puts.append("city = " + i + "\n")
-      for i in states:
-        puts.append("state = " + i + "\n")
-      for i in orgs:
-        puts.append("org = " + i + "\n")
+      puts.append("persons = " + ','.join(persons))
+      puts.append("\nplaces = " + ','.join(places))
+      puts.append("\ncities = " + ','.join(cities))
+      puts.append("\nstates = " + ','.join(states))
+      puts.append("\norgs = " + ','.join(orgs))
+      puts.append("\n")
       conf.writelines(puts)
       conf.close()
   except IOError as e:
@@ -443,6 +459,8 @@ def writeListFile():
 def killListFile(caller = None):
   os.remove(os.path.join(os.path.abspath(config['xmldir']),"myworld.cfg"))
   say("WorldList destroyed!")
+  global status
+  status.push(0,"WorldList destroyed!")
 
 def savePersonXML(fileid,data,rels):
   """Given a filename and two dictionaries, saves a person's values to an "id" XML file.
