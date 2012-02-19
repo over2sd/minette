@@ -7,6 +7,7 @@ import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from common import (say,bsay,askBox,validateFileid,recordSelectBox)
 from status import status
+from math import floor
 people = {}
 
 def getit(fileid,key):
@@ -15,7 +16,7 @@ def getit(fileid,key):
   try:
     data = people[fileid]['info']
   except KeyError as e:
-    print "Error getting info from " + fileid + ": %s" % e
+    print "Error getting info from %s: %s" % (fileid,e)
     return ""
   pair = data.get(key,None)
   if pair != None:
@@ -56,7 +57,7 @@ def buildaposition(fileid,key):
   try:
     data = people[fileid]['info']
   except KeyError as e:
-    print "Error getting info from " + fileid + ": %s" % e
+    print "Error getting info from %s: %s" % (fileid,e)
     return ""
   data = data.get(key,None)
   value = data.get("pos")
@@ -114,17 +115,22 @@ def buildaposition(fileid,key):
   return t
 
 def activateInfoEntry(self, fileid, key, extra = 0, exargs = []):
-  self.connect("focus-out-event", checkInfoForChange,fileid, key,extra,exargs)
-
-def checkInfoForChange(self,event,fileid,key,extra = 0,exargs = []):
   path = [fileid,"info",key]
   for i in range(len(exargs)): path.append(exargs[i])
-  print "Checking " + str(path)
-  if getInf(path) != self.get_text():
-    if config['debug'] > 0 : print str(getInf(path)) + " vs " + self.get_text()
-    markInfoChanged(self,path)
+  self.connect("focus-out-event", checkForChange,path)
 
-def markInfoChanged(self,path):
+def activateRelEntry(self, fileid, key, extra = 0, exargs = []):
+  path = [fileid,"info",key]
+  for i in range(len(exargs)): path.append(exargs[i])
+  self.connect("focus-out-event", checkForChange,path)
+
+def checkForChange(self,event,path):
+  if config['debug'] > 3: print "Checking " + str(path)
+  if getInf(path) != self.get_text():
+    if config['debug'] > 2 : print str(getInf(path)) + " vs " + self.get_text()
+    markChanged(self,path)
+
+def markChanged(self,path):
   global people
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
   end = len(path)
@@ -166,7 +172,8 @@ def markInfoChanged(self,path):
     else:
       say("Path too long")
       return
-    people[fileid]['changed'] = True
+    people[path[0]]['changed'] = True
+    print "Value set: " + getInf(path)
   else:
     print "Invalid path"
     return
@@ -178,7 +185,7 @@ def initPinfo(self, fileid):
   try:
     info = people[fileid]['info']
   except KeyError as e:
-    print "An error occurred accessing " + fileid + ": %s" % e
+    print "An error occurred accessing %s: %s" % (fileid,e)
     return
   self.l1 = gtk.Label("Name:")
   self.l1.set_alignment(0,0)
@@ -341,7 +348,7 @@ def initPrels(self, fileid,tabs):
   try:
     name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
   except KeyError as e:
-    print "An error occurred accessing " + fileid + ": %s" % e
+    print "An error occurred accessing %s: %s" % (fileid,e)
 #    print str(people[fileid]['info'].get(e,None))
     return
   if people[fileid].get("relat"):
@@ -375,6 +382,7 @@ def initPrels(self, fileid,tabs):
 #    print str(rels)
     typed = {}
     typed['uncat'] = []
+    unname = "New"
     keys = rels.keys()
     for key in keys:
       t = ""
@@ -404,22 +412,23 @@ def initPrels(self, fileid,tabs):
         for key in keys:
           r = rels[key]
           listRel(self,r,fileid,key,tabs)
-      if typed.get("uncat"):
-        if len(typed['uncat']):
-          if config['debug'] > 1: print 'uncat' + ": " + str(len(typed['uncat']))
-          label = gtk.Label("*** Uncategorized/New ***")
-          label.show()
-          label.set_alignment(0.05,0.5)
-          uncatbox.pack_start(label,0,0,2)
-          rule = gtk.HSeparator()
-          rule.show()
-          uncatbox.pack_start(rule,0,0,1)
-        keys = typed['uncat']
-        keys.sort()
-        for key in keys:
-          r = rels[key]
-          listRel(uncatbox,r,fileid,key,tabs)
-  self.addbutton.connect("clicked",connectToPerson,uncatbox,fileid,"Connect to " + nameperson)
+    if typed.get("uncat"):
+      unname = "Uncategorized/New"
+    label = gtk.Label("*** %s ***" % unname)
+    label.show()
+    label.set_alignment(0.05,0.5)
+    uncatbox.pack_start(label,0,0,2)
+    rule = gtk.HSeparator()
+    rule.show()
+    uncatbox.pack_start(rule,0,0,1)
+    if typed.get("uncat"):
+      if config['debug'] > 1: print 'uncat' + ": " + str(len(typed['uncat']))
+      keys = typed['uncat']
+      keys.sort()
+      for key in keys:
+        r = rels[key]
+        listRel(uncatbox,r,fileid,key,tabs)
+  self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,fileid,"Connect to " + nameperson)
   self.add(uncatbox)
 #  self.show_all()
 
@@ -509,11 +518,7 @@ def addPersonMenu(self):
   every = num
   cols = 1
   if num > 20:
-    cols = 2
-    if num > 40:
-      cols = 3
-      if num > 60:
-        cols = 4
+    cols = int(floor(num/20)) + 1
     every = int(num / cols) - 1
   pos = 0
   countitem = gtk.MenuItem("Total Entries: " + str(num))
@@ -547,13 +552,13 @@ def addPersonSubmenu(tabs,pl,persons):
     menu_items.connect("activate",displayPerson,i,tabs)
     menu_items.show()
 
-def getFileid(caller,tabs):
-  fileid = askBox(None,"Please enter a new unique filing identifier.","Fileid:","This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".")
+def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New person cancelled"):
+  fileid = askBox(None,one,two,three)
   fileid = validateFileid(fileid)
   if len(fileid) > 0:
     mkPerson(caller,fileid,tabs)
   else:
-    say("New person cancelled")
+    say(four)
 
 def mkPerson(callingWidget,fileid,tabs):
   global worldList
@@ -640,58 +645,12 @@ def listRel(self,r,fileid,relid,target = None):
         row3.add(rowmile)
 
 def activateRelEntry(self, fileid,relid,key,event = None):
-  self.connect("focus-out-event", checkRelForChange,fileid,relid,key,event)
-
-def checkRelForChange(self,signal,fileid,relid,key,event = None):
-  if getrel(fileid,relid,key,event) != self.get_text():
-    print str(getrel(fileid,relid,key,event)) + " vs " + self.get_text()
-    markRelChanged(self,fileid,relid,key,event)
-
-def getrel(fileid,relid,key,event = None):
-# TODO: This is broken, but I can't figure it out tonight. I'll tackle it later.
-  value = ""
+  path = [fileid,"relat",relid]
   if event:
-    try:
-      value = people[fileid]['relat'][relid]['events'][event][key][0]
-    except KeyError as e:
-      return ""
+    path.extend(["events",event,key])
   else:
-    try:
-      value = people[fileid]['relat'][relid][key][0]
-    except KeyError as e:
-      return ""
-  return value
-
-def markRelChanged(self,fileid,relid,key,event = None): # need some args here
-  global people
-  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
-  if people.get(fileid,None) != None:
-    if people[fileid].get('relat',None) != None:
-      if people[fileid]['relat'][relid].get(relid,None) == None:
-        people[fileid]['relat'][relid] = {}
-        if event:
-          if people[fileid]['relat'][relid].get("events",None) == None:
-            people[fileid]['relat'][relid]['events'] = {}
-            if people[fileid]['relat'][relid]['events'].get(event,None) == None:
-              people[fileid]['relat'][relid]['events'][event] = {}
-          try:
-            value = people[fileid]['relat'][relid]['events'][event].get(key)
-          except KeyError:
-            people[fileid]['relat'][relid]['events'][event][key] = {}
-          try:
-            people[fileid]['relat'][relid]['events'][event][key] = ["",False]
-            people[fileid]['relat'][relid]['events'][event][key][1] = True
-            people[fileid]['relat'][relid]['events'][event][key][0] = self.get_text()
-            print "Value set: " + str(people[fileid]['relat'][relid]['events'][event][key][0])
-            return
-          except KeyError:
-            print "Could not mark " + key + " as changed."
-            return
-        else:
-          if people[fileid]['relat'][relid].get(key,None) == None:
-            people[fileid]['relat'][relid][key] = ["",False]
-          people[fileid]['relat'][relid][key] = [self.get_text(),True]
-          print "Value set: " + str(people[fileid]['relat'][relid][key][0])
+    path.append(key)
+  self.connect("focus-out-event", checkForChange,path)
 
 def addMilestone(caller,target,fileid,relid,boxwidth):
   global people
@@ -735,11 +694,11 @@ def addMilestone(caller,target,fileid,relid,boxwidth):
     rowmile.pack_start(e,1,1,2)
     target.add(rowmile)
 
-def connectToPerson(parent,target,fileid,title = None):
+def connectToPerson(parent,target,tabs,fileid,title = None):
   global status
   relid = recordSelectBox(None,fileid,title)
   if len(relid[1]):
-    addRelToBox(target,relid,fileid)
+    addRelToBox(parent,target,relid,fileid,tabs)
     status.push(0,"Added connection to %s on %s" % (relid,fileid))
   else:
     status.push(0,"Adding connection on %s cancelled" % fileid)
@@ -865,5 +824,51 @@ def getInf(path):
   (value,mod) = data.get(path[-1],("",False))
   return value
 
-def addRelToBox(target,relid,fileid):
-    print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
+def addRelToBox(self,target,relid,fileid,tabs):
+  global people
+  cat = relid[1]
+  relid = relid[0]
+  if preReadp(True,[fileid,"relat"],2):
+    name = []
+    rels = {}
+    nameperson = ""
+    if not preReadp(False,[fileid,"relat",relid],3):
+      if not preReadp(False,fileid,1):
+        p = loadPerson(relid)
+        inf = p[0]
+        try:
+          inf.get("foo",None)
+        except AttributeError:
+          print "Load Error"
+          return
+        try:
+          name = [inf['commonname'][0],inf['gname'][0],inf['fname'][0]]
+        except KeyError as e:
+          print "An error occurred accessing %s: %s" % (relid,e)
+          return
+      else:
+        try:
+          name = [people[relid]['info']['commonname'][0],people[relid]['info']['gname'][0],people[relid]['info']['fname'][0]]
+        except KeyError as e:
+          print "An error occurred accessing %s: %s" % (relid,e)
+          return
+      if len(name[0]) > 2:
+        nameperson = name[0]
+      elif config['familyfirst']:
+        nameperson = name[2] + " " + name[1]
+      else:
+        nameperson = name[1] + " " + name[2]
+      people[fileid]['relat'][relid] = {}
+      people[fileid]['relat'][relid]['related'] = [nameperson,True]
+      people[fileid]['relat'][relid]['relation'] = ["",False] # Add a dialog here
+      people[fileid]['relat'][relid]['cat'] = [cat,True]
+      people[fileid]['relat'][relid]['rtype'] = ["",False] # Perhaps all these things in one dialog
+      people[fileid]['relat'][relid]['realm'] = ["",False] # Only write this one if user chooses a realm
+      # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids]
+      people[fileid]['relat'][relid]['events'] = {}
+      listRel(target,people[fileid]['relat'][relid],fileid,relid,tabs)
+    else:
+      bsay(self,"Not clobbering existing connection to %s!" % relid)
+      return
+  print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
+  

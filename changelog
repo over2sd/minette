@@ -2,7 +2,10 @@
 - Added new milestone adding function to occupations in info tab
 - Added preread data prep function for people
 - Added getInf, which will eventually replace getit and getrel
-- Integrated getInf and prereadp into a few functions, trimming their size.
+- Integrated getInf and prereadp into a few functions, trimming their size
+- combined several backend functions
+- Added function that adds a relationship connection to the relationships page
+- Minor cosmetic improvements
 
 2012-02-17:
 - Split relations display into categories
