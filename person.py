@@ -452,15 +452,32 @@ def displayPerson(callingWidget,fileid, tabrow):
     people[fileid] = {}
     people[fileid]['info'] = p[0]
     people[fileid]['relat'] = p[1]
-  tabrow.ptabs = gtk.Notebook()
-  tabrow.ptabs.show()
+  tabrow.vbox = gtk.VBox()
+  tabrow.vbox.show()
+  tabrow.vbox.ptabs = gtk.Notebook()
+  tabrow.vbox.ptabs.show()
+  bbar = gtk.HButtonBox()
+  bbar.show()
+  bbar.set_spacing(2)
+  save = gtk.Button("Save")
+  save.connect("clicked",saveThisP,fileid)
+  save.show()
+  bbar.pack_start(save)
+
+# other buttons...   reload,etc.   ...go here
+
+  close = gtk.Button("X")
+  close.show()
+  bbar.pack_end(close)
+  tabrow.vbox.pack_start(bbar,False,False,2)
+  tabrow.vbox.pack_start(tabrow.vbox.ptabs,True,True,2)
   tabrow.labelname = gtk.Label(fileid)
   tabrow.labelname.show()
-  tabrow.label = gtk.HBox()
-  tabrow.label.add(tabrow.labelname)
-  tabrow.label.show()
-  tabrow.append_page(tabrow.ptabs,tabrow.label)
-  tabrow.set_tab_label_text(tabrow.ptabs,fileid)
+#  tabrow.label = gtk.HBox()
+#  tabrow.label.pack_start(tabrow.labelname)
+#  tabrow.label.show()
+  tabrow.append_page(tabrow.vbox,tabrow.labelname)
+  tabrow.set_tab_label_text(tabrow.vbox,fileid)
 #  if warnme and config['openduplicatetabs']:
 #    tabrow.ptabs.<function to change background color as warning>
 #    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
@@ -470,28 +487,28 @@ def displayPerson(callingWidget,fileid, tabrow):
 
   tabrow.labeli = gtk.Label("Information")
   tabrow.labelr = gtk.Label("Relationships")
-  tabrow.ptabs.swi = gtk.ScrolledWindow()
-  tabrow.ptabs.swr = gtk.ScrolledWindow()
-  tabrow.ptabs.swi.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.ptabs.swr.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.ptabs.swi.show()
-  tabrow.ptabs.swr.show()
-  tabrow.ptabs.append_page(tabrow.ptabs.swi,tabrow.labeli)
-  tabrow.ptabs.append_page(tabrow.ptabs.swr,tabrow.labelr)
-  tabrow.ptabs.set_tab_label_packing(tabrow.ptabs.swi,True,True,gtk.PACK_START)
-  tabrow.ptabs.set_tab_label_packing(tabrow.ptabs.swr,True,True,gtk.PACK_START)
-  tabrow.ptabs.swi.infpage = gtk.VBox()
-  tabrow.ptabs.swr.relpage = gtk.VBox()
-  tabrow.ptabs.swi.infpage.show()
-  tabrow.ptabs.swr.relpage.show()
-  tabrow.ptabs.swi.add_with_viewport(tabrow.ptabs.swi.infpage)
-  tabrow.ptabs.swr.add_with_viewport(tabrow.ptabs.swr.relpage)
-  tabrow.ptabs.swi.infpage.set_border_width(5)
-  tabrow.ptabs.swr.relpage.set_border_width(5)
-  if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.ptabs)
-  initPinfo(tabrow.ptabs.swi.infpage, fileid)
-  initPrels(tabrow.ptabs.swr.relpage, fileid,tabrow)
-  tabrow.set_current_page(tabrow.page_num(tabrow.ptabs))
+  tabrow.vbox.ptabs.swi = gtk.ScrolledWindow()
+  tabrow.vbox.ptabs.swr = gtk.ScrolledWindow()
+  tabrow.vbox.ptabs.swi.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  tabrow.vbox.ptabs.swr.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  tabrow.vbox.ptabs.swi.show()
+  tabrow.vbox.ptabs.swr.show()
+  tabrow.vbox.ptabs.append_page(tabrow.vbox.ptabs.swi,tabrow.labeli)
+  tabrow.vbox.ptabs.append_page(tabrow.vbox.ptabs.swr,tabrow.labelr)
+  tabrow.vbox.ptabs.set_tab_label_packing(tabrow.vbox.ptabs.swi,True,True,gtk.PACK_START)
+  tabrow.vbox.ptabs.set_tab_label_packing(tabrow.vbox.ptabs.swr,True,True,gtk.PACK_START)
+  tabrow.vbox.ptabs.swi.infpage = gtk.VBox()
+  tabrow.vbox.ptabs.swr.relpage = gtk.VBox()
+  tabrow.vbox.ptabs.swi.infpage.show()
+  tabrow.vbox.ptabs.swr.relpage.show()
+  tabrow.vbox.ptabs.swi.add_with_viewport(tabrow.vbox.ptabs.swi.infpage)
+  tabrow.vbox.ptabs.swr.add_with_viewport(tabrow.vbox.ptabs.swr.relpage)
+  tabrow.vbox.ptabs.swi.infpage.set_border_width(5)
+  tabrow.vbox.ptabs.swr.relpage.set_border_width(5)
+  if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
+  initPinfo(tabrow.vbox.ptabs.swi.infpage, fileid)
+  initPrels(tabrow.vbox.ptabs.swr.relpage, fileid,tabrow)
+  tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
 #  tabrow.show_all()
 #  print "I got here, too!"
 
@@ -754,7 +771,7 @@ def addOccMilestone(caller,target,fileid,key):
     rev.set_text(value)
     target.attach(rev,2,3,i + 2,i + 3)
 
-def preReadp(force,path,depth = 0):
+def preReadp(force,path,depth = 0,retries = 0):
   """Using the global dict 'people' and given a list of keys 'path' and an integer 'depth', prepares a path
   in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function will build missing
   tree branches, to allow you to write to the endpoint. Do not call force with a path/depth ending in a list,
@@ -763,54 +780,60 @@ def preReadp(force,path,depth = 0):
   global people
   if depth > len(path): depth = len(path)
   if depth > 7: depth = 7
-  if people.get(path[0]):
+  if path[0] in people.keys():
     if depth <= 1:
       return True
-    if people[path[0]].get(path[1]):
+    if path[1] in people[path[0]].keys():
       if depth <= 2:
         return True
-      if people[path[0]][path[1]].get(path[2]):
+      if path[2] in people[path[0]][path[1]].keys():
         if depth <= 3:
           return True
-        if people[path[0]][path[1]][path[2]].get(path[3]):
+        if path[3] in people[path[0]][path[1]][path[2]].keys():
           if depth <= 4:
             return True
-          if people[path[0]][path[1]][path[2]][path[3]].get(path[4]):
+          if path[4] in people[path[0]][path[1]][path[2]][path[3]].keys():
             if depth <= 5:
               return True
-            if people[path[0]][path[1]][path[2]][path[3]][path[4]].get(path[5]):
+            if path[5] in people[path[0]][path[1]][path[2]][path[3]][path[4]].keys():
               if depth <= 6:
                 return True
-              if people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]].get(path[6]):
+              if path[6] in people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]].keys():
                 return True # Maximum depth reached
               elif force:
                 people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = {}
-                return preReadp(force,path,depth)
+                if retries >= depth: force = False
+                return preReadp(force,path,depth,retries + 1)
               else: # Not found, and not forcing it to be found
                 return False
             elif force:
               people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = {}
-              return preReadp(force,path,depth)
+              if retries >= depth: force = False
+              return preReadp(force,path,depth,retries + 1)
             else: # Not found, and not forcing it to be found
               return False
           elif force:
             people[path[0]][path[1]][path[2]][path[3]][path[4]] = {}
-            return preReadp(force,path,depth)
+            if retries >= depth: force = False
+            return preReadp(force,path,depth,retries + 1)
           else: # Not found, and not forcing it to be found
             return False
         elif force:
           people[path[0]][path[1]][path[2]][path[3]] = {}
-          return preReadp(force,path,depth)
+          if retries >= depth: force = False
+          return preReadp(force,path,depth,retries + 1)
         else: # Not found, and not forcing it to be found
           return False
       elif force:
         people[path[0]][path[1]][path[2]] = {}
-        return preReadp(force,path,depth)
+        if retries >= depth: force = False
+        return preReadp(force,path,depth,retries + 1)
       else: # Not found, and not forcing it to be found
         return False
     elif force:
       people[path[0]][path[1]] = {}
-      return preReadp(force,path,depth)
+      if retries >= depth: force = False
+      return preReadp(force,path,depth,retries + 1)
     else: # Not found, and not forcing it to be found
       return False
   else: # First level (fileid) can't be generated.
@@ -877,7 +900,6 @@ def addRelToBox(self,target,relid,fileid,tabs):
     else:
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
-#  print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
 
 def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',genderP = 'n'):
   global people
@@ -944,9 +966,17 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',gende
   value = str(answer)
   if len(value) < 2: # Expect 2
     return
-  if not preReadp(True,[fileid,'relat',relid],3):
+  if not preReadp(True,[fileid,'relat',relid],3): # This should have been here already.
     return
   people[fileid]['relat'][relid]['rtype'] = options[value][2]
   people[fileid]['relat'][relid]['relation'] = options[value][0]
   people[fileid]['relat'][relid]['cat'] = cat
   relation.set_text(people[fileid]['relat'][relid]['relation'])
+  # TODO: some day, maybe edit and save the other person with reciprocal relational information.
+
+def saveThisP(caller,fileid):
+  global people
+  if people.get(fileid):
+    savePerson(fileid,people[fileid])
+  else:
+    bsay(caller,"Could not load person %s." % fileid)

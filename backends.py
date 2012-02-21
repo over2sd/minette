@@ -224,12 +224,12 @@ def loadPerson(fileid):
   else:
     return loadPersonXML(fileid)
 
-def savePerson(fileid,data,rels):
+def savePerson(fileid,data):
   global config
   if config['outformat'] == "sql":
-    return savePersonSQL(fileid,data,rels)
+    return savePersonSQL(fileid,data)
   else:
-    return savePersonXML(fileid,data,rels)
+    return savePersonXML(fileid,data)
 
 def populateWorld():
   global config
@@ -246,7 +246,8 @@ def idExists(fileid,rectyp):
     idExistsXML(fileid)
 
 ### XML Backend
-from xml.etree.ElementTree import (parse, Element)
+import xml.etree.ElementTree as etree
+#from xml.etree.ElementTree import (parse, Element)
 
 def loadPersonXML(fileid):
   """Given an id (filename) matching an XML file in the appropriate
@@ -255,7 +256,7 @@ def loadPersonXML(fileid):
   """
   dinf = {}
   drel = {}
-  root = Element("person")
+  root = etree.Element("person")
   text = None
   dinf['abil'] = ["",False]
   dinf['age'] = ["",False]
@@ -317,7 +318,7 @@ def loadPersonXML(fileid):
   status.push(0,"loading person from XML... '" + fileid + "'")
   try:
     with codecs.open(fileid,'rU','utf-8') as f:
-      tree = parse(f)
+      tree = etree.parse(f)
       f.close()
       root = tree.getroot()
   except IOError as e:
@@ -486,7 +487,7 @@ def populateWorldXML():
     nlist = []
     ilist = []
     for i in range(len(olist)):
-      if re.search(r'.[Xx][Mm][Ll]',olist[i]):
+      if re.search(r'.[Xx][Mm][Ll]$',olist[i]):
         ilist.append(os.path.splitext(olist[i])[0])
         nlist.append(olist[i])
     for i in range(len(nlist)):
@@ -553,9 +554,17 @@ def killListFile(caller = None):
   global status
   status.push(0,"WorldList destroyed!")
 
-def savePersonXML(fileid,data,rels):
-  """Given a filename and two dictionaries, saves a person's values to an "id" XML file.
+def savePersonXML(fileid,data):
+  """Given a filename, saves a person's values to an "id" XML file.
   """
+  info = data.get('info')
+  rels = data.get('relat')
+  fn = fileid + ".xml"
+  person = etree.Element("person")
+  etree.SubElement(person,"commonname").text = info['commonname'][0]
+  etree.SubElement(person,"ctitle").text = info['ctitle'][0]
+  print etree.tostring(person)
+
 
 def idExistsXML(fileid):
   global config

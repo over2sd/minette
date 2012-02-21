@@ -49,9 +49,7 @@ class Base:
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
     if config['startnew']: getFileid(self,self.tabs)
-#    displayPerson("?","petekend",self.tabs)
-#    displayPerson("?","kanemela",self.tabs)
-    displayPerson("?","chamiren",self.tabs)
+#    displayPerson("?","chamiren",self.tabs)
 
     gtk.main()
 
