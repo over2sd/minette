@@ -10,7 +10,8 @@ import re
 import os
 from linecache import getline
 from status import status
-from common import say
+from common import (say,bsay,skrTimeStamp)
+import xmlout
 # from configobj import ConfigObj
 
 def storeWindowExit(caller,window):
@@ -210,6 +211,7 @@ def validateConfig(config):
   to determine its class (saves load time/disk writes, but requires
   keeping the list file up to date).
   """
+  config['printemptyXMLtags'] = config.get("printemptyXMLtags",False) # output includes <emptyelements />?
   config['xmldir'] = config.get("xmldir","worlds/default/") # Where should I look for XML files?
   config['dtddir'] = config.get("dtddir","dtd/") # Where are doctype defs kept?
   config['dtdurl'] = config.get("dtdurl",os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
@@ -287,6 +289,7 @@ def loadPersonXML(fileid):
   dinf['misc'] = ["",False]
   dinf['mname'] = ["",False]
   dinf['mole'] = ["",False]
+  dinf['nameorder'] = ["gf",False]
   dinf['nname'] = ["",False]
   dinf['origin'] = ["",False]
   dinf['other'] = ["",False]
@@ -561,10 +564,102 @@ def savePersonXML(fileid,data):
   rels = data.get('relat')
   fn = fileid + ".xml"
   person = etree.Element("person")
-  etree.SubElement(person,"commonname").text = info['commonname'][0]
-  etree.SubElement(person,"ctitle").text = info['ctitle'][0]
-  print etree.tostring(person)
-
+  # TODO: put this in a global variable, and make a function to populate it from the DTD.
+  tags = ["commonname", "ctitle", "gname", "mname", "fname", "nname", "nameorder", "gender", "bday", "dday", "stories", "mention", "appear1ch", "appear1wr", "conflict", "leadrel", "bodytyp", "age", "skin", "eyes", "hair", "dmarks", "dress", "attposs", "asmell", "personality", "speech", "formocc", "currocc", "strength", "weak", "mole", "hobby", "misc", "ethnic", "origin", "backstory", "residence", "minchar", "talent", "abil", "sgoal", "other", "relat", "update"]
+  reltags = ["related", "relation", "file", "rtype", "events", "cat", "realm"]
+  for tag in tags:
+    if tag == "relat":
+      if len(rels):
+        for r in rels:
+          if rels[r].get("related") and rels[r].get("relation") and rels[r].get("rtype") and rels[r].get("cat"):
+            connected = etree.Element("relat")
+            for t in reltags:
+              if rels[r].get(t):
+                if t == "events":
+                  if len(rels[r]['events']):
+                    events = etree.Element("events")
+                    elist = rels[r]['events'].keys()
+                    chron = sorted(elist, key = lambda x: rels[r]['events'][x].get("date"))
+                    for e in chron:
+                      mstone = etree.Element("mstone")
+                      etree.SubElement(mstone,"date").text = rels[r]['events'][e].get("date",("",False))[0]
+                      etree.SubElement(mstone,"event").text = rels[r]['events'][e].get("event",("",False))[0]
+                      if rels[r]['events'][e].get("Type"):
+                        etree.SubElement(mstone,"type").text = rels[r]['events'][e].get("type")[0]
+                      events.append(mstone)
+                    connected.append(events)
+                else:
+                  value = rels[r].get(t)
+                  if value is None: value = ['',False]
+                  etree.SubElement(connected,t).text = value[0]
+            person.append(connected)
+          else:
+            print "A required tag is missing from relation %s." % r
+      else:
+        print "no relations found"
+    elif tag == "currocc":
+      if info[tag].get("pos"):
+        occ = etree.Element(tag)
+        value = info[tag].get("pos")
+        if value is None: value = ['',False]
+        etree.SubElement(occ,"pos").text = value[0]
+        if info[tag].get("events"):
+          if len(info[tag]['events']):
+            events = etree.Element("events")
+            elist = info[tag]['events'].keys()
+            chron = sorted(elist, key = lambda x: info[tag]['events'][x].get("date"))
+            for e in chron:
+              mstone = etree.Element("mstone")
+              etree.SubElement(mstone,"date").text = info[tag]['events'][e].get("date",("",False))[0]
+              etree.SubElement(mstone,"event").text = info[tag]['events'][e].get("event",("",False))[0]
+              if info[tag]['events'][e].get("Type"):
+                etree.SubElement(mstone,"type").text = info[tag]['events'][e].get("type")[0]
+              events.append(mstone)
+          occ.append(events)
+        person.append( occ )
+    elif tag == "formocc":
+      if info[tag].get("pos"):
+        occ = etree.Element(tag)
+        value = info[tag].get("pos")
+        if value is None: value = ['',False]
+        etree.SubElement(occ,"pos").text = value[0]
+        if info[tag].get("events"):
+          if len(info[tag]['events']):
+            events = etree.Element("events")
+            elist = info[tag]['events'].keys()
+            chron = sorted(elist, key = lambda x: info[tag]['events'][x].get("date"))
+            for e in chron:
+              mstone = etree.Element("mstone")
+              etree.SubElement(mstone,"date").text = info[tag]['events'][e].get("date",("",False))[0]
+              etree.SubElement(mstone,"event").text = info[tag]['events'][e].get("event",("",False))[0]
+              if info[tag]['events'][e].get("Type"):
+                etree.SubElement(mstone,"type").text = info[tag]['events'][e].get("type")[0]
+              events.append(mstone)
+          occ.append(events)
+        person.append( occ )
+    elif tag == "update":
+      etree.SubElement(person,tag).text = skrTimeStamp(1)
+    else:
+      value = info.get(tag)
+      if value is None: value = ['',False]
+      etree.SubElement(person,tag).text = value[0]
+  out = ""
+  try:
+    out = etree.tostring(person,pretty_print = True)
+  except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
+    out = xmlout.prettyXML(person)
+  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\"person.xsl\"?>\n<!DOCTYPE person SYSTEM \"person.dtd\">\n"
+  finaloutput = start + out
+  if config['debug'] > 0: print finaloutput
+  fn = os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml")
+  try:
+    with codecs.open(fn,'wU','UTF-8') as f:
+      f.write(finaloutput)
+      f.close()
+  except IOError as e:
+    message = "The file %s could not be saved: %s" % (fn,e)
+    bsay("?",message)
+    status.push(0,message)
 
 def idExistsXML(fileid):
   global config

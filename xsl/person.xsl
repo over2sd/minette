@@ -8,10 +8,12 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 		<title>TCS: <xsl:value-of select="person/commonname"/></title>
 	</head>
 <body>
-<a href="tcs-main.htm">Return to TCS Main</a>
+<a href="index.htm">Return to world index</a>
 <h1>Person</h1>
 <div class="nam">Title:</div><div class="con"> <xsl:value-of select="person/ctitle"/></div>
-<div class="nam">Name:</div><div class="con"> <xsl:value-of select="person/fname"/> <xsl:value-of select="person/mname"/> <xsl:value-of select="person/lname"/></div>
+<div class="nam">Name:</div><div class="con"><xsl:choose><xsl:when test="person/nameorder='fg'">
+<xsl:value-of select="person/fname"/> <xsl:value-of select="person/gname"/> <xsl:value-of select="person/mname"/></xsl:when><xsl:otherwise>
+<xsl:value-of select="person/gname"/> <xsl:value-of select="person/mname"/> <xsl:value-of select="person/fname"/></xsl:otherwise></xsl:choose></div>
 <div class="nam">Nickname:</div><div class="con"> <xsl:value-of select="person/nname"/></div>
 <div class="nam">Gender:</div><div class="con"> <xsl:value-of select="person/gender"/></div>
 <div class="nam">Birth:</div><div class="con"> <xsl:value-of select="person/bday"/></div>

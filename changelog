@@ -1,3 +1,7 @@
+2012-02-21:
+- Finished save backend (XML)
+- welcome page now uses label
+
 2012-02-20:
 - Added a function to set relationship types
 - Fixed a recursive loop error in preReadp

@@ -191,10 +191,18 @@ def initPinfo(self, fileid):
   except KeyError as e:
     print "An error occurred accessing %s: %s" % (fileid,e)
     return
+  self.namelabelbox = gtk.HBox()
+  self.namelabelbox.show()
   self.l1 = gtk.Label("Name:")
   self.l1.set_alignment(0,0)
-  self.set_child_packing(self.l1,1,1,2,gtk.PACK_START)
-  self.add(self.l1)
+  self.namelabelbox.pack_start(self.l1,1,1,2)
+  self.nord = gtk.CheckButton("Order reversed")
+  self.nord.show()
+  self.nord.set_active(isOrderRev(fileid))
+  self.nord.unset_flags(gtk.CAN_FOCUS)
+  self.nord.connect("clicked",toggleOrder,fileid)
+  self.namelabelbox.pack_start(self.nord,0,0,2)
+  self.add(self.namelabelbox)
   self.namebox = gtk.HBox()
   self.namebox.set_border_width(2)
   self.add(self.namebox)
@@ -203,10 +211,13 @@ def initPinfo(self, fileid):
   self.ctitle = gtk.Entry(5)
   self.l2 = gtk.Label("Family:")
   self.fname = gtk.Entry(25)
+  activateInfoEntry(self.fname,fileid,"fname")
   self.l3 = gtk.Label("Given:")
   self.gname = gtk.Entry(25)
+  activateInfoEntry(self.gname,fileid,"gname")
   self.l4 = gtk.Label("Middle/Maiden:")
   self.mname = gtk.Entry(25)
+  activateInfoEntry(self.mname,fileid,"mname")
   self.namebox.add(self.l5)
   self.namebox.add(self.ctitle)
   self.ctitle.set_width_chars(4)
@@ -216,6 +227,7 @@ def initPinfo(self, fileid):
   self.namebox.set_child_packing(self.ctitle,0,0,2,gtk.PACK_START)
   self.ctitle.set_text(getit(fileid,'ctitle'))
   self.ctitle.show()
+  activateInfoEntry(self.ctitle,fileid,"ctitle")
   if config['familyfirst'] == True:
     self.namebox.add(self.l2)
     self.namebox.add(self.fname)
@@ -223,10 +235,10 @@ def initPinfo(self, fileid):
   self.namebox.add(self.gname)
   self.gname.set_text(getit(fileid,'gname'))
   self.gname.show()
+  self.namebox.add(self.l4)
+  self.namebox.add(self.mname)
+  self.mname.set_text(getit(fileid,'mname'))
   if config['usemiddle'] == True:
-    self.namebox.add(self.l4)
-    self.namebox.add(self.mname)
-    self.mname.set_text(getit(fileid,'mname'))
     self.mname.show()
   if config['familyfirst'] == False:
     self.namebox.add(self.l2)
@@ -576,7 +588,7 @@ def addPersonSubmenu(tabs,pl,persons):
 def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New person cancelled"):
   fileid = askBox(None,one,two,three)
   fileid = validateFileid(fileid)
-  if len(fileid) > 0:
+  if fileid and len(fileid) > 0:
     mkPerson(caller,fileid,tabs)
   else:
     say(four)
@@ -586,6 +598,7 @@ def mkPerson(callingWidget,fileid,tabs):
   if idExists(fileid,'p'):
     say("Existing fileid! Loading instead...")
   else:
+    saveThisP(callingWidget,fileid)
     worldList['p'].append(fileid)
 ### This should go in the save function, check for its value in file?
 #    if config['uselistfile'] == True:
@@ -976,7 +989,40 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',gende
 
 def saveThisP(caller,fileid):
   global people
+  global status
   if people.get(fileid):
-    savePerson(fileid,people[fileid])
+    if savePerson(fileid,people[fileid]):
+      status.push(0,"%s saved successfully." % fileid)
+    else:
+      status.push(0,"Error encountered saving %s." % fileid)
   else:
     bsay(caller,"Could not load person %s." % fileid)
+
+def isOrderRev(fileid):
+  global people
+  global config
+  norm = "gf"
+  if config['familyfirst']: norm = "fg"
+  value = getInf([fileid,"info","nameorder"])
+  if value == norm:
+    return False
+  else:
+    return True
+
+def toggleOrder(caller,fileid):
+  global people
+  global config
+  rev = "fg"
+  if config['familyfirst']:
+    norm = rev
+    rev = "gf"
+  else: norm = "gf"
+  if not preReadp(True,[fileid,"info"],2):
+    return
+  if caller.get_active():
+    print "Name is now reversed!"
+    people[fileid]['info']['nameorder'] = [rev,True]
+  else:
+    print "Name is now normal!"
+    people[fileid]['info']['nameorder'] = [norm,True]
+

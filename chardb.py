@@ -7,7 +7,7 @@ import gtk
 
 from os import path
 from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
-from person import (displayPerson, addPersonMenu)
+from person import (displayPerson, addPersonMenu,saveThisP)
 from status import status
 from common import recordSelectBox
 import sys
@@ -49,30 +49,24 @@ class Base:
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
     if config['startnew']: getFileid(self,self.tabs)
-#    displayPerson("?","chamiren",self.tabs)
-
+#    displayPerson("?","doe-john",self.tabs)
+#    saveThisP("?","doe-john")
     gtk.main()
 
   def firstRunTab(base,tabrow):
     tabrow.fr = gtk.VBox()
     tabrow.fr.show()
     tabrow.append_page(tabrow.fr,gtk.Label("First Run Tutorial"))
-    tabrow.tut = gtk.TextBuffer()
-    tabrow.tutv = gtk.TextView(tabrow.tut)
-    tabrow.tutv.set_border_width(1)
-    tabrow.tutv.set_left_margin(5)
-    tabrow.tutv.set_right_margin(5)
-    tabrow.tutv.show()
-    tabrow.tutv.set_wrap_mode(gtk.WRAP_WORD)
-    tabrow.tutv.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#D4D4D4"))
-    tabrow.tutv.set_editable(False)
-    tabrow.tut.set_text("\n\t\
-This tutorial will only display as long as you do not use a configuration \
-file. Load with a configuration file as the first argument, or create \
-'default.cfg' in the program's directory to stop seeing this welcome tab.\
-\n\tTo begin, Use the Person menu to load an existing record or make a new\
- record.")
-    tabrow.fr.add(tabrow.tutv)
+# ..............................................................................................
+    tut1 = "\n\t\
+This tutorial will only display as long as you do not use a configuration file. Load with a\
+\nconfiguration file as the first argument, or create 'default.cfg' in the program's directory\
+\nto stop seeing this welcome tab.\
+\n\tTo begin, Use the Person menu to load an existing record or make a new record."
+# ..............................................................................................
+    tabrow.tut = gtk.Label(tut1)
+    tabrow.tut.show()
+    tabrow.fr.add(tabrow.tut)
 
 
   def makeMenus(self):

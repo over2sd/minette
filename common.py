@@ -6,6 +6,7 @@ pygtk.require('2.0')
 import gtk
 
 import re
+import datetime
 from status import status
 from backends import worldList
 
@@ -93,3 +94,11 @@ def recordSelectBox(parent,fileid,title = "Select Record"):
   askbox.destroy()
   if answer < 0: answer = 86
   return answers[str(answer)]
+
+def skrTimeStamp(style):
+  """Returns a timestamp in one of my preferred formats"""
+  ts = ""
+  now = datetime.datetime.now()
+  if style == 1:
+    ts = now.strftime("%y/%m/%db")
+  return ts
