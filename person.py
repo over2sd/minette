@@ -5,7 +5,8 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
-from common import (say,bsay,askBox,validateFileid,recordSelectBox)
+from common import (say,bsay,askBox,validateFileid,recordSelectBox,askBoxProcessor)
+from getmod import getPersonConnections
 from status import status
 from math import floor
 people = {}
@@ -577,6 +578,8 @@ def mkPerson(callingWidget,fileid,tabs):
 def listRel(self,r,fileid,relid,target = None):
   if not r.get("related"): return
   name = r['related'][0]
+  if not r.get("cat"): return
+  cat = r['cat'][0]
   if not target: target = self.get_parent().get_parent().get_parent().get_parent() #Which is better?
   namebutton = gtk.Button(relid)
   namebutton.connect("clicked",displayPerson,relid,target) # passing the target or figuring it from parentage?
@@ -604,6 +607,7 @@ def listRel(self,r,fileid,relid,target = None):
   relset.show()
   relset.set_alignment(0.5,0.5)
   relset.set_size_request(36,24)
+  relset.connect("clicked",selectConnectionP,relation,fileid,relid,name,cat)
   row1.pack_start(relset,0,0,5)
   row2 = gtk.HBox()
   self.pack_start(row2,0,0,2)
@@ -611,7 +615,7 @@ def listRel(self,r,fileid,relid,target = None):
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-#  mileadd.set_size_request(int(self.size_request()[0] * 0.25),24)
+  mileadd.set_size_request(int(self.size_request()[0] * 0.50),24)
   row2.pack_start(mileadd,0,0,5)
   row2.pack_start(gtk.Label("Date"),1,1,3)
   row2.pack_start(gtk.Label("Event"),1,1,3)
@@ -700,7 +704,7 @@ def addMilestone(caller,target,fileid,relid,boxwidth):
 def connectToPerson(parent,target,tabs,fileid,title = None):
   global status
   relid = recordSelectBox(None,fileid,title)
-  if len(relid[1]):
+  if relid and len(relid[1]):
     addRelToBox(parent,target,relid,fileid,tabs)
     status.push(0,"Added connection to %s on %s" % (relid,fileid))
   else:
@@ -873,5 +877,76 @@ def addRelToBox(self,target,relid,fileid,tabs):
     else:
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
-  print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
-  
+#  print str(relid) # Succeeded in getting name and type to this point. Going to save the rest for later.
+
+def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',genderP = 'n'):
+  global people
+  nameP = ""
+  try:
+    name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
+  except KeyError as e:
+    print "An error occurred accessing %s: %s" % (fileid,e)
+    return
+  if len(name[0]) > 2:
+    nameP = name[0]
+  elif config['familyfirst']:
+    nameP = name[2] + " " + name[1]
+  else:
+    nameP = name[1] + " " + name[2]
+  askbox = gtk.Dialog("Choose connection",None,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",86))
+  answers = {}
+  options = getPersonConnections(cat,genderR,genderP)
+  for i in options.keys():
+    answers[i] = options[i][0]
+  optlist = []
+  for key, value in sorted(answers.iteritems(), key=lambda (k,v): (v,k)):
+    optlist.append(key)
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label(nameP)
+  label.show()
+  label.set_width_chars(20)
+  row.pack_start(label,True,True,1)
+  label = gtk.Label(nameR)
+  label.show()
+  label.set_width_chars(20)
+  row.pack_start(label,True,True,1)
+  askbox.vbox.pack_start(row,True,True,1)
+  sw = gtk.ScrolledWindow()
+  sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  sw.set_size_request(400,150)
+  sw.show()
+  box = gtk.VBox()
+  box.show()
+  askbox.vbox.pack_start(sw,True,True,1)
+  sw.add_with_viewport(box)
+  for key in optlist:
+    if len(answers[key]) > 0:
+      rid = len(answers)
+      row = gtk.HBox()
+      row.show()
+      label = gtk.Label(options[key][1])
+      label.show()
+      label.set_width_chars(25)
+      row.pack_start(label,True,True,1)
+      button = gtk.Button(options[key][0])
+      button.show()
+      button.set_size_request(150,-1)
+      button.connect("clicked",askBoxProcessor,askbox,int(key))
+      row.pack_start(button,True,True,1)
+      box.pack_start(row,True,True,1)
+  width, height = askbox.get_size()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  answers['86'] = ""
+  answer = askbox.run()
+  askbox.destroy()
+  if answer < 0: answer = 86
+  value = str(answer)
+  if len(value) < 2: # Expect 2
+    return
+  if not preReadp(True,[fileid,'relat',relid],3):
+    return
+  people[fileid]['relat'][relid]['rtype'] = options[value][2]
+  people[fileid]['relat'][relid]['relation'] = options[value][0]
+  people[fileid]['relat'][relid]['cat'] = cat
+  relation.set_text(people[fileid]['relat'][relid]['relation'])

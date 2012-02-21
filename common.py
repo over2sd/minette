@@ -56,11 +56,12 @@ def recordSelectBox(parent,fileid,title = "Select Record"):
   colbox.pack_start(col,False,False,1)
   bound = 20
   sepcount = 0
+  #TODO: Move these to the backends module
   sepnames = {'p':("People","person"),'l':("Places","place"),'c':("Cities","city"),'s':("States","state"),'i':("Items","item")}
-  for li in ['p','l','c','s','i']:
+  for li in sepnames.keys():
     if worldList.get(li):
       count = len(worldList[li])
-      if count:
+      if count > 0 and len(worldList[li][0]) > 0:
         sep = gtk.Label(sepnames.get(li,("Other","other"))[0])
         sep.show()
         sepcount += 1
@@ -78,7 +79,7 @@ def recordSelectBox(parent,fileid,title = "Select Record"):
           colbox.pack_start(col,False,False,1)
           sepcount = 0
           bound += 20
-        if value != fileid:
+        if value != fileid and len(value) > 0:
           rid = len(answers)
           answers[str(rid)] = (value,sepnames[li][1])
           button = gtk.Button(value)

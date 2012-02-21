@@ -3,6 +3,7 @@
 
 config = {}
 worldList = {}
+relsP = {}
 
 import codecs
 import re
@@ -10,20 +11,26 @@ import os
 from linecache import getline
 from status import status
 from common import say
+# from configobj import ConfigObj
 
 def storeWindowExit(caller,window):
   storeWindow(caller,window)
   window.destroy()
 
 def storeWindow(caller,window):
-  """Checks for the existence of the config file, and if it exists,
-  deletes old window definitions and writes a new set. Requires window
-  argument specifying widget to read size/location info.
+  """Checks current window size against stored value in memory. If
+  different, Checks for the existence of the config file, and if it
+  exists, deletes old window definitions and writes a new set. Requires
+  window argument specifying widget to read size/location info.
   """
   global config
   if config.get("nowindowstore"): return # Allow config option to disable this behavior
   (x, y) = window.get_position()
   (w, h) = window.get_size()
+  if config['pos'] == (x,y) and config['size'] == (w,h):
+    if config['debug'] > 0:
+      print "Window not moved/resized. Keeping existing values."
+    return
   lines = []
   found = []
   if os.path.exists(os.path.abspath(config['file'])): # Don't create a config file if it doesn't exist.
@@ -63,6 +70,90 @@ def storeWindow(caller,window):
     print "Saving window: %s,%s; %sx%s" % (x,y,w,h)
   else:
     print "No config file. Not saving window."
+
+def getRelsP(pgender,rgender):
+  global relsP
+  if not len(relsP):
+    print "Loading people relations for the first time."
+#    r = ConfigOb(os.path.abspath("peopleconnections.ini"))
+# TODO: INI file import
+    # Some day, pull these values from a backend
+    relsP['relsnn'] = { # [autoreverse,rtype]
+      '101':['Friend','Friend','friend',"nn"],
+      '102':['Boss',"Subordinate",'work',"nn"],
+      '103':['Subordinate','Boss','work',"nn"],
+      '104':['Running Partner','Running Partner','casual',"nn"],
+      '105':['Sibling','Sibling','fam',"nn"],
+      '106':['Cousin','Cousin','fam',"nn"],
+    }
+    relsP['relsnf'] = {
+'107':['Sister','Sibling','fam',"nf"],
+'108':['Mother','Child','fam',"nf"],
+'109':['Sister-in-law','Sibling-in-law','fam',"nf"],
+'110':['Mother-in-law','Child-in-law','fam',"nf"],
+'111':['Stepsister','Stepsibling','fam',"nf"],
+'112':['Stepmother','Stepchild','fam',"nf"],
+    }
+    relsP['relsnm'] = {
+'113':['Brother','Sibling','fam',"nm"],
+'114':['Father','Child','fam',"nm"],
+'115':['Brother-in-law','Sibling-in-law','fam',"nm"],
+'116':['Father-in-law','Child-in-law','fam',"nm"],
+'117':['Stepbrother','Stepsibling','fam',"nm"],
+'118':['Stepfather','Stepchild','fam',"nm"],
+    }
+    relsP['relsmf'] = {
+'119':['Lover','Lover','other',"mf"],
+'120':['Wife','Husband','fam',"mf"],
+'121':['Sister','Brother','fam',"mf"],
+'122':['Mother','Son','fam',"mf"],
+'123':['Sister-in-law','Brother-in-law','fam',"mf"],
+'124':['Mother-in-law','Son-in-law','fam',"mf"],
+'125':['Stepsister','Stepbrother','fam',"mf"],
+'126':['Stepmother','Stepson','fam',"mf"],
+    }
+    relsP['relsfm'] = {
+'127':['Lover','Lover','other',"fm"],
+'128':['Husband','Wife','fam',"fm"],
+'129':['Brother','Sister','fam',"fm"],
+'130':['Father','Daughter','fam',"fm"],
+'131':['Brother-in-law','Sister-in-law','fam',"fm"],
+'132':['Father-in-law','Daughter-in-law','fam',"fm"],
+'133':['Stepbrother','Stepsister','fam',"fm"],
+'134':['Stepfather','Stepdaughter','fam',"fm"],
+    }
+    relsP['relsff'] = {
+'135':['Sister','Sister','fam',"fm"],
+'136':['Mother','Daughter','fam',"fm"],
+'137':['Sister-in-law','Sister-in-law','fam',"fm"],
+'138':['Mother-in-law','Daughter-in-law','fam',"fm"],
+'139':['Stepsister','Stepsister','fam',"fm"],
+'140':['Stepmother','Stepdaughter','fam',"fm"],
+    }
+    relsP['relsmm'] = {
+'141':['Brother','Brother','fam',"mm"],
+'142':['Father','Son','fam',"mm"],
+'143':['Brother-in-law','Brother-in-law','fam',"mm"],
+'144':['Father-in-law','Son-in-law','fam',"mm"],
+'145':['Stepbrother','Stepbrother','fam',"mm"],
+'146':['Stepfather','Stepson','fam',"mm"],
+    }
+
+  if pgender == 'n' and rgender == 'f':
+    return relsP['relsnf']
+  elif pgender == 'f' and rgender == 'f':
+    return relsP['relsff']
+  elif pgender == 'm' and rgender == 'f':
+    return relsP['relsmf']
+  elif pgender == 'n' and rgender == 'm':
+    return relsP['relsnm']
+  elif pgender == 'f' and rgender == 'm':
+    return relsP['relsfm']
+  elif pgender == 'm' and rgender == 'm':
+    return relsP['relsmm']
+  else:
+    return relsP['relsnn']
+
 
 def loadConfig(fn = None):
   """Returns a dict containing the config options in the CCOW config file."""
