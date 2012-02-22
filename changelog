@@ -1,3 +1,6 @@
+2012-02-22:
+- Moved all choice defining functions to a new file. Made the gender choice function more flexible
+
 2012-02-21:
 - Finished save backend (XML)
 - welcome page now uses label

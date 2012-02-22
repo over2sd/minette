@@ -907,7 +907,7 @@ def addRelToBox(self,target,relid,fileid,tabs):
       people[fileid]['relat'][relid]['cat'] = [cat,True]
       people[fileid]['relat'][relid]['rtype'] = ["",False] # Perhaps all these things in one dialog
       people[fileid]['relat'][relid]['realm'] = ["",False] # Only write this one if user chooses a realm
-      # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids]
+      # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids])
       people[fileid]['relat'][relid]['events'] = {}
       listRel(target,people[fileid]['relat'][relid],fileid,relid,tabs)
     else:
