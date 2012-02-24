@@ -5,6 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
+from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,recordSelectBox,askBoxProcessor)
 from getmod import getPersonConnections
 from status import status
@@ -254,7 +255,7 @@ def initPinfo(self, fileid):
   self.add(self.cname)
   self.nname = buildarow("Nickname:",fileid,'nname')
   self.add(self.nname)
-  self.gender = buildarow("Gender:",fileid,'gender') # TODO: Some day, this will be a radio button
+  self.gender = buildGenderRow(fileid)
   self.add(self.gender)
   self.bday = buildarow("Birth Date:",fileid,'bday')
   self.add(self.bday)
@@ -637,7 +638,13 @@ def listRel(self,r,fileid,relid,target = None):
   relset.show()
   relset.set_alignment(0.5,0.5)
   relset.set_size_request(36,24)
-  relset.connect("clicked",selectConnectionP,relation,fileid,relid,name,cat)
+  genderR = getInf([relid,"info","gender"])
+  if not genderR or genderR == "":
+    p = loadPerson(relid)
+    genderR = p[0].get("gender",['N',False])
+    genderR = genderR[0]
+  genderP = getInf([fileid,"info","gender"])
+  relset.connect("clicked",selectConnectionP,relation,fileid,relid,name,cat,genderR,genderP)
   row1.pack_start(relset,0,0,5)
   row2 = gtk.HBox()
   self.pack_start(row2,0,0,2)
@@ -645,7 +652,7 @@ def listRel(self,r,fileid,relid,target = None):
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-  mileadd.set_size_request(int(self.size_request()[0] * 0.50),24)
+  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
   row2.pack_start(mileadd,0,0,5)
   row2.pack_start(gtk.Label("Date"),1,1,3)
   row2.pack_start(gtk.Label("Event"),1,1,3)
@@ -856,9 +863,11 @@ def getInf(path):
   """Returns the value of a key path, or an empty string."""
   global people
   end = len(path) - 1
-  data = people[path[0]]
+  data = people.get(path[0])
+  if not data: return ""
   i = 1
   while i < end:
+    if config['debug'] > 5: print str(data) + '\n'
     if data.get(path[i]):
       data = data[path[i]]
       i += 1
@@ -914,8 +923,18 @@ def addRelToBox(self,target,relid,fileid,tabs):
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
 
-def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',genderP = 'n'):
+def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'N',genderP = 'N'):
   global people
+  rl = len(str(genderR))
+  pl = len(str(genderP))
+  if rl > 1 or pl > 1:
+    if config['debug'] > 5: print "Received R: %s P: %s" % (genderR,genderP)
+    print "Gender must be a single character: Attempting to convert."
+    choices = allGenders(1)
+    if rl > 1:
+      genderR = choices.get(genderR,'N')
+    if pl > 1:
+      genderP = choices.get(genderP,'N')
   nameP = ""
   try:
     name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
@@ -930,7 +949,7 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',gende
     nameP = name[1] + " " + name[2]
   askbox = gtk.Dialog("Choose connection",None,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",86))
   answers = {}
-  options = getPersonConnections(cat,genderR,genderP)
+  options = getPersonConnections(cat,str(genderR),str(genderP))
   for i in options.keys():
     answers[i] = options[i][0]
   optlist = []
@@ -981,6 +1000,7 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'n',gende
     return
   if not preReadp(True,[fileid,'relat',relid],3): # This should have been here already.
     return
+  if value == "86": return # Cancel
   people[fileid]['relat'][relid]['rtype'] = options[value][2]
   people[fileid]['relat'][relid]['relation'] = options[value][0]
   people[fileid]['relat'][relid]['cat'] = cat
@@ -1025,4 +1045,62 @@ def toggleOrder(caller,fileid):
   else:
     print "Name is now normal!"
     people[fileid]['info']['nameorder'] = [norm,True]
+
+def buildGenderRow(fileid,display = 0):
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("Gender:")
+  label.show()
+  label
+  row.pack_start(label,False,False,2)
+  label.set_width_chars(20)
+  label.set_alignment(1,0.5)
+  choices = allGenders()
+  path = [fileid,"info","gender"]
+  g = getInf(path)
+  if display == 1:
+    radio = gtk.VBox()
+    radio.show()
+    row.pack_start(radio,True,True,2)
+    group = None
+    for key in sorted(choices.keys()):
+      rbut = gtk.RadioButton(group,choices[key])
+      rbut.connect("clicked",setGender,fileid,key)
+      if config['debug'] > 5: print "%s : %s : %s" % (g,key,choices[key])
+      if g == key or g == choices[key]:
+        rbut.set_active(True)
+      rbut.show()
+      group = rbut
+      radio.pack_start(rbut,False,False,2)
+  else:
+    gender = gtk.combo_box_new_text()
+    gender.show()
+    selected = -1
+    keys = []
+    i = 0
+    for key in sorted(choices.keys()):
+      gender.append_text(choices[key])
+      keys.append(key)
+      if g == key or g == choices[key]:
+        selected = i
+      i += 1
+    gender.set_active(selected)
+    gender.connect("changed",setGenderCombo,fileid)
+    row.pack_start(gender,True,True,2)
+  return row
+
+def setGenderCombo(widget,fileid):
+  setGender(None,fileid,widget.get_active_text())
+
+def setGender(caller,fileid,key):
+  global people
+  if len(key) > 1:
+    genderkeys = allGenders(1)
+    key = genderkeys.get(key,'N')
+    if config['debug'] > 3: print "new key: %s" % key
+  if preReadp(False,[fileid,"info","gender"],2):
+    people[fileid]['info']['gender'] = [key,True]
+    if config['debug'] > 2: print "New Gender: %s" % key
+  else:
+    bsay(None,"Could not set gender for %s." % fileid)
 

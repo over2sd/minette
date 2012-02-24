@@ -1,3 +1,9 @@
+2012-02-23:
+- Changed Gender row to radio buttons instead of text entry
+- Made related backend functions more flexible
+- Minor edge case bugfixes
+- Changed default Gender row to ComboBox instead of radio buttons (for space conservation)
+
 2012-02-22:
 - Moved all choice defining functions to a new file. Made the gender choice function more flexible
 

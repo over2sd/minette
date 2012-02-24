@@ -1,10 +1,16 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-def allGenders():
+def allGenders(order = 0):
   # TODO: Gender editor/config file, where user can define sci-fi genders, etc.
-  genders = ['M','F']
-  return genders
+  genders = {'M':"Male",'F':"Female",'N':"Unknown"}
+  if order == 1:
+    gendercodes = {}
+    for key in genders.keys():
+      gendercodes[genders[key]] = key
+    return gendercodes
+  else:
+    return genders
 
 relsP = {}
 
@@ -12,13 +18,14 @@ def getRelsP(pgender = 'N',rgender = 'N'):
   global relsP
   if not len(relsP):
     print "Loading people relations for the first time."
+#    relsP = loadRelsP() # backends.loadRelsP()
 #    r = ConfigOb(os.path.abspath("peopleconnections.ini"))
 # TODO: INI file import
     # Some day, pull these values from a backend
-    relsP['relsNN'] = { # [autoreverse,rtype]
+    relsP['relsNN'] = { # [relation,autoreverse,rtype,required pairgenders,is reciprocal,reverse's key]
       '101':['Friend','Friend','friend',"NN"],
-      '102':['Boss',"Subordinate",'work',"NN"],
-      '103':['Subordinate','Boss','work',"NN"],
+      '102':['Boss',"Subordinate",'work',"NN",True,'103'],
+      '103':['Subordinate','Boss','work',"NN",True,'102'],
       '104':['Running Partner','Running Partner','casual',"NN"],
       '105':['Sibling','Sibling','fam',"NN"],
       '106':['Cousin','Cousin','fam',"NN"],
@@ -75,6 +82,6 @@ def getRelsP(pgender = 'N',rgender = 'N'):
 '145':['Stepbrother','Stepbrother','fam',"MM"],
 '146':['Stepfather','Stepson','fam',"MM"],
     }
-  listtype = "rels" + pgender + rgender
+  listtype = "rels" + pgender.upper() + rgender.upper()
   return relsP[listtype]
 

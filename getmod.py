@@ -5,8 +5,7 @@ def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need
   if cat == "person":
     relsNN = getRelsP('N','N')
     relspr = getRelsP(pgender,rgender)
-    d.update(relsnn)
-### For now, let it be dumb.
+    d.update(relsNN)
     if pgender != 'N' or rgender != 'N':
       d.update(relspr)
 #  elif cat == "place":
