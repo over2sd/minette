@@ -1,6 +1,11 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
+from backends import (readfile,writefile)
+
+stories = {}
+relsP = {}
+
 def allGenders(order = 0):
   # TODO: Gender editor/config file, where user can define sci-fi genders, etc.
   genders = {'M':"Male",'F':"Female",'N':"Unknown"}
@@ -11,8 +16,6 @@ def allGenders(order = 0):
     return gendercodes
   else:
     return genders
-
-relsP = {}
 
 def getRelsP(pgender = 'N',rgender = 'N'):
   global relsP
@@ -85,3 +88,31 @@ def getRelsP(pgender = 'N',rgender = 'N'):
   listtype = "rels" + pgender.upper() + rgender.upper()
   return relsP[listtype]
 
+def myStories(worlddir):
+  global stories
+  if len(stories) > 0:
+    return stories
+  else:
+    fn = os.path.join(os.path.abspath(worlddir)),"mystories.cfg"
+    lines = readfile(fn)
+    for line in lines:
+      try:
+        line = line.strip()
+        if line:
+          values = [x.strip() for x in line.split('=')]
+          if not stories.get(value[0]): stories[values[0]] = values[1] # existing options will not be clobbered
+      except Exception as e:
+        print "There was an error in the configuration file: %s" % e
+    return stories
+
+def saveStories(worlddir):
+  worlddir = os.path.abspath(worlddir)
+  if os.path.exists(worlddir):
+    lines = []
+    for key in stories:
+      lines.append("%s = %s\n" % (key,stories[key]))
+    if config['debug'] > 3: print lines
+    fn = os.path.join(worlddir,"mystories.cfg")
+    writefile(fn,lines,True)
+  else:
+    bsay(None,"The path %s does not exist.")

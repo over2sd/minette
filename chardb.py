@@ -9,6 +9,7 @@ from os import path
 from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
 from person import (displayPerson, addPersonMenu,saveThisP)
 from status import status
+from story import storyEditor
 from common import recordSelectBox
 import sys
 
@@ -79,6 +80,10 @@ This tutorial will only display as long as you do not use a configuration file. 
     f = gtk.Menu()
     f.show()
     itemF.set_submenu(f)
+    itemFT = gtk.MenuItem("S_tory Editor",True)
+    itemFT.show()
+    f.append(itemFT)
+    itemFT.connect("activate",storyEditor,self.window)
     itemFQ = gtk.MenuItem("_Quit",True)
     itemFQ.show()
     f.append(itemFQ)

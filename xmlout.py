@@ -53,9 +53,10 @@ def prettyXML(root):
                 etext += wrapelement(k.tag,mtext,3)
             if config['printemptyXMLtags'] or len(etext) > 2:
               specialtext += wrapelement(j.tag,etext,2)
-          else:
+          elif config['printemptyXMLtags'] or len(j.text) > 2:
             specialtext += wrapelement(j.tag,j.text,2)
-        out += wrapelement(root[i].tag,specialtext,1)
+        if config['printemptyXMLtags'] or len(specialtext) > 2:
+          out += wrapelement(root[i].tag,specialtext,1)
       elif len(root[i].text) > 0:
         out += wrapelement(root[i].tag,root[i].text,1)
       elif config['printemptyXMLtags']:

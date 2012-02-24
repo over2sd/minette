@@ -71,26 +71,24 @@ def storeWindow(caller,window):
   else:
     print "No config file. Not saving window."
 
-def loadConfig(fn = None):
+def loadConfig(fn = None,recursion = 0):
   """Returns a dict containing the config options in the CCOW config file."""
   lines = []
   global config
   config['debug'] = 1
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
-  if os.path.exists(os.path.abspath(fn)):
-    try:
-      with codecs.open(os.path.abspath(fn),'rU','utf-8') as conf:
-        lines = conf.readlines()
-        conf.close()
-    except IOError as e:
-      print " Could not open configuration file: %s" % e
+  lines = readfile(fn)
   for line in lines:
     try:
       line = line.strip()
       if line:
         values = [x.strip() for x in line.split('=')]
-        config[values[0]] = values[1]
+        if values[0] != "loadworld":
+          if not config.get(values[0]): config[values[0]] = values[1] # existing options will not be clobbered
+        elif recursion < 2 and os.path.exists(values[1]): # loadworld must be first option, or its options may be ignored.
+          recursion += 1
+          loadConfig(values[1],recursion)
     except Exception as e:
       print "There was an error in the configuration file: %s" % e
   config['file'] = fn
@@ -116,10 +114,12 @@ def validateConfig(config):
   config['informat'] = config.get("informat","xml") # How are people stored initially?
   config['outformat'] = config.get("outformat","xml") # how will we save data?
   config['openduplicatetabs'] = config.get('openduplicatetabs',False) # Should we open duplicate tabs?
+  config['worlddir'] = config.get("worlddir","worlds/example/") # Where should I look for XML files and configs?
 # Person options
   config['familyfirst'] = config.get("familyfirst",False) # Does the family name come first?
   config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?
   config['startnew'] = config.get("startnew",False) # Start by opening a new person file?
+  config['specialrelsonly'] = config.get("specialrelsonly",False) # use only world-defined relations?
 # XML file options
   config['uselistfile'] = config.get("uselistfile",True) # Whether to...
   """ save/load a list file instead of walking through each XML file
@@ -127,13 +127,39 @@ def validateConfig(config):
   keeping the list file up to date).
   """
   config['printemptyXMLtags'] = config.get("printemptyXMLtags",False) # output includes <emptyelements />?
-  config['xmldir'] = config.get("xmldir","worlds/default/") # Where should I look for XML files?
   config['dtddir'] = config.get("dtddir","dtd/") # Where are doctype defs kept?
   config['dtdurl'] = config.get("dtdurl",os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
   config['xslurl'] = config.get("xslurl",os.path.abspath("xsl/")) # What reference goes in the XML files?
   return config
 
 ### Wrappers
+def readfile(fn):
+  lines = []
+  if os.path.exists(os.path.abspath(fn)):
+    try:
+      with codecs.open(os.path.abspath(fn),'rU','utf-8') as f:
+        lines = f.readlines()
+        f.close()
+    except IOError as e:
+      bsay(None, " Could not open file: %s" % e)
+    status.push(0,"File read successfully: %s" % fn)
+  else:
+    bsay(None,"File not found: %s" % fn)
+  return lines
+
+def writefile(fn,lines,create = False):
+  if create or os.path.exists(os.path.abspath(fn)):
+    try:
+      f = codes.open(os.path.abspath(fn), 'wU',"UTF-8")
+      f.writelines(lines)
+      f.close()
+    except IOError as e:
+      bsay(None, " Could not write story file: %s" % e)
+      return
+    status.push(0,"%s written successfully." % fn)
+  else:
+    bsay("File not found and not created: %s" % fn)
+
 def loadPerson(fileid):
   global config
   if config['informat'] == "sql":
@@ -563,7 +589,9 @@ def savePersonXML(fileid,data):
     out = etree.tostring(person,pretty_print = True)
   except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
     out = xmlout.prettyXML(person)
-  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\"person.xsl\"?>\n<!DOCTYPE person SYSTEM \"person.dtd\">\n"
+  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
+  start += os.path.join(config['xslurl'],"person.xsl")
+  start += "\"?>\n<!DOCTYPE person SYSTEM \"person.dtd\">\n"
   finaloutput = start + out
   if config['debug'] > 0: print finaloutput
   fn = os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml")
