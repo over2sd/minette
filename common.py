@@ -28,6 +28,7 @@ def askBox(parent,text,label,subtext = None):
   entry.connect("activate",askBoxProcessor,askbox,gtk.RESPONSE_OK)
   row.pack_start(gtk.Label(label),False,False,5)
   row.pack_start(entry)
+  entry.grab_focus()
   askbox.vbox.pack_end(row,True,True,0)
   width, height = askbox.get_size()
   askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
@@ -102,3 +103,6 @@ def skrTimeStamp(style):
   if style == 1:
     ts = now.strftime("%y/%m/%db")
   return ts
+
+def kill(caller,widget):
+  widget.destroy()

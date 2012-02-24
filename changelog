@@ -4,6 +4,7 @@
 - Config files can now be nested to a depth of 2
 - xmldir is now worlddir to reflect the presence of other files (stories, etc)
 - Added story editor function
+- Made some entries grab focus when added
 
 2012-02-23:
 - Changed Gender row to radio buttons instead of text entry

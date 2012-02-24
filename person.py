@@ -731,6 +731,7 @@ def addMilestone(caller,target,fileid,relid,boxwidth):
     d.set_text(people[fileid]['relat'][relid]['events'][i]['date'][0])
     activateRelEntry(d,fileid,relid,"date",i)
     rowmile.pack_start(d,1,1,2)
+    d.grab_focus()
     e = gtk.Entry()
     e.show()
     e.set_text(people[fileid]['relat'][relid]['events'][i]['event'][0])
@@ -781,6 +782,7 @@ def addOccMilestone(caller,target,fileid,key):
     rda.set_width_chars(12)
     rda.set_text(value)
     target.attach(rda,1,2,i + 2,i + 3)
+    rda.grab_focus()
     value = data['events'][str(i)].get("event","")
     if value: value = value[0]
     rev = gtk.Entry()

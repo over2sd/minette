@@ -1,7 +1,8 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-from backends import (readfile,writefile)
+from backends import (config,readfile,writefile)
+import os
 
 stories = {}
 relsP = {}
@@ -93,14 +94,14 @@ def myStories(worlddir):
   if len(stories) > 0:
     return stories
   else:
-    fn = os.path.join(os.path.abspath(worlddir)),"mystories.cfg"
-    lines = readfile(fn)
+    fn = os.path.join(os.path.abspath(worlddir),"mystories.cfg")
+    lines = readfile(fn,False) # Try to read file, but quietly
     for line in lines:
       try:
         line = line.strip()
         if line:
           values = [x.strip() for x in line.split('=')]
-          if not stories.get(value[0]): stories[values[0]] = values[1] # existing options will not be clobbered
+          if not stories.get(values[0]): stories[values[0]] = values[1] # existing options will not be clobbered
       except Exception as e:
         print "There was an error in the configuration file: %s" % e
     return stories

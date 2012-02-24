@@ -133,7 +133,7 @@ def validateConfig(config):
   return config
 
 ### Wrappers
-def readfile(fn):
+def readfile(fn,verbose = True):
   lines = []
   if os.path.exists(os.path.abspath(fn)):
     try:
@@ -141,16 +141,16 @@ def readfile(fn):
         lines = f.readlines()
         f.close()
     except IOError as e:
-      bsay(None, " Could not open file: %s" % e)
+      if verbose: bsay(None, " Could not open file: %s" % e)
     status.push(0,"File read successfully: %s" % fn)
   else:
-    bsay(None,"File not found: %s" % fn)
+    if verbose: bsay(None,"File not found: %s" % fn)
   return lines
 
 def writefile(fn,lines,create = False):
   if create or os.path.exists(os.path.abspath(fn)):
     try:
-      f = codes.open(os.path.abspath(fn), 'wU',"UTF-8")
+      f = codecs.open(os.path.abspath(fn),'wU',"UTF-8")
       f.writelines(lines)
       f.close()
     except IOError as e:
@@ -374,7 +374,7 @@ def populateWorldXML():
   """
   global config
   global worldList
-  fn = os.path.join(config['xmldir'],"myworld.cfg")
+  fn = os.path.join(config['worlddir'],"myworld.cfg")
   persons = []
   places = []
   cities = []
@@ -462,7 +462,7 @@ def populateWorldXML():
   worldList['c'] = cities
   worldList['s'] = states
   worldList['o'] = orgs
-  fn = os.path.join(config['xmldir'],"myworld.cfg")
+  fn = os.path.join(config['worlddir'],"myworld.cfg")
   if config['uselistfile'] and not os.path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."
     writeListFile()
