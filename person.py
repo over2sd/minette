@@ -6,9 +6,10 @@ pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from choices import allGenders
-from common import (say,bsay,askBox,validateFileid,recordSelectBox,askBoxProcessor)
-from getmod import getPersonConnections
+from common import (say,bsay,askBox,validateFileid,askBoxProcessor)
+from getmod import (getPersonConnections,recordSelectBox)
 from status import status
+from story import storyPicker
 from math import floor
 people = {}
 
@@ -269,7 +270,12 @@ def initPinfo(self, fileid):
   self.add(self.s1)
   self.s1.show()
   self.stories = buildarow("Stories:",fileid,'stories') # TODO: Some day, this will be a dynamic list of checkboxes
+# Option: show stories as raw value, as a list of title values. Put this in buildstoryrow
   self.add(self.stories)
+  self.stbut = gtk.Button("Set")
+  self.stbut.show()
+  self.stbut.connect("clicked",setStories,fileid,self.stories.e)
+  self.add(self.stbut)
   self.mention = buildarow("First Mention:",fileid,'mention')
   self.add(self.mention)
   self.appearch = buildarow("First appeared (chron):",fileid,'appear1ch')
@@ -1106,3 +1112,10 @@ def setGender(caller,fileid,key):
   else:
     bsay(None,"Could not set gender for %s." % fileid)
 
+def setStories(caller,fileid,x):
+  global people
+  value = storyPicker(x.get_text())
+  if value:
+    x.set_text(value)
+    if preReadp(False,[fileid,"info","stories"],3):
+      people[fileid]['info']['stories'] = [value,True]

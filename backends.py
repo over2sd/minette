@@ -258,7 +258,7 @@ def loadPersonXML(fileid):
   if not idExistsXML(fileid):
     status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
-  fileid = os.path.join(config['xmldir'],fileid + ".xml")
+  fileid = os.path.join(config['worlddir'],fileid + ".xml")
   status.push(0,"loading person from XML... '" + fileid + "'")
   try:
     with codecs.open(fileid,'rU','utf-8') as f:
@@ -369,7 +369,7 @@ def loadPersonXML(fileid):
   return (dinf,drel)
 
 def populateWorldXML():
-  """Looks in the xmldir and makes a list of fileids the program can
+  """Looks in the worlddir and makes a list of fileids the program can
   load. Makes worldList a tuple of lists.
   """
   global config
@@ -427,7 +427,7 @@ def populateWorldXML():
         print "There was an error in the configuration file: %s" % e
   else:
     print "Generating worldList from directory..."
-    olist = os.listdir(config['xmldir'])
+    olist = os.listdir(config['worlddir'])
     nlist = []
     ilist = []
     for i in range(len(olist)):
@@ -435,7 +435,7 @@ def populateWorldXML():
         ilist.append(os.path.splitext(olist[i])[0])
         nlist.append(olist[i])
     for i in range(len(nlist)):
-      fn = os.path.join(config['xmldir'],nlist[i])
+      fn = os.path.join(config['worlddir'],nlist[i])
       line = getline(fn,2)
       match = line.find("SYSTEM")
       if match == -1:
@@ -476,7 +476,7 @@ def writeListFile():
   cities = worldList['c']
   states = worldList['s']
   orgs = worldList['o']
-  fn = os.path.join(config['xmldir'],"myworld.cfg")
+  fn = os.path.join(config['worlddir'],"myworld.cfg")
   try:
     with codecs.open(fn,'wU','utf-8') as conf:
       puts = []
@@ -493,7 +493,7 @@ def writeListFile():
     exit(1)
 
 def killListFile(caller = None):
-  os.remove(os.path.join(os.path.abspath(config['xmldir']),"myworld.cfg"))
+  os.remove(os.path.join(os.path.abspath(config['worlddir']),"myworld.cfg"))
   say("WorldList destroyed!")
   global status
   status.push(0,"WorldList destroyed!")
@@ -594,7 +594,7 @@ def savePersonXML(fileid,data):
   start += "\"?>\n<!DOCTYPE person SYSTEM \"person.dtd\">\n"
   finaloutput = start + out
   if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml")
+  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
   try:
     with codecs.open(fn,'wU','UTF-8') as f:
       f.write(finaloutput)
@@ -606,7 +606,7 @@ def savePersonXML(fileid,data):
 
 def idExistsXML(fileid):
   global config
-  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml") + "...",
-  return os.path.exists(os.path.join(os.path.abspath(config['xmldir']),fileid + ".xml"))
+  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml") + "...",
+  return os.path.exists(os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml"))
 
 ### SQL Backend

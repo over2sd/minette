@@ -1,3 +1,8 @@
+2012-02-25:
+- Redid the layout for the story editor; the old one just wasn't working right
+- Moved some functions from common to getmod
+- Added story selector Dialog
+
 2012-02-24:
 - Made chenges to XMLout that should eliminate unwanted empty tags
 - savePerson (XML) now respects XSLURL config option

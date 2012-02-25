@@ -10,7 +10,7 @@ from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
 from person import (displayPerson, addPersonMenu,saveThisP)
 from status import status
 from story import storyEditor
-from common import recordSelectBox
+from getmod import recordSelectBox
 import sys
 
 class Base:
