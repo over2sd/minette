@@ -68,5 +68,5 @@ def csplit(s):
       if not values: values = []
       values.append(re.sub(r"\'",r'',item))
   else:
-    values = s.split(',')
+    values = [x.strip() for x in s.split(',')]
   return values

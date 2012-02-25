@@ -120,6 +120,7 @@ def validateConfig(config):
   config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?
   config['startnew'] = config.get("startnew",False) # Start by opening a new person file?
   config['specialrelsonly'] = config.get("specialrelsonly",False) # use only world-defined relations?
+  config['showstories'] = config.get("showstories","idlist") # Show titles, or just reference codes?
 # XML file options
   config['uselistfile'] = config.get("uselistfile",True) # Whether to...
   """ save/load a list file instead of walking through each XML file

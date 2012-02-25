@@ -9,7 +9,7 @@ from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor)
 from getmod import (getPersonConnections,recordSelectBox)
 from status import status
-from story import storyPicker
+from story import (storyPicker,expandTitles)
 from math import floor
 people = {}
 
@@ -269,13 +269,8 @@ def initPinfo(self, fileid):
   self.s1 = gtk.HSeparator()
   self.add(self.s1)
   self.s1.show()
-  self.stories = buildarow("Stories:",fileid,'stories') # TODO: Some day, this will be a dynamic list of checkboxes
+  self.stories = buildstoryrow(fileid,self) # TODO: Some day, this will be a dynamic list of checkboxes
 # Option: show stories as raw value, as a list of title values. Put this in buildstoryrow
-  self.add(self.stories)
-  self.stbut = gtk.Button("Set")
-  self.stbut.show()
-  self.stbut.connect("clicked",setStories,fileid,self.stories.e)
-  self.add(self.stbut)
   self.mention = buildarow("First Mention:",fileid,'mention')
   self.add(self.mention)
   self.appearch = buildarow("First appeared (chron):",fileid,'appear1ch')
@@ -1112,10 +1107,46 @@ def setGender(caller,fileid,key):
   else:
     bsay(None,"Could not set gender for %s." % fileid)
 
-def setStories(caller,fileid,x):
+def setStories(caller,fileid,x,parent):
   global people
-  value = storyPicker(x.get_text())
+  name = getInf([fileid,"info","commonname"])
+  value = ""
+  if config.get('showstories') == "titlelist":
+    value = getInf([fileid,"info","stories"])
+  else:
+    value = x.get_text()
+  value = storyPicker(parent,name,value)
   if value:
-    x.set_text(value)
     if preReadp(False,[fileid,"info","stories"],3):
       people[fileid]['info']['stories'] = [value,True]
+    if config.get('showstories') == "titlelist":
+      value = expandTitles(value)
+    x.set_text(value)
+
+def buildstoryrow(fileid,target):
+# Option: show stories as raw value, as a list of title values. Put this in buildstoryrow
+  row = gtk.HBox()
+  row.set_border_width(2)
+  row.show()
+  row.label = gtk.Label("Stories:")
+  row.label.set_width_chars(20)
+  position = 0.5
+  row.label.show()
+  row.pack_start(row.label,False,False,2)
+  stories = None
+  value = getInf([fileid,"info","stories"])
+  if config.get('showstories') == "titlelist":
+    position = 0.03
+    stories = gtk.Label(expandTitles(value))
+  else: # elif config['showstories'] == "idlist":
+    stories = gtk.Label(value)
+  row.label.set_alignment(1,position)
+  stories.show()
+  stories.set_alignment(0,0.5)
+  if stories: row.pack_start(stories,True,True,2)
+  stbut = gtk.Button("Set")
+  stbut.show()
+  stbut.connect("clicked",setStories,fileid,stories,None)
+  row.pack_start(stbut,False,False,2)
+  target.pack_start(row,False,False,2)
+

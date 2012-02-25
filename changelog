@@ -2,6 +2,7 @@
 - Redid the layout for the story editor; the old one just wasn't working right
 - Moved some functions from common to getmod
 - Added story selector Dialog
+- Added buildstoryrow function to format new story selection result
 
 2012-02-24:
 - Made chenges to XMLout that should eliminate unwanted empty tags

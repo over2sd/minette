@@ -66,11 +66,11 @@ def addStoryRowNew(caller,parent,ed,target):
   text = "Please enter the short code for this story"
   label = "Code:"
   subtext = "\
-This will be what is displayed\n\
-in your backend files. Once set,\n\
-it cannot be changed within this\n\
-program.  It may only contain\n\
-word characters (A-Z,0-9,_,-)."
+This will be what is displayed in your\n\
+backend files. Once set, it cannot be\n\
+changed within this program.  It may\n\
+only contain spaces and word characters\n\
+(A-Z,0-9,_,-)."
   code = askBox(ed,text,label,subtext)
   code = validateFileid(code)
   if code and len(code) > 0:
@@ -93,7 +93,7 @@ word characters (A-Z,0-9,_,-)."
 def refreshEd(parent,ed):
   (x,y,w,h) = ed.vbox.get_allocation()
   if w < 250: w = 250
-  ed.resize(None,w + 5,h + 5)
+  ed.resize(w + 5,h + 5)
   (x,y) = parent.get_position()
   (w,h) = parent.get_size()
   x += int(w / 2)
@@ -109,9 +109,62 @@ def setStory(widget,event,key):
     stories[key] = widget.get_text()
     widget.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCFFCC")) # change background for edited
 
-def storyPicker(value):
-  keys = csplit(str(value))
-  print keys
-# Show dialog with checkbox for each defined story
-# checkboxes append/delete defined values
+picklist = []
+
+def storyPicker(parent,name,value):
+  global picklist
+  global stories
+  picklist = csplit(str(value))
+  title = "Stories involving %s" % name
+  if not len(stories):
+    stories = myStories(config.get("worlddir"))
+  askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,None)
+  askbox.add_button("Cancel",1)
+  askbox.add_button("Set",0)
+  for key in sorted(stories.keys()):
+    title = stories.get(key,"")
+    if title and len(title) > 0:
+      button = gtk.CheckButton(title)
+      button.show()
+      button.unset_flags(gtk.CAN_FOCUS)
+      button.connect("toggled",updatePicklist,key)
+      if key in picklist:
+        button.set_active(True)
+      askbox.vbox.pack_start(button,True,True,2)
 # OK button closes dialog, turns keys into a csv string and returns it (nondefined values, plus defined that are checked)
+  askbox.move(config['pos'][0] + 50,config['pos'][1] + 50)
+  value = askbox.run()
+  askbox.destroy()
+  if value == 0:
+    output = ""
+    for k in range(len(picklist)):
+      if k > 0:
+        output += ", "
+      output += picklist[k]
+    return output
+  else:
+    status.push(0,"Cancel: Stories not modified.")
+  return None
+
+def updatePicklist(caller,key):
+  global picklist
+  if caller.get_active() and key not in picklist:
+    picklist.append(key)
+  elif not caller.get_active() and key in picklist:
+    picklist.remove(key)
+
+def expandTitles(value):
+  global stories
+  picklist = csplit(str(value))
+  titles = ""
+  if not len(stories):
+    stories = myStories(config.get("worlddir"))
+  for item in picklist:
+    if config['debug'] > 5: print "'%s' - '%s'" % (item,stories.get(item))
+    if stories.get(item):
+      titles += "%s\n" % stories[item]
+    else:
+      titles += "\'%s\'\n" % item
+  titles = titles[:-1]
+  return titles
+
