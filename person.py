@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from choices import allGenders
-from common import (say,bsay,askBox,validateFileid,askBoxProcessor)
+from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill)
 from getmod import (getPersonConnections,recordSelectBox)
 from status import status
 from story import (storyPicker,expandTitles)
@@ -466,8 +466,10 @@ def displayPerson(callingWidget,fileid, tabrow):
     people[fileid] = {}
     people[fileid]['info'] = p[0]
     people[fileid]['relat'] = p[1]
+    people[fileid]['changed'] = False
   tabrow.vbox = gtk.VBox()
   tabrow.vbox.show()
+  tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.vbox.ptabs = gtk.Notebook()
   tabrow.vbox.ptabs.show()
   bbar = gtk.HButtonBox()
@@ -482,6 +484,7 @@ def displayPerson(callingWidget,fileid, tabrow):
 
   close = gtk.Button("X")
   close.show()
+  close.connect("clicked",preClose,fileid,tabrow.vbox)
   bbar.pack_end(close)
   tabrow.vbox.pack_start(bbar,False,False,2)
   tabrow.vbox.pack_start(tabrow.vbox.ptabs,True,True,2)
@@ -1045,9 +1048,11 @@ def toggleOrder(caller,fileid):
   if caller.get_active():
     print "Name is now reversed!"
     people[fileid]['info']['nameorder'] = [rev,True]
+    people[fileid]['changed'] = True
   else:
     print "Name is now normal!"
     people[fileid]['info']['nameorder'] = [norm,True]
+    people[fileid]['changed'] = True
 
 def buildGenderRow(fileid,display = 0):
   row = gtk.HBox()
@@ -1103,6 +1108,7 @@ def setGender(caller,fileid,key):
     if config['debug'] > 3: print "new key: %s" % key
   if preReadp(False,[fileid,"info","gender"],2):
     people[fileid]['info']['gender'] = [key,True]
+    people[fileid]['changed'] = True
     if config['debug'] > 2: print "New Gender: %s" % key
   else:
     bsay(None,"Could not set gender for %s." % fileid)
@@ -1119,6 +1125,7 @@ def setStories(caller,fileid,x,parent):
   if value:
     if preReadp(False,[fileid,"info","stories"],3):
       people[fileid]['info']['stories'] = [value,True]
+      people[fileid]['changed'] = True
     if config.get('showstories') == "titlelist":
       value = expandTitles(value)
     x.set_text(value)
@@ -1149,4 +1156,30 @@ def buildstoryrow(fileid,target):
   stbut.connect("clicked",setStories,fileid,stories,None)
   row.pack_start(stbut,False,False,2)
   target.pack_start(row,False,False,2)
+
+def preClose(caller,fileid,target = None):
+  result = -8
+  if people.get(fileid):
+    if people[fileid].get("changed"):
+      result = 0
+      caller.set_sensitive(False)
+      asker = gtk.MessageDialog(None,gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_INFO,gtk.BUTTONS_YES_NO,None)
+      asker.set_markup("Are you sure you want to close %s?\nYou will lose all unsaved changes." % fileid)
+      asker.connect("destroy",lambda x: caller.set_sensitive(True))
+      (x,y,w,h) = caller.get_allocation()
+      asker.move(x - 50,y - 50)
+      result = asker.run()
+      asker.destroy()
+  if result == -8: # Yes
+    print "Destroying tab"
+    kill(caller,target)
+    return True
+  else: # No
+    print "Cancel"
+    return False
+
+def tabdestroyed(caller,fileid):
+  """Deletes the person's fileid key from people dict so the person can be reloaded."""
+  global people
+  del people[fileid]
 

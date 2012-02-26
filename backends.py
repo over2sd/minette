@@ -604,6 +604,9 @@ def savePersonXML(fileid,data):
     message = "The file %s could not be saved: %s" % (fn,e)
     bsay("?",message)
     status.push(0,message)
+    return False
+  people[fileid]['changed'] = False
+  return True
 
 def idExistsXML(fileid):
   global config
