@@ -1,15 +1,13 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-config = {}
-worldList = {}
-
 import codecs
 import re
 import os
 from linecache import getline
 from status import status
 from common import (say,bsay,skrTimeStamp)
+from globdata import (config,worldList)
 import xmlout
 # from configobj import ConfigObj
 

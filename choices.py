@@ -1,11 +1,9 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-from backends import (config,readfile,writefile)
+import backends
+from globdata import (config,stories,relsP)
 import os
-
-stories = {}
-relsP = {}
 
 def allGenders(order = 0):
   # TODO: Gender editor/config file, where user can define sci-fi genders, etc.
@@ -95,7 +93,7 @@ def myStories(worlddir):
     return stories
   else:
     fn = os.path.join(os.path.abspath(worlddir),"mystories.cfg")
-    lines = readfile(fn,False) # Try to read file, but quietly
+    lines = backends.readfile(fn,False) # Try to read file, but quietly
     for line in lines:
       try:
         line = line.strip()
@@ -114,6 +112,6 @@ def saveStories(worlddir):
       lines.append("%s = %s\n" % (key,stories[key]))
     if config['debug'] > 3: print lines
     fn = os.path.join(worlddir,"mystories.cfg")
-    writefile(fn,lines,True)
+    backends.writefile(fn,lines,True)
   else:
     bsay(None,"The path %s does not exist.")

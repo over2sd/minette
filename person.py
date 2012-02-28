@@ -6,12 +6,14 @@ pygtk.require('2.0')
 import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from choices import allGenders
-from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill)
+from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab)
 from getmod import (getPersonConnections,recordSelectBox)
+from globdata import people
+from person2 import preReadp
 from status import status
 from story import (storyPicker,expandTitles)
 from math import floor
-people = {}
 
 def getit(fileid,key):
   """deprecated function. will be removed eventually."""
@@ -28,171 +30,18 @@ def getit(fileid,key):
   else:
     return ""
 
-def buildarow(name,fileid,key,style = 0):
-  """Returns a row containing the given key description and value in a GTK HBox."""
-  row = gtk.HBox()
-  row.set_border_width(2)
-  row.show()
-  row.label = gtk.Label(name)
-  row.label.set_width_chars(20)
-  value = 0.5
-  if style == 1: value = 0.03
-  row.label.set_alignment(1,value)
-  row.label.show()
-  row.add(row.label)
-  row.set_child_packing(row.label,0,0,2,gtk.PACK_START)
-  if style == 0:
-    value = getInf([fileid,"info",key])
-    row.e = gtk.Entry()
-    row.e.set_text(value)
-    activateInfoEntry(row.e,fileid,key)
-  if style == 1:
-    row.e = buildaposition(fileid,key)
-  row.e.show()
-  row.add(row.e)
-  row.set_child_packing(row.e,1,1,2,gtk.PACK_START)
-  return row
-
-def buildaposition(fileid,key):
-  """Returns a GTK table containing the data values of the given position."""
-  t = gtk.Table(1,4) # TODO: Move this out into the buildarow so we can pu multiple positions in the same table?
-  # or do we want them separated so we have the headers and separation?
-  t.show()
-  global people
-  data = {}
-  try:
-    data = people[fileid]['info']
-  except KeyError as e:
-    print "Error getting info from %s: %s" % (fileid,e)
-    return ""
-  data = data.get(key,None)
-  value = data.get("pos")
-  if value: value = value[0]
-  if data.get("events"):
-    rows = len(data['events'])
-    cols = 4
-#    t.addpos = gtk.Button("Add Position")
-    t.addmile = gtk.Button("Add milestone")
-    t.addmile.show()
-    t.attach(t.addmile,3,4,1,2)
-    t.addmile.connect("clicked",addOccMilestone,t,fileid,key)
-    if rows > 0:
-      t.resize(rows + 3,cols)
-#      t.set_geometry_hints(None,790,440)
-      t.phead = gtk.Label("Position")
-      t.phead.show()
-      t.attach(t.phead,0,1,0,1)
-      t.mhead = gtk.Label("Milestone")
-      t.mhead.show()
-      t.attach(t.mhead,1,3,0,1)
-      t.dhead = gtk.Label("Date")
-      t.dhead.show()
-      t.attach(t.dhead,1,2,1,2)
-      t.ehead = gtk.Label("Event")
-      t.ehead.show()
-      t.attach(t.ehead,2,3,1,2)
-      rpos = gtk.Entry()
-      extraargs = ["pos",]
-      activateInfoEntry(rpos,fileid,key,len(extraargs),extraargs)
-      rpos.show()
-      rpos.set_text(value)
-      rpos.set_width_chars(12)
-      t.attach(rpos,0,1,1,2)
-      for i in range(rows):
-        value = data['events'][str(i)].get("date","")
-        if value: value = value[0]
-        rda = gtk.Entry()
-        extraargs = ["events",str(i),"date"]
-        activateInfoEntry(rda,fileid,key,len(extraargs),extraargs)
-        rda.show()
-        rda.set_width_chars(12)
-        rda.set_text(value)
-        t.attach(rda,1,2,i + 2,i + 3)
-        value = data['events'][str(i)].get("event","")
-        if value: value = value[0]
-        rev = gtk.Entry()
-        extraargs = ["events",str(i),"event"]
-        activateInfoEntry(rev,fileid,key,len(extraargs),extraargs)
-        rev.show()
-        rev.set_width_chars(10)
-        rev.set_text(value)
-        t.attach(rev,2,3,i + 2,i + 3)
-#        print str(t.size_request())
-  return t
-
-def activateInfoEntry(self, fileid, key, extra = 0, exargs = []):
-  path = [fileid,"info",key]
-  for i in range(len(exargs)): path.append(exargs[i])
-  self.connect("focus-out-event", checkForChange,path)
-
-def activateRelEntry(self, fileid, key, extra = 0, exargs = []):
-  path = [fileid,"info",key]
-  for i in range(len(exargs)): path.append(exargs[i])
-  self.connect("focus-out-event", checkForChange,path)
-
-def checkForChange(self,event,path):
-  if config['debug'] > 3: print "Checking " + str(path)
-  if getInf(path) != self.get_text():
-    if config['debug'] > 2 : print str(getInf(path)) + " vs " + self.get_text()
-    markChanged(self,path)
-
-def markChanged(self,path):
-  global people
-  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
-  end = len(path)
-  goforit = preReadp(True,path[:-1],end)
-  value = ["",False]
-  value[1] = True
-  value[0] = self.get_text()
-  if goforit:
-    if end == 3:
-      try:
-        people[path[0]][path[1]][path[2]] = value
-      except KeyError:
-        print "Could not mark " + path[2] + " as changed."
-        return
-    elif end == 4:
-      try:
-        people[path[0]][path[1]][path[2]][path[3]] = value
-      except KeyError:
-        print "Could not mark " + path[3] + " as changed."
-        return
-    elif end == 5:
-      try:
-        people[path[0]][path[1]][path[2]][path[3]][path[4]] = value
-      except KeyError:
-        print "Could not mark " + path[4] + " as changed."
-        return
-    elif end == 6:
-      try:
-        people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
-      except KeyError:
-        print "Could not mark " + path[5] + " as changed."
-        return
-    elif end == 7:
-      try:
-        people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
-      except KeyError:
-        print "Could not mark " + path[6] + " as changed."
-        return
-    else:
-      say("Path too long")
-      return
-    people[path[0]]['changed'] = True
-    print "Value set: " + getInf(path)
-  else:
-    print "Invalid path"
-    return
-
 def initPinfo(self, fileid):
   global people
   global config
   info = {}
+  scroll = self.get_parent()
   try:
     info = people[fileid]['info']
   except KeyError as e:
     print "An error occurred accessing %s: %s" % (fileid,e)
     return
+  offset = 0
+  scroll = self.get_parent()
   self.namelabelbox = gtk.HBox()
   self.namelabelbox.show()
   self.l1 = gtk.Label("Name:")
@@ -205,6 +54,7 @@ def initPinfo(self, fileid):
   self.nord.connect("clicked",toggleOrder,fileid)
   self.namelabelbox.pack_start(self.nord,0,0,2)
   self.add(self.namelabelbox)
+  offset += self.namelabelbox.get_allocation().height
   self.namebox = gtk.HBox()
   self.namebox.set_border_width(2)
   self.add(self.namebox)
@@ -213,13 +63,13 @@ def initPinfo(self, fileid):
   self.ctitle = gtk.Entry(5)
   self.l2 = gtk.Label("Family:")
   self.fname = gtk.Entry(25)
-  activateInfoEntry(self.fname,fileid,"fname")
+  activateInfoEntry(self.fname,scroll,people.get(fileid),fileid,"fname")
   self.l3 = gtk.Label("Given:")
   self.gname = gtk.Entry(25)
-  activateInfoEntry(self.gname,fileid,"gname")
+  activateInfoEntry(self.gname,scroll,people.get(fileid),fileid,"gname")
   self.l4 = gtk.Label("Middle/Maiden:")
   self.mname = gtk.Entry(25)
-  activateInfoEntry(self.mname,fileid,"mname")
+  activateInfoEntry(self.mname,scroll,people.get(fileid),fileid,"mname")
   self.namebox.add(self.l5)
   self.namebox.add(self.ctitle)
   self.ctitle.set_width_chars(4)
@@ -229,7 +79,7 @@ def initPinfo(self, fileid):
   self.namebox.set_child_packing(self.ctitle,0,0,2,gtk.PACK_START)
   self.ctitle.set_text(getit(fileid,'ctitle'))
   self.ctitle.show()
-  activateInfoEntry(self.ctitle,fileid,"ctitle")
+  activateInfoEntry(self.ctitle,scroll,people.get(fileid),fileid,"ctitle")
   if config['familyfirst'] == True:
     self.namebox.add(self.l2)
     self.namebox.add(self.fname)
@@ -252,15 +102,17 @@ def initPinfo(self, fileid):
   self.l3.show()
   self.l4.show()
   self.l5.show()
-  self.cname = buildarow("Common Name:",fileid,'commonname') # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
+  offset += self.namebox.get_allocation().height
+  self.cname = buildarow(scroll,"Common Name:",people.get(fileid),fileid,'commonname') # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
   self.add(self.cname)
-  self.nname = buildarow("Nickname:",fileid,'nname')
+  offset += self.cname.get_allocation().height
+  self.nname = buildarow(scroll,"Nickname:",people.get(fileid),fileid,'nname')
   self.add(self.nname)
-  self.gender = buildGenderRow(fileid)
+  self.gender = buildGenderRow(scroll,people.get(fileid),fileid)
   self.add(self.gender)
-  self.bday = buildarow("Birth Date:",fileid,'bday')
+  self.bday = buildarow(scroll,"Birth Date:",people.get(fileid),fileid,'bday')
   self.add(self.bday)
-  self.dday = buildarow("Death Date:",fileid,'dday')
+  self.dday = buildarow(scroll,"Death Date:",people.get(fileid),fileid,'dday')
   self.add(self.dday)
   self.l6 = gtk.Label("Stories")
   self.l6.set_alignment(0,0)
@@ -269,17 +121,16 @@ def initPinfo(self, fileid):
   self.s1 = gtk.HSeparator()
   self.add(self.s1)
   self.s1.show()
-  self.stories = buildstoryrow(fileid,self) # TODO: Some day, this will be a dynamic list of checkboxes
-# Option: show stories as raw value, as a list of title values. Put this in buildstoryrow
-  self.mention = buildarow("First Mention:",fileid,'mention')
+  self.stories = buildarow(scroll,"Stories:",people.get(fileid),fileid,'stories',2)
+  self.mention = buildarow(scroll,"First Mention:",people.get(fileid),fileid,'mention')
   self.add(self.mention)
-  self.appearch = buildarow("First appeared (chron):",fileid,'appear1ch')
+  self.appearch = buildarow(scroll,"First appeared (chron):",people.get(fileid),fileid,'appear1ch')
   self.add(self.appearch)
-  self.appearwr = buildarow("First appeared (writ):",fileid,'appear1wr')
+  self.appearwr = buildarow(scroll,"First appeared (writ):",people.get(fileid),fileid,'appear1wr')
   self.add(self.appearwr)
-  self.conflict = buildarow("Conflict:",fileid,'conflict')
+  self.conflict = buildarow(scroll,"Conflict:",people.get(fileid),fileid,'conflict')
   self.add(self.conflict)
-  self.leadrel = buildarow("Relation to lead:",fileid,'leadrel')
+  self.leadrel = buildarow(scroll,"Relation to lead:",people.get(fileid),fileid,'leadrel')
   self.add(self.leadrel)
   self.l7 = gtk.Label("Physical Appearance")
   self.l7.set_alignment(0,1)
@@ -288,23 +139,23 @@ def initPinfo(self, fileid):
   self.s2 = gtk.HSeparator()
   self.add(self.s2)
   self.s2.show()
-  self.bodytyp = buildarow("Body Type:",fileid,'bodytyp')
+  self.bodytyp = buildarow(scroll,"Body Type:",people.get(fileid),fileid,'bodytyp')
   self.add(self.bodytyp)
-  self.age = buildarow("Age:",fileid,'age')
+  self.age = buildarow(scroll,"Age:",people.get(fileid),fileid,'age')
   self.add(self.age)
-  self.skin = buildarow("Skin:",fileid,'skin')
+  self.skin = buildarow(scroll,"Skin:",people.get(fileid),fileid,'skin')
   self.add(self.skin)
-  self.eyes = buildarow("Eyes:",fileid,'eyes')
+  self.eyes = buildarow(scroll,"Eyes:",people.get(fileid),fileid,'eyes')
   self.add(self.eyes)
-  self.hair = buildarow("Hair:",fileid,'hair')
+  self.hair = buildarow(scroll,"Hair:",people.get(fileid),fileid,'hair')
   self.add(self.hair)
-  self.dmarks = buildarow("Distinguishing Marks:",fileid,'dmarks')
+  self.dmarks = buildarow(scroll,"Distinguishing Marks:",people.get(fileid),fileid,'dmarks')
   self.add(self.dmarks)
-  self.dress = buildarow("Dress:",fileid,'dress')
+  self.dress = buildarow(scroll,"Dress:",people.get(fileid),fileid,'dress')
   self.add(self.dress)
-  self.attpos = buildarow("Attached Possessions:",fileid,'attpos')
+  self.attpos = buildarow(scroll,"Attached Possessions:",people.get(fileid),fileid,'attpos')
   self.add(self.attpos)
-  self.asmell = buildarow("Associated Smell:",fileid,'asmell')
+  self.asmell = buildarow(scroll,"Associated Smell:",people.get(fileid),fileid,'asmell')
   self.add(self.asmell)
   self.l8 = gtk.Label("Personality Traits")
   self.l8.set_alignment(0,1)
@@ -313,21 +164,21 @@ def initPinfo(self, fileid):
   self.s3 = gtk.HSeparator()
   self.add(self.s3)
   self.s3.show()
-  self.pers = buildarow("Personality:",fileid,'personality')
+  self.pers = buildarow(scroll,"Personality:",people.get(fileid),fileid,'personality')
   self.add(self.pers)
-  self.speech = buildarow("Distinct Speech:",fileid,'asmell')
+  self.speech = buildarow(scroll,"Distinct Speech:",people.get(fileid),fileid,'asmell')
   self.add(self.speech)
-  self.formocc = buildarow("Former Occupation:",fileid,'formocc',1)
+  self.formocc = buildarow(scroll,"Former Occupation:",people.get(fileid),fileid,'formocc',1)
   self.add(self.formocc)
-  self.curocc = buildarow("Current Occupation:",fileid,'currocc',1)
+  self.curocc = buildarow(scroll,"Current Occupation:",people.get(fileid),fileid,'currocc',1)
   self.add(self.curocc)
-  self.strength = buildarow("Strengths:",fileid,'strength')
+  self.strength = buildarow(scroll,"Strengths:",people.get(fileid),fileid,'strength')
   self.add(self.strength)
-  self.weak = buildarow("Weakness:",fileid,'weak')
+  self.weak = buildarow(scroll,"Weakness:",people.get(fileid),fileid,'weak')
   self.add(self.weak)
-  self.mole = buildarow("Mole:",fileid,'mole')
+  self.mole = buildarow(scroll,"Mole:",people.get(fileid),fileid,'mole')
   self.add(self.mole)
-  self.hobby = buildarow("Hobby:",fileid,'hobby')
+  self.hobby = buildarow(scroll,"Hobby:",people.get(fileid),fileid,'hobby')
   self.add(self.hobby)
   self.l9 = gtk.Label("Miscellany")
   self.l9.set_alignment(0,1)
@@ -336,28 +187,29 @@ def initPinfo(self, fileid):
   self.s4 = gtk.HSeparator()
   self.add(self.s4)
   self.s4.show()
-  self.misc = buildarow("Misc:",fileid,'misc') # make a textbox
+  self.misc = buildarow(scroll,"Misc:",people.get(fileid),fileid,'misc') # make a textbox
   self.add(self.misc)
-  self.ethnic = buildarow("Ethnic background:",fileid,'ethnic')
+  self.ethnic = buildarow(scroll,"Ethnic background:",people.get(fileid),fileid,'ethnic')
   self.add(self.ethnic)
-  self.origin = buildarow("Origin:",fileid,'origin')
+  self.origin = buildarow(scroll,"Origin:",people.get(fileid),fileid,'origin')
   self.add(self.origin)
-  self.backs = buildarow("Background:",fileid,'backstory') # make a textbox someday?
+  self.backs = buildarow(scroll,"Background:",people.get(fileid),fileid,'backstory') # make a textbox someday?
   self.add(self.backs)
-  self.residence = buildarow("Place of residence:",fileid,'residence')
+  self.residence = buildarow(scroll,"Place of residence:",people.get(fileid),fileid,'residence')
   self.add(self.residence)
-  self.minchar = buildarow("Minor related characters:",fileid,'minchar')
+  self.minchar = buildarow(scroll,"Minor related characters:",people.get(fileid),fileid,'minchar')
   self.add(self.minchar)
-  self.talent = buildarow("Talents:",fileid,'talent')
+  self.talent = buildarow(scroll,"Talents:",people.get(fileid),fileid,'talent')
   self.add(self.talent)
-  self.abil = buildarow("Abilities:",fileid,'abil') # textbox someday?
+  self.abil = buildarow(scroll,"Abilities:",people.get(fileid),fileid,'abil') # textbox someday?
   self.add(self.abil)
-  self.sgoal = buildarow("Story goal:",fileid,'sgoal')
+  self.sgoal = buildarow(scroll,"Story goal:",people.get(fileid),fileid,'sgoal')
   self.add(self.sgoal)
-  self.other = buildarow("Other notes:",fileid,'other') # textbox someday
+  self.other = buildarow(scroll,"Other notes:",people.get(fileid),fileid,'other') # textbox someday
   self.add(self.other)
 
 def initPrels(self, fileid,tabs):
+  scroll = self.get_parent()
   global people
   global config
   name = []
@@ -429,7 +281,7 @@ def initPrels(self, fileid,tabs):
         keys.sort()
         for key in keys:
           r = rels[key]
-          listRel(self,r,fileid,key,tabs)
+          listRel(self,r,fileid,key,scroll,tabs)
     if typed.get("uncat"):
       unname = "Uncategorized/New"
     label = gtk.Label("*** %s ***" % unname)
@@ -445,8 +297,8 @@ def initPrels(self, fileid,tabs):
       keys.sort()
       for key in keys:
         r = rels[key]
-        listRel(uncatbox,r,fileid,key,tabs)
-  self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,fileid,"Connect to " + nameperson)
+        listRel(uncatbox,r,fileid,key,scroll,tabs)
+  self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,scroll,fileid,"Connect to " + nameperson)
   self.add(uncatbox)
 #  self.show_all()
 
@@ -467,6 +319,7 @@ def displayPerson(callingWidget,fileid, tabrow):
     people[fileid]['info'] = p[0]
     people[fileid]['relat'] = p[1]
     people[fileid]['changed'] = False
+    people[fileid]['cat'] = 'p'
   tabrow.vbox = gtk.VBox()
   tabrow.vbox.show()
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
@@ -610,7 +463,7 @@ def mkPerson(callingWidget,fileid,tabs):
 #      writeListFile()
   displayPerson(callingWidget,fileid,tabs)
 
-def listRel(self,r,fileid,relid,target = None):
+def listRel(self,r,fileid,relid,scroll,target = None):
   if not r.get("related"): return
   name = r['related'][0]
   if not r.get("cat"): return
@@ -632,7 +485,7 @@ def listRel(self,r,fileid,relid,target = None):
   nameentry = gtk.Entry()
   nameentry.show()
   nameentry.set_text(name)
-  activateRelEntry(nameentry,fileid,relid,"related")
+  activateRelEntry(nameentry,scroll,people.get(fileid),fileid,relid,"related")
   row1.pack_start(nameentry,1,1)
   relation = gtk.Label(r['relation'][0])
   relation.show()
@@ -642,12 +495,12 @@ def listRel(self,r,fileid,relid,target = None):
   relset.show()
   relset.set_alignment(0.5,0.5)
   relset.set_size_request(36,24)
-  genderR = getInf([relid,"info","gender"])
+  genderR = getInf(people.get(relid),["info","gender"])
   if not genderR or genderR == "":
     p = loadPerson(relid)
     genderR = p[0].get("gender",['N',False])
     genderR = genderR[0]
-  genderP = getInf([fileid,"info","gender"])
+  genderP = getInf(people.get(fileid),["info","gender"])
   relset.connect("clicked",selectConnectionP,relation,fileid,relid,name,cat,genderR,genderP)
   row1.pack_start(relset,0,0,5)
   row2 = gtk.HBox()
@@ -656,16 +509,22 @@ def listRel(self,r,fileid,relid,target = None):
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
+#  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
   row2.pack_start(mileadd,0,0,5)
-  row2.pack_start(gtk.Label("Date"),1,1,3)
-  row2.pack_start(gtk.Label("Event"),1,1,3)
+  dhead = gtk.Label("Date")
+  dhead.show()
+  dhead.set_width_chars(8)
+  row2.pack_start(dhead,1,1,2)
+  ehead = gtk.Label("Event")
+  ehead.show()
+  ehead.set_width_chars(18)
+  row2.pack_start(ehead,1,1,2)
   row2.show_all()
   row3 = gtk.VBox()
   row3.show()
   self.pack_start(row3,0,0,2)
   boxwidth = self.size_request()[0]
-  mileadd.connect("clicked",addMilestone,row3,fileid,relid,boxwidth)
+  mileadd.connect("clicked",addMilestone,scroll,row3,people.get(fileid),fileid,"relat",relid,boxwidth)
   if r.get("events"):
     for i in r['events']:
 #      showMile(row3,r,i,fileid,relid)
@@ -678,211 +537,33 @@ def listRel(self,r,fileid,relid,target = None):
         rowmile.show()
         blank = gtk.Label()
         blank.show()
-        blank.set_size_request(int(boxwidth * 0.20),10)
-        rowmile.pack_start(blank,1,1,2)
+        blank.set_width_chars(12)
+        rowmile.pack_start(blank,0,0,2)
         d = gtk.Entry()
         d.show()
+        d.set_width_chars(12)
         d.set_text(events['date'][0])
-        activateRelEntry(d,fileid,relid,"date",i)
+        data = people.get(fileid)
+        activateRelEntry(d,scroll,data,fileid,relid,"date",i)
         rowmile.pack_start(d,1,1,2)
         e = gtk.Entry()
         e.show()
+        e.set_width_chars(18)
         e.set_text(events['event'][0])
-        activateRelEntry(e,fileid,relid,"event",i)
+        activateRelEntry(e,scroll,data,fileid,relid,"event",i)
         rowmile.pack_start(e,1,1,2)
         row3.add(rowmile)
 
-def activateRelEntry(self, fileid,relid,key,event = None):
-  path = [fileid,"relat",relid]
-  if event:
-    path.extend(["events",event,key])
-  else:
-    path.append(key)
-  self.connect("focus-out-event", checkForChange,path)
-
-def addMilestone(caller,target,fileid,relid,boxwidth):
-  global people
-  i = 0
-  err = False
-  if people.get(fileid):
-    if people[fileid].get("relat"):
-      if people[fileid]['relat'].get(relid):
-        if not people[fileid]['relat'][relid].get("events"):
-          people[fileid]['relat'][relid]["events"] = {}
-        i = str(len(people[fileid]['relat'][relid]['events']))
-        people[fileid]['relat'][relid]['events'][i] = {}
-        people[fileid]['relat'][relid]['events'][i]['date'] = ["",False]
-        people[fileid]['relat'][relid]['events'][i]['event'] = ["",False]
-      else:
-        print "Could not find related person " + relid + "!"
-        err = True
-    else:
-      print "Person " + fileid + " has no relations!"
-      err = True
-  else:
-    print "Could not find person " + fileid + "!"
-    err = True
-  if config['debug'] > 0: print str(target)
-  if not err:
-    rowmile = gtk.HBox()
-    rowmile.show()
-    blank = gtk.Label()
-    blank.show()
-    blank.set_size_request(int(boxwidth * 0.20),10)
-    rowmile.pack_start(blank,1,1,2)
-    d = gtk.Entry()
-    d.show()
-    d.set_text(people[fileid]['relat'][relid]['events'][i]['date'][0])
-    activateRelEntry(d,fileid,relid,"date",i)
-    rowmile.pack_start(d,1,1,2)
-    d.grab_focus()
-    e = gtk.Entry()
-    e.show()
-    e.set_text(people[fileid]['relat'][relid]['events'][i]['event'][0])
-    activateRelEntry(e,fileid,relid,"event",i)
-    rowmile.pack_start(e,1,1,2)
-    target.add(rowmile)
-
-def connectToPerson(parent,target,tabs,fileid,title = None):
+def connectToPerson(parent,target,tabs,scroll,fileid,title = None):
   global status
   relid = recordSelectBox(None,fileid,title)
   if relid and len(relid[1]):
-    addRelToBox(parent,target,relid,fileid,tabs)
+    addRelToBox(parent,target,relid,fileid,tabs,scroll)
     status.push(0,"Added connection to %s on %s" % (relid,fileid))
   else:
     status.push(0,"Adding connection on %s cancelled" % fileid)
 
-def addOccMilestone(caller,target,fileid,key):
-  global people
-  i = 0
-  err = False
-  if people.get(fileid):
-    if people[fileid].get("info"):
-      if people[fileid]['info'].get(key):
-        if not people[fileid]['info'][key].get("events"):
-          people[fileid]['info'][key]['events'] = {}
-        i = len(people[fileid]['info'][key]['events'])
-        people[fileid]['info'][key]['events'][str(i)] = {}
-        people[fileid]['info'][key]['events'][str(i)]['date'] = ["",False]
-        people[fileid]['info'][key]['events'][str(i)]['event'] = ["",False]
-      else:
-        print "Person " + fileid + " has no " + key + "!"
-        err = True
-    else:
-      print "Person " + fileid + " has no info!"
-      err = True
-  else:
-    print "Could not find person " + fileid + "!"
-    err = True
-  if config['debug'] > 0: print "Target: " + str(target)
-  if not err:
-    data = people[fileid]['info'][key] # we checked each step this far earlier, so no error check here
-    value = data['events'][str(i)].get("date","")
-    if value: value = value[0]
-    rda = gtk.Entry()
-    extraargs = ["events",str(i),"date"]
-    activateInfoEntry(rda,fileid,key,len(extraargs),extraargs)
-    rda.show()
-    rda.set_width_chars(12)
-    rda.set_text(value)
-    target.attach(rda,1,2,i + 2,i + 3)
-    rda.grab_focus()
-    value = data['events'][str(i)].get("event","")
-    if value: value = value[0]
-    rev = gtk.Entry()
-    extraargs = ["events",str(i),"event"]
-    activateInfoEntry(rev,fileid,key,len(extraargs),extraargs)
-    rev.show()
-    rev.set_width_chars(10)
-    rev.set_text(value)
-    target.attach(rev,2,3,i + 2,i + 3)
-
-def preReadp(force,path,depth = 0,retries = 0):
-  """Using the global dict 'people' and given a list of keys 'path' and an integer 'depth', prepares a path
-  in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function will build missing
-  tree branches, to allow you to write to the endpoint. Do not call force with a path/depth ending in a list,
-  tuple, or something other than a dict, which this function produces. Call force on one path higher.
-  """
-  global people
-  if depth > len(path): depth = len(path)
-  if depth > 7: depth = 7
-  if path[0] in people.keys():
-    if depth <= 1:
-      return True
-    if path[1] in people[path[0]].keys():
-      if depth <= 2:
-        return True
-      if path[2] in people[path[0]][path[1]].keys():
-        if depth <= 3:
-          return True
-        if path[3] in people[path[0]][path[1]][path[2]].keys():
-          if depth <= 4:
-            return True
-          if path[4] in people[path[0]][path[1]][path[2]][path[3]].keys():
-            if depth <= 5:
-              return True
-            if path[5] in people[path[0]][path[1]][path[2]][path[3]][path[4]].keys():
-              if depth <= 6:
-                return True
-              if path[6] in people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]].keys():
-                return True # Maximum depth reached
-              elif force:
-                people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = {}
-                if retries >= depth: force = False
-                return preReadp(force,path,depth,retries + 1)
-              else: # Not found, and not forcing it to be found
-                return False
-            elif force:
-              people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = {}
-              if retries >= depth: force = False
-              return preReadp(force,path,depth,retries + 1)
-            else: # Not found, and not forcing it to be found
-              return False
-          elif force:
-            people[path[0]][path[1]][path[2]][path[3]][path[4]] = {}
-            if retries >= depth: force = False
-            return preReadp(force,path,depth,retries + 1)
-          else: # Not found, and not forcing it to be found
-            return False
-        elif force:
-          people[path[0]][path[1]][path[2]][path[3]] = {}
-          if retries >= depth: force = False
-          return preReadp(force,path,depth,retries + 1)
-        else: # Not found, and not forcing it to be found
-          return False
-      elif force:
-        people[path[0]][path[1]][path[2]] = {}
-        if retries >= depth: force = False
-        return preReadp(force,path,depth,retries + 1)
-      else: # Not found, and not forcing it to be found
-        return False
-    elif force:
-      people[path[0]][path[1]] = {}
-      if retries >= depth: force = False
-      return preReadp(force,path,depth,retries + 1)
-    else: # Not found, and not forcing it to be found
-      return False
-  else: # First level (fileid) can't be generated.
-    return False
-
-def getInf(path):
-  """Returns the value of a key path, or an empty string."""
-  global people
-  end = len(path) - 1
-  data = people.get(path[0])
-  if not data: return ""
-  i = 1
-  while i < end:
-    if config['debug'] > 5: print str(data) + '\n'
-    if data.get(path[i]):
-      data = data[path[i]]
-      i += 1
-    else:
-      return ""
-  (value,mod) = data.get(path[-1],("",False))
-  return value
-
-def addRelToBox(self,target,relid,fileid,tabs):
+def addRelToBox(self,target,relid,fileid,tabs,scroll):
   global people
   cat = relid[1]
   relid = relid[0]
@@ -924,7 +605,7 @@ def addRelToBox(self,target,relid,fileid,tabs):
       people[fileid]['relat'][relid]['realm'] = ["",False] # Only write this one if user chooses a realm
       # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids])
       people[fileid]['relat'][relid]['events'] = {}
-      listRel(target,people[fileid]['relat'][relid],fileid,relid,tabs)
+      listRel(target,people[fileid]['relat'][relid],fileid,relid,scroll,tabs)
     else:
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
@@ -1025,11 +706,10 @@ def saveThisP(caller,fileid):
     bsay(caller,"Could not load person %s." % fileid)
 
 def isOrderRev(fileid):
-  global people
   global config
   norm = "gf"
   if config['familyfirst']: norm = "fg"
-  value = getInf([fileid,"info","nameorder"])
+  value = getInf(people.get(fileid),["info","nameorder"])
   if value == norm:
     return False
   else:
@@ -1054,7 +734,7 @@ def toggleOrder(caller,fileid):
     people[fileid]['info']['nameorder'] = [norm,True]
     people[fileid]['changed'] = True
 
-def buildGenderRow(fileid,display = 0):
+def buildGenderRow(scroll,data,fileid,display = 0):
   row = gtk.HBox()
   row.show()
   label = gtk.Label("Gender:")
@@ -1064,8 +744,8 @@ def buildGenderRow(fileid,display = 0):
   label.set_width_chars(20)
   label.set_alignment(1,0.5)
   choices = allGenders()
-  path = [fileid,"info","gender"]
-  g = getInf(path)
+  path = ["info","gender"]
+  g = getInf(data,path)
   if display == 1:
     radio = gtk.VBox()
     radio.show()
@@ -1094,6 +774,7 @@ def buildGenderRow(fileid,display = 0):
       i += 1
     gender.set_active(selected)
     gender.connect("changed",setGenderCombo,fileid)
+    gender.connect("focus-in-event",scrollOnTab,scroll)
     row.pack_start(gender,True,True,2)
   return row
 
@@ -1112,50 +793,6 @@ def setGender(caller,fileid,key):
     if config['debug'] > 2: print "New Gender: %s" % key
   else:
     bsay(None,"Could not set gender for %s." % fileid)
-
-def setStories(caller,fileid,x,parent):
-  global people
-  name = getInf([fileid,"info","commonname"])
-  value = ""
-  if config.get('showstories') == "titlelist":
-    value = getInf([fileid,"info","stories"])
-  else:
-    value = x.get_text()
-  value = storyPicker(parent,name,value)
-  if value:
-    if preReadp(False,[fileid,"info","stories"],3):
-      people[fileid]['info']['stories'] = [value,True]
-      people[fileid]['changed'] = True
-    if config.get('showstories') == "titlelist":
-      value = expandTitles(value)
-    x.set_text(value)
-
-def buildstoryrow(fileid,target):
-# Option: show stories as raw value, as a list of title values. Put this in buildstoryrow
-  row = gtk.HBox()
-  row.set_border_width(2)
-  row.show()
-  row.label = gtk.Label("Stories:")
-  row.label.set_width_chars(20)
-  position = 0.5
-  row.label.show()
-  row.pack_start(row.label,False,False,2)
-  stories = None
-  value = getInf([fileid,"info","stories"])
-  if config.get('showstories') == "titlelist":
-    position = 0.03
-    stories = gtk.Label(expandTitles(value))
-  else: # elif config['showstories'] == "idlist":
-    stories = gtk.Label(value)
-  row.label.set_alignment(1,position)
-  stories.show()
-  stories.set_alignment(0,0.5)
-  if stories: row.pack_start(stories,True,True,2)
-  stbut = gtk.Button("Set")
-  stbut.show()
-  stbut.connect("clicked",setStories,fileid,stories,None)
-  row.pack_start(stbut,False,False,2)
-  target.pack_start(row,False,False,2)
 
 def preClose(caller,fileid,target = None):
   result = -8

@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 from backends import (config,)
 from choices import (stories,myStories,saveStories)
-from common import (askBox,kill,csplit,validateFileid)
+from common import (askBox,kill,csplit,validateFileid,expandTitles)
 from status import status
 
 def storyEditor(caller,parent):
@@ -69,8 +69,8 @@ def addStoryRowNew(caller,parent,ed,target):
 This will be what is displayed in your\n\
 backend files. Once set, it cannot be\n\
 changed within this program.  It may\n\
-only contain spaces and word characters\n\
-(A-Z,0-9,_,-)."
+contain word characters (A-Z,0-9,_,-)\n\
+only."
   code = askBox(ed,text,label,subtext)
   code = validateFileid(code)
   if code and len(code) > 0:
@@ -102,12 +102,6 @@ def refreshEd(parent,ed):
   w = int(w/2)
   h = int(h/2)
   ed.move(x - w,y - h)
-
-def setStory(widget,event,key):
-  global stories
-  if stories.get(key) != widget.get_text():
-    stories[key] = widget.get_text()
-    widget.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCFFCC")) # change background for edited
 
 picklist = []
 
@@ -152,19 +146,4 @@ def updatePicklist(caller,key):
     picklist.append(key)
   elif not caller.get_active() and key in picklist:
     picklist.remove(key)
-
-def expandTitles(value):
-  global stories
-  picklist = csplit(str(value))
-  titles = ""
-  if not len(stories):
-    stories = myStories(config.get("worlddir"))
-  for item in picklist:
-    if config['debug'] > 5: print "'%s' - '%s'" % (item,stories.get(item))
-    if stories.get(item):
-      titles += "%s\n" % stories[item]
-    else:
-      titles += "\'%s\'\n" % item
-  titles = titles[:-1]
-  return titles
 

@@ -6,7 +6,8 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (config,worldList,loadConfig,populateWorld,storeWindowExit)
+from backends import (worldList,loadConfig,populateWorld,storeWindowExit)
+from globdata import config
 from person import (displayPerson, addPersonMenu,saveThisP)
 from status import status
 from story import storyEditor

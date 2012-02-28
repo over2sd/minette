@@ -1,3 +1,7 @@
+2012-02-27:
+- Moved several global dictionaries to their own globdata file to prevent circular importing
+- Expanded several person functions and moved them to common
+
 2012-02-25:
 - Redid the layout for the story editor; the old one just wasn't working right
 - Moved some functions from common to getmod

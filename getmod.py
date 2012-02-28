@@ -1,4 +1,10 @@
+import pygtk
+pygtk.require('2.0')
+import gtk
+
 from choices import getRelsP
+from common import askBoxProcessor
+from globdata import worldList
 
 def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need relation's gender than person's
   d = {}
