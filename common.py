@@ -5,6 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+import os
 import re
 import datetime
 from choices import myStories
@@ -235,7 +236,7 @@ def setStories(caller,data,fileid,x,parent):
     x.set_text(value)
 
 def buildaposition(scroll,data,fileid,key): #only applicable to people, but can't put it back in people because of circular import :(
-  """Returns a GTK table containing the data values of the given position."""
+  """Returns a GTK VBox containing the data values of the given position."""
   t = gtk.VBox()
   t.show()
   data = {}
@@ -399,3 +400,34 @@ def scrollOnTab(caller,x,scroll):
     adj = scroll.get_vadjustment()
     adj.set_value(b - 2)
     scroll.set_vadjustment(adj)
+
+def customlabel(cat,text,close = 0):
+  icon = None
+  if cat == 'p':
+    icon = "img/person.png"
+  if cat == 'l':
+    icon = "img/place.png"
+  if cat == 'c':
+    icon = "img/city.png"
+  if cat == 's':
+    icon = "img/state.png"
+  if cat == 'i':
+    icon = "img/item.png"
+  container = gtk.EventBox()
+  row = gtk.HBox()
+  label = gtk.Label(text)
+  image = None
+  if icon:
+    icon = os.path.abspath(icon)
+  if os.path.exists(icon):
+    image = gtk.Image()
+    image.set_from_file(icon)
+    image.show()
+  label.show()
+  row.show()
+  if image:
+    row.pack_start(image,False,False,1)
+  row.pack_start(label,True,True,1)
+  container.add(row)
+  return container
+

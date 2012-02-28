@@ -1,10 +1,11 @@
-<!ELEMENT place ( commonname?, name?, start?, scue?, end?, ecue?, stories?, mention?, desc?, address?, loc?, locfile?, state?, statefile?, note*, relat*, update? ) >
+<!ELEMENT place ( commonname?, name?, start?, scue?, end?, ecue?, stories?, mention?, desc?, address?, loc?, locfile?, state?, statefile?, note*, relat?, update? ) >
 <!ELEMENT address ( #PCDATA )>
 <!ELEMENT name ( #PCDATA )>
 <!ELEMENT start ( #PCDATA )>
 <!ELEMENT scue ( #PCDATA )>
 <!ELEMENT end ( #PCDATA )>
 <!ELEMENT ecue ( #PCDATA )>
+<!ELEMENT content ( #PCDATA )>
 <!ELEMENT stories ( #PCDATA )>
 <!ELEMENT mention ( #PCDATA )>
 <!ELEMENT desc ( #PCDATA )>
@@ -14,7 +15,7 @@
 <!ELEMENT statefile ( #PCDATA )>
 <!ELEMENT note ( content, date )>
 <!ELEMENT commonname ( #PCDATA )>
-<!ELEMENT relat ( related, relation, file?, rtype, events*, cat ) >
+<!ELEMENT relat ( related, relation, file, rtype, events?, cat ) >
 <!ELEMENT cat ( #CDATA ) >
 <!ELEMENT rtype ( #CDATA ) >
 <!ELEMENT related ( #PCDATA )>

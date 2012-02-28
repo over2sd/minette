@@ -1,3 +1,7 @@
+2012-02-28:
+- Started building place loader/saver (XML)
+
+
 2012-02-27:
 - Moved several global dictionaries to their own globdata file to prevent circular importing
 - Expanded several person functions and moved them to common

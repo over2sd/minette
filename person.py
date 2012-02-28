@@ -7,7 +7,7 @@ import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
-activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab)
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
 from person2 import preReadp
@@ -341,7 +341,7 @@ def displayPerson(callingWidget,fileid, tabrow):
   bbar.pack_end(close)
   tabrow.vbox.pack_start(bbar,False,False,2)
   tabrow.vbox.pack_start(tabrow.vbox.ptabs,True,True,2)
-  tabrow.labelname = gtk.Label(fileid)
+  tabrow.labelname = customlabel('p',fileid)
   tabrow.labelname.show()
 #  tabrow.label = gtk.HBox()
 #  tabrow.label.pack_start(tabrow.labelname)
