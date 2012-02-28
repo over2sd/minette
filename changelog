@@ -1,6 +1,7 @@
 2012-02-28:
 - Started building place loader/saver (XML)
-
+- Added icons to notebook tabs (Icons provided by http://www.fatcow.com/free-icons)
+- Started building place display
 
 2012-02-27:
 - Moved several global dictionaries to their own globdata file to prevent circular importing

@@ -4,7 +4,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList,killListFile)
+from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList)
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel)
@@ -40,7 +40,6 @@ def initPinfo(self, fileid):
   except KeyError as e:
     print "An error occurred accessing %s: %s" % (fileid,e)
     return
-  offset = 0
   scroll = self.get_parent()
   self.namelabelbox = gtk.HBox()
   self.namelabelbox.show()
@@ -54,7 +53,6 @@ def initPinfo(self, fileid):
   self.nord.connect("clicked",toggleOrder,fileid)
   self.namelabelbox.pack_start(self.nord,0,0,2)
   self.add(self.namelabelbox)
-  offset += self.namelabelbox.get_allocation().height
   self.namebox = gtk.HBox()
   self.namebox.set_border_width(2)
   self.add(self.namebox)
@@ -102,10 +100,8 @@ def initPinfo(self, fileid):
   self.l3.show()
   self.l4.show()
   self.l5.show()
-  offset += self.namebox.get_allocation().height
   self.cname = buildarow(scroll,"Common Name:",people.get(fileid),fileid,'commonname') # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
   self.add(self.cname)
-  offset += self.cname.get_allocation().height
   self.nname = buildarow(scroll,"Nickname:",people.get(fileid),fileid,'nname')
   self.add(self.nname)
   self.gender = buildGenderRow(scroll,people.get(fileid),fileid)
@@ -329,25 +325,27 @@ def displayPerson(callingWidget,fileid, tabrow):
   bbar.show()
   bbar.set_spacing(2)
   save = gtk.Button("Save")
+  image = gtk.Image()
+  image.set_from_file("img/save.png")
+  save.set_image(image)
   save.connect("clicked",saveThisP,fileid)
   save.show()
   bbar.pack_start(save)
 
 # other buttons...   reload,etc.   ...go here
 
-  close = gtk.Button("X")
-  close.show()
+  close = gtk.Button("Close")
+  image = gtk.Image()
+  image.set_from_file("img/close.png")
+  close.set_image(image)
+  close.show_all()
   close.connect("clicked",preClose,fileid,tabrow.vbox)
   bbar.pack_end(close)
   tabrow.vbox.pack_start(bbar,False,False,2)
   tabrow.vbox.pack_start(tabrow.vbox.ptabs,True,True,2)
-  tabrow.labelname = customlabel('p',fileid)
-  tabrow.labelname.show()
-#  tabrow.label = gtk.HBox()
-#  tabrow.label.pack_start(tabrow.labelname)
-#  tabrow.label.show()
+  tabrow.labelname = customlabel('p',fileid,tabrow.vbox)
+  tabrow.labelname.show_all()
   tabrow.append_page(tabrow.vbox,tabrow.labelname)
-  tabrow.set_tab_label_text(tabrow.vbox,fileid)
 #  if warnme and config['openduplicatetabs']:
 #    tabrow.ptabs.<function to change background color as warning>
 #    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
@@ -393,11 +391,6 @@ def addPersonMenu(self):
   p.append(itemPN)
   itemPN.show()
   itemPN.connect("activate",getFileid,self.tabs)
-  if config['uselistfile']:
-    itemPC = gtk.MenuItem("_Clear list file",True)
-    p.append(itemPC)
-    itemPC.show()
-    itemPC.connect("activate",killListFile)
   itemPL = gtk.MenuItem("_Load",True)
   p.append(itemPL)
   itemPL.show()

@@ -401,7 +401,7 @@ def scrollOnTab(caller,x,scroll):
     adj.set_value(b - 2)
     scroll.set_vadjustment(adj)
 
-def customlabel(cat,text,close = 0):
+def customlabel(cat,text,tab,close = 0):
   icon = None
   if cat == 'p':
     icon = "img/person.png"
@@ -411,9 +411,10 @@ def customlabel(cat,text,close = 0):
     icon = "img/city.png"
   if cat == 's':
     icon = "img/state.png"
+  if cat == 'o':
+    icon = "img/org.png"
   if cat == 'i':
     icon = "img/item.png"
-  container = gtk.EventBox()
   row = gtk.HBox()
   label = gtk.Label(text)
   image = None
@@ -428,6 +429,42 @@ def customlabel(cat,text,close = 0):
   if image:
     row.pack_start(image,False,False,1)
   row.pack_start(label,True,True,1)
-  container.add(row)
-  return container
+  return row
+
+
+def sayBox(parent,text,text2 = None,text3 = None,text4 = None,text5 = None):
+  askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK)
+  askbox.set_markup(text)
+  row = gtk.HBox()
+  if subtext: askbox.format_secondary_markup(subtext)
+  entry = gtk.Entry()
+  entry.connect("activate",askBoxProcessor,askbox,gtk.RESPONSE_OK)
+  row.pack_start(gtk.Label(label),False,False,5)
+  row.pack_start(entry)
+  entry.grab_focus()
+  askbox.vbox.pack_end(row,True,True,0)
+  width, height = askbox.get_size()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  askbox.show_all()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  askbox.run()
+  answer = entry.get_text()
+  askbox.destroy()
+  return answer
+
+
+def addHelpMenu(self):
+  itemH = gtk.MenuItem("_Help",True)
+  itemH.show()
+  self.mb.append(itemH)
+  h = gtk.Menu()
+  h.show()
+  itemH.set_submenu(h)
+  itemHA = gtk.MenuItem("_About",True)
+  h.append(itemHA)
+  itemHA.show()
+  itemHA.connect("activate",showHelp,self)
+
+def showHelp(caller,parent):
+  bsay(parent,"Icons provided by http://www.fatcow.com/free-icons")
 

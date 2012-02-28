@@ -12,6 +12,7 @@ Stage 5: Load and edit city records (XML)
 Stage 6: Load and edit state records (XML)
 Stage 7: Load and edit item records (XML)
 
+Stage ?: Customizable display for different types of persons/places/etc. (interview subjects cf. fictional characters)
 Stage ?: Load person records from SQL
 Stage ?: Save/Update person records to SQL
 Stage ?: Load/Save all other record types (SQL)

@@ -6,9 +6,11 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (worldList,loadConfig,populateWorld,storeWindowExit)
+from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile)
+from common import addHelpMenu
 from globdata import config
 from person import (displayPerson, addPersonMenu,saveThisP)
+from place import (addPlaceMenu,)
 from status import status
 from story import storyEditor
 from getmod import recordSelectBox
@@ -75,22 +77,29 @@ This tutorial will only display as long as you do not use a configuration file. 
     self.mb = gtk.MenuBar()
     self.mb.show()
 # File
-    itemF = gtk.MenuItem("_File",True)
-    itemF.show()
-    self.mb.append(itemF)
-    f = gtk.Menu()
-    f.show()
-    itemF.set_submenu(f)
-    itemFT = gtk.MenuItem("S_tory Editor",True)
-    itemFT.show()
-    f.append(itemFT)
-    itemFT.connect("activate",storyEditor,self.window)
-    itemFQ = gtk.MenuItem("_Quit",True)
-    itemFQ.show()
-    f.append(itemFQ)
-    itemFQ.connect("activate", storeWindowExit,self.window)
+    itemW = gtk.MenuItem("_World",True)
+    itemW.show()
+    self.mb.append(itemW)
+    w = gtk.Menu()
+    w.show()
+    itemW.set_submenu(w)
+    itemWT = gtk.MenuItem("S_tory Editor",True)
+    itemWT.show()
+    w.append(itemWT)
+    itemWT.connect("activate",storyEditor,self.window)
+    if config['uselistfile']:
+      itemWC = gtk.MenuItem("_Clear list file",True)
+      w.append(itemWC)
+      itemWC.show()
+      itemWC.connect("activate",killListFile)
+    itemWQ = gtk.MenuItem("_Quit",True)
+    itemWQ.show()
+    w.append(itemWQ)
+    itemWQ.connect("activate", storeWindowExit,self.window)
 # Person
     addPersonMenu(self)
+    addPlaceMenu(self)
+    addHelpMenu(self)
 
   def delete_event(self,widget,event,data=None):
     if config['debug'] > 3: print self.window.get_size()
@@ -103,6 +112,7 @@ This tutorial will only display as long as you do not use a configuration file. 
 if __name__ == "__main__":
   fn = None
   if len(sys.argv) > 1:
+    print "%s" % sys.argv
     fn = sys.argv[1] # for now, config must be first argument
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
