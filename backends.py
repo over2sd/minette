@@ -162,6 +162,12 @@ def validateConfig(config):
   return config
 
 ### Wrappers
+def getCityList(order = 0):
+  if config['informat'] == "sql":
+    return backsql.getCityList(order)
+  else:
+    return backxml.getCityList(order)
+
 def idExists(fileid,rectyp):
   global config
   if config['informat'] == "sql":

@@ -10,7 +10,7 @@ from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildaro
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
-from person2 import preReadp
+from preread import preReadp
 from status import status
 from story import (storyPicker,expandTitles)
 from math import floor
@@ -688,7 +688,6 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'N',gende
   # TODO: some day, maybe edit and save the other person with reciprocal relational information.
 
 def saveThisP(caller,fileid):
-  global people
   global status
   if people.get(fileid):
     if savePerson(fileid,people[fileid]):
@@ -696,7 +695,7 @@ def saveThisP(caller,fileid):
     else:
       status.push(0,"Error encountered saving %s." % fileid)
   else:
-    bsay(caller,"Could not load person %s." % fileid)
+    bsay(caller,"Could not find person %s." % fileid)
 
 def isOrderRev(fileid):
   global config
@@ -754,6 +753,7 @@ def buildGenderRow(scroll,data,fileid,display = 0):
       group = rbut
       radio.pack_start(rbut,False,False,2)
   else:
+#    gender = gtk.ComboBoxText()
     gender = gtk.combo_box_new_text()
     gender.show()
     selected = -1
@@ -767,6 +767,8 @@ def buildGenderRow(scroll,data,fileid,display = 0):
       i += 1
     gender.set_active(selected)
     gender.connect("changed",setGenderCombo,fileid)
+    gender.connect("move-active",setGenderCombo,fileid)
+    gender.connect("focus",scrollOnTab,scroll)
     gender.connect("focus-in-event",scrollOnTab,scroll)
     row.pack_start(gender,True,True,2)
   return row

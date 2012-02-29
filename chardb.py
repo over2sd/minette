@@ -34,6 +34,8 @@ class Base:
     self.tabs = gtk.Notebook()
     self.tabs.set_scrollable(True)
     if not path.exists(path.abspath(fn)): Base.firstRunTab(self,self.tabs)
+    self.accgroup = gtk.AccelGroup() # for use on menus
+    self.window.add_accel_group(self.accgroup)
     Base.makeMenus(self)
     self.box1.add(self.mb)
     self.box1.add(self.tabs)
@@ -81,6 +83,7 @@ This tutorial will only display as long as you do not use a configuration file. 
     itemW.show()
     self.mb.append(itemW)
     w = gtk.Menu()
+    w.set_accel_group(self.accgroup)
     w.show()
     itemW.set_submenu(w)
     itemWT = gtk.MenuItem("S_tory Editor",True)
@@ -94,6 +97,8 @@ This tutorial will only display as long as you do not use a configuration file. 
       itemWC.connect("activate",killListFile)
     itemWQ = gtk.MenuItem("_Quit",True)
     itemWQ.show()
+    k,m = gtk.accelerator_parse("<Control>Q")
+    itemWQ.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
     w.append(itemWQ)
     itemWQ.connect("activate", storeWindowExit,self.window)
 # Person

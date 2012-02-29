@@ -4,6 +4,51 @@ from status import status
 import codecs
 import os
 
+locs = {}
+lockeys = {}
+
+def getCityList(order):
+  global locs
+  global lockeys
+  if not len(worldList): populateWorld()
+#  else:
+#    print len(worldList['c'])
+  if len(locs):
+    return locs
+  elif order == 0:
+    for city in worldList['c']:
+      cityloc = None
+      if len(city) > 0: cityloc = getCityLoc(city)
+      if cityloc:
+        locs[city] = cityloc
+    return locs
+  elif order == 1:
+    if not len(locs): getCityList(0)
+    if not len(lockeys):
+      for loc in locs:
+        cityloc = None
+        if len(city) > 0: cityloc = getCityLoc(loc)
+        if cityloc:
+          lockeys["%s, %s" % (cityloc[0],cityloc[2])] = loc
+    return lockeys
+
+def getCityLoc(fileid):
+  root = etree.Element("place")
+  fileid = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"reading city location from XML... '" + fileid + "'")
+  try:
+    with codecs.open(fileid,'rU','utf-8') as f:
+      tree = etree.parse(f)
+      f.close()
+      root = tree.getroot()
+  except IOError as e:
+    print " Could not open configuration file: %s" % e
+  print root
+  cityname = root.find("name").text.strip()
+  statename = root.find("state").text.strip()
+  statefile = root.find("statefile").text.strip()
+  return [cityname,statefile,statename]
+
 def idExists(fileid):
   global config
   if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml") + "...",
@@ -317,6 +362,10 @@ def populateWorld():
   worldList['c'] = cities
   worldList['s'] = states
   worldList['o'] = orgs
+  for key in worldList.keys():
+    if len(worldList[key]):
+      if not len(worldList[key][0]):
+        worldList[key] = {}
   fn = os.path.join(config['worlddir'],"myworld.cfg")
   if config['uselistfile'] and not os.path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."

@@ -10,7 +10,7 @@ import re
 import datetime
 from choices import myStories
 from globdata import (config,people,places,stories)
-from person2 import preReadp
+import preread
 from status import status
 
 def say(text):
@@ -103,6 +103,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
     stbut.show()
     stbut.connect("clicked",setStories,data,fileid,row.e,None)
     row.pack_end(stbut,False,False,2)
+    row.e.set_alignment(0.05,0)
   row.label.set_alignment(1,valign)
   row.label.show()
   row.pack_start(row.label,0,0,2)
@@ -110,10 +111,12 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   row.pack_start(row.e,1,1,2)
   return row
 
-def getInf(data,path):
-  """Returns the value of a key path in the given data, or an empty string."""
+def getInf(data,path,default = ""):
+  """Returns the value of a key path in the given data, a given default, or an empty string."""
   end = len(path) - 1
-  if not data: return ""
+  if not data or end < 0:
+    print "Bad data to getInf: %s %s" % (data, path)
+    return default
   i = 0
   while i < end:
     if config['debug'] > 5: print str(data) + '\n'
@@ -121,23 +124,37 @@ def getInf(data,path):
       data = data[path[i]]
       i += 1
     else:
-      return ""
-  (value,mod) = data.get(path[-1],("",False))
+      return default
+  value = default
+  try:
+    (value,mod) = data.get(path[-1],(default,False))
+  except ValueError as e:
+    print "%s yields %s with %s" % (path,data.get(path[-1],(default,False)),e)
   return value
 
 def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
   cat = data.get("cat")
   path = []
-  if cat == 'p': path = [fileid,"info",key]
+  if cat == 'p' or cat == 'l': path = [fileid,"info",key]
   for i in range(len(exargs)): path.append(exargs[i])
   self.connect("focus-out-event", checkForChange,data,path)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
-def checkForChange(self,event,data,path):
+def activateNoteEntry(self, scroll, data, fileid, i,date):
+  cat = data.get("cat")
+  path = []
+  if cat == 'l': path = [fileid,"info","notes",i]
+  self.connect("focus-out-event", checkForChange,data,path,date)
+  self.connect("focus-in-event",scrollOnTab,scroll)
+
+def checkForChange(self,event,data,path,optionaltarget = None):
   if config['debug'] > 3: print "Checking " + str(path)
   if getInf(data,path[1:]) != self.get_text():
     if config['debug'] > 2 : print str(getInf(data,path[1:])) + " vs " + self.get_text()
     markChanged(self,data.get("cat"),path)
+    if optionaltarget: # Automatically update a linked date field
+      optionaltarget.set_text(skrTimeStamp(1))
+      markChanged(optionaltarget,data.get("cat"),path)
 
 def markChanged(self,cat,path):
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
@@ -147,7 +164,7 @@ def markChanged(self,cat,path):
   value[0] = self.get_text()
   if cat == 'p':
     global people
-    goforit = preReadp(True,path[:-1],end)
+    goforit = preread.preReadp(True,path[:-1],end)
     if goforit:
       if end == 3:
         try:
@@ -188,7 +205,47 @@ def markChanged(self,cat,path):
       print "Invalid path"
       return
   elif cat == 'l':
-    print "Place"
+    global places
+    goforit = preread.preReadl(True,path[:-1],end)
+    if goforit:
+      if end == 3:
+        try:
+          places[path[0]][path[1]][path[2]] = value
+        except KeyError:
+          print "Could not mark " + path[2] + " as changed."
+          return
+      elif end == 4:
+        try:
+          places[path[0]][path[1]][path[2]][path[3]] = value
+        except KeyError:
+          print "Could not mark " + path[3] + " as changed."
+          return
+      elif end == 5:
+        try:
+          places[path[0]][path[1]][path[2]][path[3]][path[4]] = value
+        except KeyError:
+          print "Could not mark " + path[4] + " as changed."
+          return
+      elif end == 6:
+        try:
+          places[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
+        except KeyError:
+          print "Could not mark " + path[5] + " as changed."
+          return
+      elif end == 7:
+        try:
+          places[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
+        except KeyError:
+          print "Could not mark " + path[6] + " as changed."
+          return
+      else:
+        say("Path too long")
+        return
+      places[path[0]]['changed'] = True
+      if config['debug'] > 2: print "Value set: " + getInf(places.get(path[0]),path[1:])
+    else:
+      print "Invalid path"
+      return
 
 def expandTitles(value):
   global stories
@@ -223,12 +280,12 @@ def setStories(caller,data,fileid,x,parent):
   if value:
     if cat == 'p':
       global people
-      if preReadp(False,[fileid,"info","stories"],3):
+      if preread.preReadp(False,[fileid,"info","stories"],3):
         people[fileid]['info']['stories'] = [value,True]
         people[fileid]['changed'] = True
     elif cat == 'l':
       global places
-      if preReadl(False,[fileid,"info","stories"],3):
+      if preread.preReadl(False,[fileid,"info","stories"],3):
         places[fileid]['info']['stories'] = [value,True]
         places[fileid]['changed'] = True
     if config.get('showstories') == "titlelist":
@@ -320,7 +377,6 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
   return t
 
 def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
-  global people
   i = 0
   err = False
   if data:
