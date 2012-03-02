@@ -86,7 +86,6 @@ def loadPerson(fileid):
   events['0']['event'] = ["",False]
   dinf['currocc']['events'] = events
   dinf['formocc']['events'] = events
-  # if no relations, leave blank
   if not idExists(fileid):
     status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
@@ -104,25 +103,32 @@ def loadPerson(fileid):
   for i in range(len(root)):
     if root[i].tag is not None:
       if root[i].tag == "relat":
-        node = ""
-        try:
-          node = root[i].find("file").text.strip()
-        except AttributeError:
-          bsay("?","XML formatting error in %s! Probably an empty relat tag." % fileid)
-        drel[node] = {}
-        for j in root[i]:
-          if j.tag == "events":
-            if not drel[node].get('events'): drel[node]['events'] = {}
-            for k in j:
-              stone = str(len(drel[node]['events']))
-              drel[node]['events'][stone] = {}
-              for m in k:
-                if m.tag and m.text:
-                  drel[node]['events'][stone][m.tag] = [m.text.strip(),False]
-          else: # elif j.tag != "file":
-            if j.tag and j.text:
-              drel[node][j.tag] = [j.text.strip(),False]
-        if config['debug'] > 3: print drel[node]
+        if len(root[i]) > 0:
+          node = ""
+          node = root[i].find("file")
+          if node:
+            node = node.strip()
+            drel[node] = {}
+            for j in root[i]:
+              if j.tag == "events":
+                if not drel[node].get('events'): drel[node]['events'] = {}
+                for k in j:
+                  stone = str(len(drel[node]['events']))
+                  drel[node]['events'][stone] = {}
+                  for m in k:
+                    if m.tag and m.text:
+                      drel[node]['events'][stone][m.tag] = [m.text.strip(),False]
+              else: # elif j.tag != "file":
+                if j.tag and j.text:
+                  drel[node][j.tag] = [j.text.strip(),False]
+            if config['debug'] > 3: print drel[node]
+          else:
+            if config['debug'] > 0:
+              print "Invalid relat tag:"
+              for c in root[i]:
+                print c.tag
+        else: # no relat length
+          if config['debug'] > 0: print "Empty relat tag."
       elif root[i].tag == "currocc":
 #        print ",",
         dinf['currocc'] = {}
@@ -412,32 +418,15 @@ def savePerson(fileid,data):
                   value = rels[r].get(t)
                   if value is None: value = ['',False]
                   etree.SubElement(connected,t).text = value[0]
+              elif t == "file":
+                value = [r,False]
+                etree.SubElement(connected,t).text = value[0]
             person.append(connected)
           else:
             print "A required tag is missing from relation %s." % r
       else:
         print "no relations found"
-    elif tag == "currocc":
-      if info[tag].get("pos"):
-        occ = etree.Element(tag)
-        value = info[tag].get("pos")
-        if value is None: value = ['',False]
-        etree.SubElement(occ,"pos").text = value[0]
-        if info[tag].get("events"):
-          if len(info[tag]['events']):
-            events = etree.Element("events")
-            elist = info[tag]['events'].keys()
-            chron = sorted(elist, key = lambda x: info[tag]['events'][x].get("date"))
-            for e in chron:
-              mstone = etree.Element("mstone")
-              etree.SubElement(mstone,"date").text = info[tag]['events'][e].get("date",("",False))[0]
-              etree.SubElement(mstone,"event").text = info[tag]['events'][e].get("event",("",False))[0]
-              if info[tag]['events'][e].get("Type"):
-                etree.SubElement(mstone,"type").text = info[tag]['events'][e].get("type")[0]
-              events.append(mstone)
-          occ.append(events)
-        person.append( occ )
-    elif tag == "formocc":
+    elif tag == "currocc" or tag == "formocc":
       if info[tag].get("pos"):
         occ = etree.Element(tag)
         value = info[tag].get("pos")

@@ -13,6 +13,7 @@ from choices import myStories
 from globdata import (config,people,places,stories)
 import preread
 from status import status
+import story
 
 def say(text):
   print text # TODO: Make this a GTK dialog box.
@@ -131,6 +132,7 @@ def csplit(s):
       values.append(re.sub(r"\'",r'',item))
   else:
     values = [x.strip() for x in s.split(',')]
+  if not values: values = []
   return values
 
 def buildarow(scroll,name,data,fileid,key,style = 0):
@@ -170,6 +172,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   if style == 3:
     datebut = gtk.Button()
     datebut.show()
+    datebut.unset_flags(gtk.CAN_FOCUS)
     image = gtk.Image()
     image.set_from_file("img/date.png")
     datebut.set_image(image)
@@ -345,7 +348,7 @@ def setStories(caller,data,fileid,x,parent):
     value = getInf(data,["info","stories"])
   else:
     value = x.get_text()
-  value = storyPicker(parent,name,value)
+  value = story.storyPicker(parent,name,value)
   if value:
     if cat == 'p':
       global people
@@ -383,6 +386,7 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
 #    t.addpos = gtk.Button("Add Position")
     t.addmile = gtk.Button("Add milestone")
     t.addmile.show()
+    t.addmile.unset_flags(gtk.CAN_FOCUS)
     r = gtk.HBox()
     r.show()
     r.pack_end(t.addmile,False,False,2)
@@ -430,6 +434,16 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
         rda.set_width_chars(12)
         rda.set_text(value)
         r.pack_start(rda,1,1,2)
+        datebut = gtk.Button()
+        datebut.show()
+        datebut.unset_flags(gtk.CAN_FOCUS)
+        image = gtk.Image()
+        image.set_from_file("img/date.png")
+        datebut.set_image(image)
+        cat = data.get("cat")
+        path = [fileid,"info",key,"events",str(i),"date"]
+        datebut.connect("clicked",dateChoose,rda,data,path)
+        r.pack_start(datebut,0,0,2)
         value = getInf(data,["info",key,"events",str(i),"event"])
         if value: value = value[0]
         rev = gtk.Entry()
@@ -489,6 +503,7 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
     image = gtk.Image()
     image.set_from_file("img/date.png")
     datebut.set_image(image)
+    datebut.unset_flags(gtk.CAN_FOCUS)
     datebut.connect("clicked",dateChoose,d,data,[side,key,'events',i,'date'])
     rowmile.pack_start(datebut,0,0,2)
     e = gtk.Entry()

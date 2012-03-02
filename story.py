@@ -4,9 +4,9 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-from backends import (config,)
 from choices import (stories,myStories,saveStories)
-from common import (askBox,kill,csplit,validateFileid,expandTitles,setStory)
+import common
+from globdata import (config,)
 from status import status
 
 def storyEditor(caller,parent):
@@ -108,7 +108,7 @@ picklist = []
 def storyPicker(parent,name,value):
   global picklist
   global stories
-  picklist = csplit(str(value))
+  picklist = common.csplit(str(value))
   title = "Stories involving %s" % name
   if not len(stories):
     stories = myStories(config.get("worlddir"))
@@ -122,6 +122,7 @@ def storyPicker(parent,name,value):
       button.show()
       button.unset_flags(gtk.CAN_FOCUS)
       button.connect("toggled",updatePicklist,key)
+      if not picklist: picklist = []
       if key in picklist:
         button.set_active(True)
       askbox.vbox.pack_start(button,True,True,2)

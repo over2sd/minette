@@ -7,12 +7,12 @@ import gtk
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList)
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
-activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel)
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
 from preread import preReadp
 from status import status
-from story import (storyPicker,expandTitles)
+from story import storyPicker
 from math import floor
 
 def getit(fileid,key):
@@ -118,6 +118,7 @@ def initPinfo(self, fileid):
   self.add(self.s1)
   self.s1.show()
   self.stories = buildarow(scroll,"Stories:",people.get(fileid),fileid,'stories',2)
+  self.add(self.stories)
   self.mention = buildarow(scroll,"First Mention:",people.get(fileid),fileid,'mention')
   self.add(self.mention)
   self.appearch = buildarow(scroll,"First appeared (chron):",people.get(fileid),fileid,'appear1ch')
@@ -149,7 +150,7 @@ def initPinfo(self, fileid):
   self.add(self.dmarks)
   self.dress = buildarow(scroll,"Dress:",people.get(fileid),fileid,'dress')
   self.add(self.dress)
-  self.attpos = buildarow(scroll,"Attached Possessions:",people.get(fileid),fileid,'attpos')
+  self.attpos = buildarow(scroll,"Attached Possessions:",people.get(fileid),fileid,'attposs')
   self.add(self.attpos)
   self.asmell = buildarow(scroll,"Associated Smell:",people.get(fileid),fileid,'asmell')
   self.add(self.asmell)
@@ -162,7 +163,7 @@ def initPinfo(self, fileid):
   self.s3.show()
   self.pers = buildarow(scroll,"Personality:",people.get(fileid),fileid,'personality')
   self.add(self.pers)
-  self.speech = buildarow(scroll,"Distinct Speech:",people.get(fileid),fileid,'asmell')
+  self.speech = buildarow(scroll,"Distinct Speech:",people.get(fileid),fileid,'speech')
   self.add(self.speech)
   self.formocc = buildarow(scroll,"Former Occupation:",people.get(fileid),fileid,'formocc',1)
   self.add(self.formocc)
@@ -497,7 +498,9 @@ def listRel(self,r,fileid,relid,scroll,target = None):
   relset.show()
   relset.set_alignment(0.5,0.5)
   relset.set_size_request(36,24)
-  genderR = getInf(people.get(relid),["info","gender"])
+  data = people.get(relid,None)
+  genderR = ""
+  if data: genderR = getInf(data,["info","gender"])
   if not genderR or genderR == "":
     p = loadPerson(relid)
     genderR = p[0].get("gender",['N',False])
