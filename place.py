@@ -30,11 +30,11 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
       return
     else:
       places[path[0]][path[1]][path[2]][path[3]]['content'] = ["",False]
-      places[path[0]][path[1]][path[2]][path[3]]['date'] = [skrTimeStamp(1),False]
+      places[path[0]][path[1]][path[2]][path[3]]['date'] = [skrTimeStamp(config['datestyle']),False]
   print i
   row = gtk.HBox()
   row.show()
-  if not dval: dval = skrTimeStamp(1)
+  if not dval: dval = skrTimeStamp(config['datestyle'])
   date = gtk.Label(dval)
   date.show()
   date.set_width_chars(10)
@@ -47,7 +47,8 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   target.pack_start(row,False,False,2)
 
 def addPlaceMenu(self):
-  displayPlace(self,"p-bleakf",self.tabs)
+#  displayPlace(self,"p-bleakf",self.tabs)
+  pass
 
 def buildLocRow(scroll,data,fileid):
   row = gtk.HBox()
@@ -120,6 +121,15 @@ def displayPlace(callingWidget,fileid, tabrow):
   save.connect("clicked",saveThisL,fileid)
   save.show()
   bbar.pack_start(save)
+  if config['debug'] > 0:
+    report = gtk.Button("Report")
+    image = gtk.Image()
+    image.set_from_file("img/report.png")
+    report.set_image(image)
+    report.connect("clicked",showPerson,fileid)
+    report.show()
+    bbar.pack_start(report)
+  # endif
 
 # other buttons...   reload,etc.   ...go here
 
@@ -269,7 +279,7 @@ def initLinfo(self, fileid):
   newbut = gtk.Button("Add a note")
   newbut.show()
   image = gtk.Image()
-  image.set_from_file("img/new.png")
+  image.set_from_file("img/add.png")
   newbut.set_image(image)
   newbut.connect("clicked",addNote,scroll,notebox,fileid)
   box = gtk.HBox()
@@ -343,8 +353,12 @@ def setLoc(caller,fileid,key):
 def setLocCombo(widget,fileid):
   setLoc(None,fileid,widget.get_active_text())
 
+def showPlace(caller,fileid):
+  if places.get(fileid):
+    print places[fileid]
+
 def tabdestroyed(caller,fileid):
-  """Deletes the place's fileid key from people dict so the place can be reloaded."""
+  """Deletes the place's fileid key from places dict so the place can be reloaded."""
   global places
   del places[fileid]
 

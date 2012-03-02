@@ -1,8 +1,13 @@
-import xml.etree.ElementTree as etree
-from globdata import (config,worldList)
-from status import status
 import codecs
+from linecache import getline
 import os
+import re
+import xml.etree.ElementTree as etree
+
+import common
+from globdata import (config,worldList,people,places)
+from status import status
+import xmlout
 
 locs = {}
 lockeys = {}
@@ -325,6 +330,9 @@ def populateWorld():
             print "Unknown type " + values[0] + " found"
       except Exception as e:
         print "There was an error in the configuration file: %s" % e
+  elif not os.path.exists(config['worlddir']):
+    print "Fatal error. World directory %s does not exist! Exiting." % config['worlddir']
+    exit(-1)
   else:
     print "Generating worldList from directory..."
     olist = os.listdir(config['worlddir'])
@@ -365,16 +373,13 @@ def populateWorld():
   for key in worldList.keys():
     if len(worldList[key]):
       if not len(worldList[key][0]):
-        worldList[key] = {}
-  fn = os.path.join(config['worlddir'],"myworld.cfg")
-  if config['uselistfile'] and not os.path.exists(fn):
-    print " writing list file so you won't have to walk the directory again..."
-    writeListFile()
+        worldList[key] = []
   if config['debug'] > 3: print worldList
 
 def savePerson(fileid,data):
   """Given a filename, saves a person's values to an "id" XML file.
   """
+  global people
   info = data.get('info')
   rels = data.get('relat')
   fn = fileid + ".xml"
@@ -453,7 +458,7 @@ def savePerson(fileid,data):
           occ.append(events)
         person.append( occ )
     elif tag == "update":
-      etree.SubElement(person,tag).text = skrTimeStamp(1)
+      etree.SubElement(person,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
       value = info.get(tag)
       if value is None: value = ['',False]
@@ -484,6 +489,7 @@ def savePerson(fileid,data):
 def savePlace(fileid,data):
   """Given a filename, saves a place's values to an "id" XML file.
   """
+  global places
   info = data.get('info')
   rels = data.get('relat')
   fn = fileid + ".xml"
@@ -534,7 +540,7 @@ def savePlace(fileid,data):
               etree.SubElement(note,"date").text = value[0]
               place.append(note)
     elif tag == "update":
-      etree.SubElement(place,tag).text = skrTimeStamp(1)
+      etree.SubElement(place,tag).text = skrTimeStamp(config['datestyle'])
     else:
       value = info.get(tag)
       if value is None: value = ['',False]

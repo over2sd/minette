@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile)
+from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,writeListFile)
 from common import addHelpMenu
 from globdata import config
 from person import (displayPerson, addPersonMenu,saveThisP)
@@ -123,5 +123,9 @@ if __name__ == "__main__":
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
   loadConfig(fn)
   populateWorld()
+  fn = path.join(config['worlddir'],"myworld.cfg")
+  if config['uselistfile'] and not path.exists(fn):
+    print " writing list file so you won't have to walk the directory again..."
+    writeListFile()
   base = Base(fn)
   base.main()

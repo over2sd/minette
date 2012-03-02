@@ -106,9 +106,9 @@ def initPinfo(self, fileid):
   self.add(self.nname)
   self.gender = buildGenderRow(scroll,people.get(fileid),fileid)
   self.add(self.gender)
-  self.bday = buildarow(scroll,"Birth Date:",people.get(fileid),fileid,'bday')
+  self.bday = buildarow(scroll,"Birth Date:",people.get(fileid),fileid,'bday',3)
   self.add(self.bday)
-  self.dday = buildarow(scroll,"Death Date:",people.get(fileid),fileid,'dday')
+  self.dday = buildarow(scroll,"Death Date:",people.get(fileid),fileid,'dday',3)
   self.add(self.dday)
   self.l6 = gtk.Label("Stories")
   self.l6.set_alignment(0,0)
@@ -331,6 +331,15 @@ def displayPerson(callingWidget,fileid, tabrow):
   save.connect("clicked",saveThisP,fileid)
   save.show()
   bbar.pack_start(save)
+  if config['debug'] > 0:
+    report = gtk.Button("Report")
+    image = gtk.Image()
+    image.set_from_file("img/report.png")
+    report.set_image(image)
+    report.connect("clicked",showPerson,fileid)
+    report.show()
+    bbar.pack_start(report)
+  # endif
 
 # other buttons...   reload,etc.   ...go here
 
@@ -687,6 +696,10 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'N',gende
   relation.set_text(people[fileid]['relat'][relid]['relation'])
   # TODO: some day, maybe edit and save the other person with reciprocal relational information.
 
+def showPerson(caller,fileid):
+  if people.get(fileid):
+    print people[fileid]
+
 def saveThisP(caller,fileid):
   global status
   if people.get(fileid):
@@ -702,7 +715,7 @@ def isOrderRev(fileid):
   norm = "gf"
   if config['familyfirst']: norm = "fg"
   value = getInf(people.get(fileid),["info","nameorder"])
-  if value == norm:
+  if value == norm or not value:
     return False
   else:
     return True
@@ -766,15 +779,16 @@ def buildGenderRow(scroll,data,fileid,display = 0):
         selected = i
       i += 1
     gender.set_active(selected)
-    gender.connect("changed",setGenderCombo,fileid)
+    gender.connect("changed",setGenderCombo,None,fileid) # move-action sends an event, so must fill its place when change sends without one
     gender.connect("move-active",setGenderCombo,fileid)
     gender.connect("focus",scrollOnTab,scroll)
     gender.connect("focus-in-event",scrollOnTab,scroll)
     row.pack_start(gender,True,True,2)
   return row
 
-def setGenderCombo(widget,fileid):
+def setGenderCombo(widget,event,fileid):
   setGender(None,fileid,widget.get_active_text())
+  print "Gender changed."
 
 def setGender(caller,fileid,key):
   global people

@@ -8,6 +8,7 @@ import gtk
 import os
 import re
 import datetime
+import time
 from choices import myStories
 from globdata import (config,people,places,stories)
 import preread
@@ -42,6 +43,63 @@ def askBox(parent,text,label,subtext = None):
   askbox.destroy()
   return answer
 
+def dateChoose(caller,target,data,path):
+  askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
+  askbox.set_markup("Choose a date")
+  cal = gtk.Calendar()
+  cal.show()
+  (y,m,d) = parseDate(target.get_text())
+  cal.select_month(m,y)
+  cal.select_day(d)
+  month = gtk.Entry(3)
+  month.set_text(str(m))
+  year = gtk.Entry(5)
+  year.set_text(str(y))
+  row = gtk.HBox()
+  row.show()
+  month.connect("activate",lambda x,y: cal.select_month(int(month.get_text()),int(year.get_text())))
+  year.connect("activate",lambda x,y: cal.select_month(int(month.get_text()),int(year.get_text())))
+  row.pack_start(gtk.Label("Month:"),0,0,2)
+  row.pack_start(month,0,0,2)
+  row.pack_start(gtk.Label("Year:"),0,0,2)
+  row.pack_start(year,0,0,2)
+  row.show_all()
+  askbox.vbox.pack_start(row,0,0,2)
+  askbox.vbox.pack_start(cal,1,1,2)
+  (x,y,w,h) = caller.get_allocation()
+  (x2,y2,w,h) = askbox.get_allocation()
+  w = int(w / 2)
+  h = int(h / 2)
+  askbox.move(x - w,y - h)
+  result = askbox.run()
+  if result == gtk.RESPONSE_OK:
+    setDate(cal,target)
+  askbox.destroy()
+  checkForChange(target,None,data,path)
+
+def setDate(cal,target):
+  (y,m,d) = cal.get_date()
+  t = (y,m,d,0,0,0,0,0,0)
+  style = config.get('datestyle',"%Y/%m/%db")
+  if True: style = re.sub(r'%y',r'%Y',style)
+  target.set_text(time.strftime(style,t))
+
+def parseDate(date):
+  now = datetime.datetime.now()
+  y = now.year
+  m = now.month
+  d = now.day
+  pattern = re.compile(r'.*?([0-9]+)[/\.]([0-9]+)[/\.]([0-9]+)b?')
+  result = pattern.search(date)
+  if result:
+    y = long(result.group(1))
+    if y < 100:
+      if y > config['centbreak']: y -= 100
+      y = config['century'] + y
+    m = int(result.group(2))
+    d = int(result.group(3))
+  return (y,m,d)
+
 def validateFileid(fileid):
   output = ""
   match = re.match(r'^[\w-]+$',fileid)
@@ -49,12 +107,11 @@ def validateFileid(fileid):
   if len(output) > 0: return output
   return None
 
-def skrTimeStamp(style):
+def skrTimeStamp(style = "%y/%m/%db"):
   """Returns a timestamp in one of my preferred formats"""
   ts = ""
   now = datetime.datetime.now()
-  if style == 1:
-    ts = now.strftime("%y/%m/%db")
+  ts = now.strftime(style)
   return ts
 
 def kill(caller,widget):
@@ -62,6 +119,7 @@ def kill(caller,widget):
 
 def csplit(s):
   values = None
+  if not len(str(s)): return values
   if str(s)[0] == '[': # This is not very smart code. But it'll do a little, if the input isn't too wonky.
     pattern = re.compile(r'^\[(.+)\]$')
     match = pattern.search(s)
@@ -83,7 +141,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   row.label = gtk.Label(name)
   row.label.set_width_chars(20)
   valign = 0.5
-  if style == 0:
+  if style == 0 or style == 3:
     value = getInf(data,["info",key])
     row.e = gtk.Entry()
     row.e.set_text(value)
@@ -96,7 +154,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
     row.e = gtk.Label()
     if config.get('showstories') == "titlelist":
       valign = 0.03
-      row.e.set_text(expandTitles(value))
+      if len(str(value)): row.e.set_text(expandTitles(value))
     else: # elif config['showstories'] == "idlist":
       row.e.set_text(value)
     stbut = gtk.Button("Set")
@@ -109,6 +167,16 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   row.pack_start(row.label,0,0,2)
   row.e.show()
   row.pack_start(row.e,1,1,2)
+  if style == 3:
+    datebut = gtk.Button()
+    datebut.show()
+    image = gtk.Image()
+    image.set_from_file("img/date.png")
+    datebut.set_image(image)
+    cat = data.get("cat")
+    path = [fileid,"info",key]
+    datebut.connect("clicked",dateChoose,row.e,data,path)
+    row.pack_start(datebut,0,0,2)
   return row
 
 def getInf(data,path,default = ""):
@@ -153,7 +221,7 @@ def checkForChange(self,event,data,path,optionaltarget = None):
     if config['debug'] > 2 : print str(getInf(data,path[1:])) + " vs " + self.get_text()
     markChanged(self,data.get("cat"),path)
     if optionaltarget: # Automatically update a linked date field
-      optionaltarget.set_text(skrTimeStamp(1))
+      optionaltarget.set_text(skrTimeStamp(config['datestyle']))
       markChanged(optionaltarget,data.get("cat"),path)
 
 def markChanged(self,cat,path):
@@ -249,8 +317,9 @@ def markChanged(self,cat,path):
 
 def expandTitles(value):
   global stories
-  picklist = csplit(str(value))
   titles = ""
+  if not len(str(value)): return titles
+  picklist = csplit(str(value))
   if not len(stories):
     stories = myStories(config.get("worlddir"))
   for item in picklist:
@@ -415,6 +484,13 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
     d.set_text(getInf(data,[side,key,'events',i,'date']))
     rowmile.pack_start(d,1,1,2)
     d.grab_focus()
+    datebut = gtk.Button()
+    datebut.show()
+    image = gtk.Image()
+    image.set_from_file("img/date.png")
+    datebut.set_image(image)
+    datebut.connect("clicked",dateChoose,d,data,[side,key,'events',i,'date'])
+    rowmile.pack_start(datebut,0,0,2)
     e = gtk.Entry()
     e.show()
     e.set_width_chars(18)

@@ -4,11 +4,9 @@
 import codecs
 import re
 import os
-from linecache import getline
 from status import status
 from common import (say,bsay,skrTimeStamp)
 from globdata import (config,worldList)
-import xmlout
 # from configobj import ConfigObj
 
 def storeWindowExit(caller,window):
@@ -143,6 +141,12 @@ def validateConfig(config):
   config['outformat'] = config.get("outformat","xml") # how will we save data?
   config['openduplicatetabs'] = config.get('openduplicatetabs',False) # Should we open duplicate tabs?
   config['worlddir'] = config.get("worlddir","worlds/example/") # Where should I look for XML files and configs?
+  if not os.path.exists(os.path.abspath(config['worlddir'])): # must be a valid directory
+    print "Fatal error. World directory %s does not exist! Exiting." % config['worlddir']
+    exit(-1)
+  config['datestyle'] = config.get("datestyle","%y/%m/%db") # Style of date output
+  config['century'] = config.get("century",2000) # Assumed century for 2-digit years
+  config['centbreak'] = config.get("centbreak",69) # earliest year of previous century
 # Person options
   config['familyfirst'] = config.get("familyfirst",False) # Does the family name come first?
   config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?

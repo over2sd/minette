@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 from backends import (config,)
 from choices import (stories,myStories,saveStories)
-from common import (askBox,kill,csplit,validateFileid,expandTitles)
+from common import (askBox,kill,csplit,validateFileid,expandTitles,setStory)
 from status import status
 
 def storyEditor(caller,parent):
