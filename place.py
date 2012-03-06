@@ -4,18 +4,19 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+from math import floor
 
-from globdata import (config,places,worldList)
 from backends import (loadPlace, savePlace, config, writeListFile, idExists,worldList,killListFile,getCityList)
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
-activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,skrTimeStamp)
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
+skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton)
+from globdata import (config,places,worldList)
 from preread import preReadl
+from status import status
+from story import (storyPicker,)
 """
 from choices import allPlaceCats
 from getmod import (getPlaceConnections,recordSelectBox)
-from status import status
-from story import (storyPicker,expandTitles)
-from math import floor
 """
 
 def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
@@ -31,7 +32,6 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
     else:
       places[path[0]][path[1]][path[2]][path[3]]['content'] = ["",False]
       places[path[0]][path[1]][path[2]][path[3]]['date'] = [skrTimeStamp(config['datestyle']),False]
-  print i
   row = gtk.HBox()
   row.show()
   if not dval: dval = skrTimeStamp(config['datestyle'])
@@ -42,13 +42,61 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   content = gtk.Entry(500)
   content.show()
   if cval: content.set_text(cval)
-  activateNoteEntry(content, scroll, data, fileid,i,date)
   row.pack_end(content,1,1,2)
   target.pack_start(row,False,False,2)
+  activateNoteEntry(content, scroll, data, fileid,i,date)
 
 def addPlaceMenu(self):
-#  displayPlace(self,"p-bleakf",self.tabs)
-  pass
+  itemL = gtk.MenuItem("P_lace",True)
+  itemL.show()
+  self.mb.append(itemL)
+  l = gtk.Menu()
+  l.show()
+  itemL.set_submenu(l)
+  itemLN = gtk.MenuItem("_New",True)
+  l.append(itemLN)
+  itemLN.show()
+  itemLN.connect("activate",getFileid,self.tabs)
+  itemLL = gtk.MenuItem("_Load",True)
+  l.append(itemLL)
+  itemLL.show()
+  ll = gtk.Menu()
+  ll.show()
+  itemLL.set_submenu(ll)
+  places = sorted(worldList['l'])
+  num = len(places)
+  every = num
+  cols = 1
+  if num > 20:
+    cols = int(floor(num/20)) + 1
+    every = int(num / cols) - 1
+  pos = 0
+  countitem = gtk.MenuItem("Total Entries: " + str(num))
+  ll.append(countitem)
+  countitem.show()
+  addPlaceSubmenu(self.tabs,ll,places[pos:pos + every])
+  if num > every:
+    pos += every
+    lsm = addLoadSubmenuItem(ll, num - pos)
+    for i in range(cols):
+      addPlaceSubmenu(self.tabs,lsm,places[pos:pos + every])
+      pos += every
+      if num > pos + 1:
+        lsm = addLoadSubmenuItem(lsm, num - pos)
+      elif num == pos:
+        addPlaceSubmenu(self.tabs,lsm,places[-1:])
+
+def addPlaceSubmenu(tabs,ll,places):
+  digits = "123456789ABCDEFGHIJKL"
+  for i in places:
+    n = -1
+    if places.index(i) < len(digits): n = places.index(i)
+    item = i
+    if n != -1: item = "_%s %s" % (digits[n],i)
+    menu_items = gtk.MenuItem(item,True)
+    ll.append(menu_items)
+    menu_items.connect("activate",displayPlace,i,tabs)
+    menu_items.show()
 
 def buildLocRow(scroll,data,fileid):
   row = gtk.HBox()
@@ -91,7 +139,7 @@ def buildLocRow(scroll,data,fileid):
 def displayPlace(callingWidget,fileid, tabrow):
   global places
   warnme = False
-  if places.get(fileid,None):
+  if places.get(fileid,None) and places[fileid].get("tab"):
     warnme = True
     if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
       status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
@@ -126,7 +174,7 @@ def displayPlace(callingWidget,fileid, tabrow):
     image = gtk.Image()
     image.set_from_file("img/report.png")
     report.set_image(image)
-    report.connect("clicked",showPerson,fileid)
+    report.connect("clicked",showPlace,fileid)
     report.show()
     bbar.pack_start(report)
   # endif
@@ -176,6 +224,15 @@ def displayPlace(callingWidget,fileid, tabrow):
   initLinfo(tabrow.vbox.ltabs.swi.infpage, fileid)
 #  initLrels(tabrow.vbox.ltabs.swr.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
+  places[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
+
+def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New place cancelled"):
+  fileid = askBox(None,one,two,three)
+  fileid = validateFileid(fileid)
+  if fileid and len(fileid) > 0:
+    mkPlace(caller,fileid,tabs)
+  else:
+    say(four)
 
 def initLinfo(self, fileid):
   data = {}
@@ -183,7 +240,7 @@ def initLinfo(self, fileid):
   try:
     data = places.get(fileid)
   except KeyError as e:
-    print "An error occurred accessing %s: %s" % (fileid,e)
+    print "initLinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
   scroll = self.get_parent()
   self.namelabelbox = gtk.HBox()
@@ -200,6 +257,9 @@ def initLinfo(self, fileid):
   self.pack_start(name,0,0,2)
   commonname = buildarow(scroll,"Common Name:",data,fileid,'commonname')
   self.pack_start(commonname,0,0,2)
+  if commonname.e.get_text() == "" and name.e.get_text() != "":
+    commonname.e.set_text(name.e.get_text())
+    commonname.e.emit("focus-out-event",gtk.gdk.Event(gtk.gdk.FOCUS_CHANGE))
   row = gtk.HBox()
   row.show()
   path = ["info","start"]
@@ -211,6 +271,9 @@ def initLinfo(self, fileid):
   start.set_text(getInf(data,path))
   activateInfoEntry(start,scroll,data,fileid,"start")
   row.pack_start(start,True,True,2)
+  path2 = [fileid,"info"]
+  path2.append(path[-1])
+  placeCalendarButton(data,row,start,path2)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -232,6 +295,9 @@ def initLinfo(self, fileid):
   end.set_text(getInf(data,path))
   activateInfoEntry(end,scroll,data,fileid,"end")
   row.pack_start(end,True,True,2)
+  path2 = [fileid,"info"]
+  path2.append(path[-1])
+  placeCalendarButton(data,row,end,path2)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -300,6 +366,19 @@ def initLinfo(self, fileid):
       cval = notes[i].get("content")
       if dval and cval: addNote(self,scroll,notebox,fileid,dval,cval,i)
 
+def mkPlace(callingWidget,fileid,tabs):
+  if idExists(fileid,'l'):
+    say("Existing fileid! Loading instead...")
+  else:
+    L = loadPlace(fileid)
+    places[fileid] = {}
+    places[fileid]['info'] = L[0]
+    places[fileid]['relat'] = L[1]
+    places[fileid]['changed'] = False
+    places[fileid]['cat'] = 'l'
+    saveThisL(callingWidget,fileid)
+  displayPlace(callingWidget,fileid,tabs)
+
 def preClose(caller,fileid,target = None):
   result = -8
   if places.get(fileid):
@@ -329,7 +408,7 @@ def saveThisL(caller,fileid):
     else:
       status.push(0,"Error encountered saving %s." % fileid)
   else:
-    bsay(caller,"Could not find place %s." % fileid)
+    bsay(caller,"saveThisL: Could not find place %s." % fileid)
 
 def setLoc(caller,fileid,key):
   global places
@@ -348,7 +427,7 @@ def setLoc(caller,fileid,key):
       places[fileid]['changed'] = True
       if config['debug'] > 0: print "New Loc: %s" % key
   else:
-    bsay(None,"Could not set loc for %s." % fileid)
+    bsay(None,"setLoc: Could not set loc for %s." % fileid)
 
 def setLocCombo(widget,fileid):
   setLoc(None,fileid,widget.get_active_text())

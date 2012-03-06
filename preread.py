@@ -1,3 +1,6 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
 from globdata import (people,places)
 
 def preReadp(force,path,depth = 0,retries = 0):

@@ -4,31 +4,21 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+from math import floor
+
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList)
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
-activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles)
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,addLoadSubmenuItem)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
 from preread import preReadp
 from status import status
 from story import storyPicker
-from math import floor
 
 def getit(fileid,key):
   """deprecated function. will be removed eventually."""
-  global people
-  data = {}
-  try:
-    data = people[fileid]['info']
-  except KeyError as e:
-    print "Error getting info from %s: %s" % (fileid,e)
-    return ""
-  pair = data.get(key,None)
-  if pair != None:
-    return pair[0]
-  else:
-    return ""
+  raise NameError("Deprecated function getit")
 
 def initPinfo(self, fileid):
   global people
@@ -38,7 +28,7 @@ def initPinfo(self, fileid):
   try:
     info = people[fileid]['info']
   except KeyError as e:
-    print "An error occurred accessing %s: %s" % (fileid,e)
+    print "initPinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
   scroll = self.get_parent()
   self.namelabelbox = gtk.HBox()
@@ -75,7 +65,8 @@ def initPinfo(self, fileid):
   self.gname.set_width_chars(10)
   self.mname.set_width_chars(10)
   self.namebox.set_child_packing(self.ctitle,0,0,2,gtk.PACK_START)
-  self.ctitle.set_text(getit(fileid,'ctitle'))
+  data = people.get(fileid)
+  self.ctitle.set_text(getInf(data,["info","ctitle"]))
   self.ctitle.show()
   activateInfoEntry(self.ctitle,scroll,people.get(fileid),fileid,"ctitle")
   if config['familyfirst'] == True:
@@ -83,17 +74,17 @@ def initPinfo(self, fileid):
     self.namebox.add(self.fname)
   self.namebox.add(self.l3)
   self.namebox.add(self.gname)
-  self.gname.set_text(getit(fileid,'gname'))
+  self.gname.set_text(getInf(data,["info","gname"]))
   self.gname.show()
   self.namebox.add(self.l4)
   self.namebox.add(self.mname)
-  self.mname.set_text(getit(fileid,'mname'))
+  self.mname.set_text(getInf(data,["info","mname"]))
   if config['usemiddle'] == True:
     self.mname.show()
   if config['familyfirst'] == False:
     self.namebox.add(self.l2)
     self.namebox.add(self.fname)
-  self.fname.set_text(getit(fileid,'fname'))
+  self.fname.set_text(getInf(data,["info","fname"]))
   self.fname.show()
   self.l1.show()
   self.l2.show()
@@ -215,8 +206,8 @@ def initPrels(self, fileid,tabs):
   try:
     name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
   except KeyError as e:
-    print "An error occurred accessing %s: %s" % (fileid,e)
-#    print str(people[fileid]['info'].get(e,None))
+    print "initPrels: An error occurred accessing %s: %s" % (fileid,e)
+    if config['debug'] > 5: print str(people[fileid]['info'].get(e,None))
     return
   if people[fileid].get("relat"):
     rels = people[fileid]['relat']
@@ -297,12 +288,11 @@ def initPrels(self, fileid,tabs):
         listRel(uncatbox,r,fileid,key,scroll,tabs)
   self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,scroll,fileid,"Connect to " + nameperson)
   self.add(uncatbox)
-#  self.show_all()
 
 def displayPerson(callingWidget,fileid, tabrow):
   global people
   warnme = False
-  if people.get(fileid,None):
+  if people.get(fileid,None) and people[fileid].get("tab"):
     warnme = True
     if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
       status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
@@ -342,7 +332,7 @@ def displayPerson(callingWidget,fileid, tabrow):
     bbar.pack_start(report)
   # endif
 
-# other buttons...   reload,etc.   ...go here
+  # other buttons...   reload,etc.   ...go here
 
   close = gtk.Button("Close")
   image = gtk.Image()
@@ -387,8 +377,7 @@ def displayPerson(callingWidget,fileid, tabrow):
   initPinfo(tabrow.vbox.ptabs.swi.infpage, fileid)
   initPrels(tabrow.vbox.ptabs.swr.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
-#  tabrow.show_all()
-#  print "I got here, too!"
+  people[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
 def addPersonMenu(self):
   itemP = gtk.MenuItem("_Person",True)
@@ -421,27 +410,23 @@ def addPersonMenu(self):
   addPersonSubmenu(self.tabs,pl,persons[pos:pos + every])
   if num > every:
     pos += every
-    lsm = addPersonSubmenuItem(pl, num - pos)
+    lsm = addLoadSubmenuItem(pl, num - pos)
     for i in range(cols):
       addPersonSubmenu(self.tabs,lsm,persons[pos:pos + every])
       pos += every
       if num > pos + 1:
-        lsm = addPersonSubmenuItem(lsm, num - pos)
+        lsm = addLoadSubmenuItem(lsm, num - pos)
       elif num == pos:
         addPersonSubmenu(self.tabs,lsm,persons[-1:])
 
-def addPersonSubmenuItem(pl, num):
-  itemMore = gtk.MenuItem(str(num) + " _More",True)
-  pl.append(itemMore)
-  itemMore.show()
-  molo = gtk.Menu()
-  molo.show()
-  itemMore.set_submenu(molo)
-  return molo
-
 def addPersonSubmenu(tabs,pl,persons):
+  digits = "123456789ABCDEFGHIJKL"
   for i in persons:
-    menu_items = gtk.MenuItem(i)
+    n = -1
+    if persons.index(i) < len(digits): n = persons.index(i)
+    item = i
+    if n != -1: item = "_%s %s" % (digits[n],i)
+    menu_items = gtk.MenuItem(item,True)
     pl.append(menu_items)
     menu_items.connect("activate",displayPerson,i,tabs)
     menu_items.show()
@@ -459,11 +444,13 @@ def mkPerson(callingWidget,fileid,tabs):
   if idExists(fileid,'p'):
     say("Existing fileid! Loading instead...")
   else:
+    p = loadPerson(fileid)
+    people[fileid] = {}
+    people[fileid]['info'] = p[0]
+    people[fileid]['relat'] = p[1]
+    people[fileid]['changed'] = False
+    people[fileid]['cat'] = 'p'
     saveThisP(callingWidget,fileid)
-    worldList['p'].append(fileid)
-### This should go in the save function, check for its value in file?
-#    if config['uselistfile'] == True:
-#      writeListFile()
   displayPerson(callingWidget,fileid,tabs)
 
 def listRel(self,r,fileid,relid,scroll,target = None):
@@ -583,18 +570,18 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll):
         try:
           inf.get("foo",None)
         except AttributeError:
-          print "Load Error"
+          print "addRelToBox: Load Error"
           return
         try:
           name = [inf['commonname'][0],inf['gname'][0],inf['fname'][0]]
         except KeyError as e:
-          print "An error occurred accessing %s: %s" % (relid,e)
+          print "addRelToBox: An error occurred accessing relation %s: %s" % (relid,e)
           return
       else:
         try:
           name = [people[relid]['info']['commonname'][0],people[relid]['info']['gname'][0],people[relid]['info']['fname'][0]]
         except KeyError as e:
-          print "An error occurred accessing %s: %s" % (relid,e)
+          print "addRelToBox: An error occurred accessing person %s: %s" % (relid,e)
           return
       if len(name[0]) > 2:
         nameperson = name[0]
@@ -631,7 +618,7 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'N',gende
   try:
     name = [people[fileid]['info']['commonname'][0],people[fileid]['info']['gname'][0],people[fileid]['info']['fname'][0]]
   except KeyError as e:
-    print "An error occurred accessing %s: %s" % (fileid,e)
+    print "selectConnectionP: An error occurred accessing %s: %s" % (fileid,e)
     return
   if len(name[0]) > 2:
     nameP = name[0]
@@ -711,7 +698,7 @@ def saveThisP(caller,fileid):
     else:
       status.push(0,"Error encountered saving %s." % fileid)
   else:
-    bsay(caller,"Could not find person %s." % fileid)
+    bsay(caller,"saveThisP: Could not find person %s." % fileid)
 
 def isOrderRev(fileid):
   global config
@@ -727,10 +714,10 @@ def toggleOrder(caller,fileid):
   global people
   global config
   rev = "fg"
+  norm = "gf"
   if config['familyfirst']:
     norm = rev
     rev = "gf"
-  else: norm = "gf"
   if not preReadp(True,[fileid,"info"],2):
     return
   if caller.get_active():
@@ -804,7 +791,7 @@ def setGender(caller,fileid,key):
     people[fileid]['changed'] = True
     if config['debug'] > 2: print "New Gender: %s" % key
   else:
-    bsay(None,"Could not set gender for %s." % fileid)
+    bsay(None,"setGender: Could not set gender for %s." % fileid)
 
 def preClose(caller,fileid,target = None):
   result = -8
@@ -831,4 +818,3 @@ def tabdestroyed(caller,fileid):
   """Deletes the person's fileid key from people dict so the person can be reloaded."""
   global people
   del people[fileid]
-

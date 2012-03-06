@@ -4,11 +4,11 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-
 import os
 import re
 import datetime
 import time
+
 from choices import myStories
 from globdata import (config,people,places,stories)
 import preread
@@ -77,6 +77,8 @@ def dateChoose(caller,target,data,path):
     setDate(cal,target)
   askbox.destroy()
   checkForChange(target,None,data,path)
+
+
 
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
@@ -170,17 +172,22 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   row.e.show()
   row.pack_start(row.e,1,1,2)
   if style == 3:
-    datebut = gtk.Button()
-    datebut.show()
-    datebut.unset_flags(gtk.CAN_FOCUS)
-    image = gtk.Image()
-    image.set_from_file("img/date.png")
-    datebut.set_image(image)
-    cat = data.get("cat")
     path = [fileid,"info",key]
-    datebut.connect("clicked",dateChoose,row.e,data,path)
-    row.pack_start(datebut,0,0,2)
+    placeCalendarButton(data,row,row.e,path)
   return row
+
+def placeCalendarButton(data,row,target,path):
+  """Puts a nice little calendar button in row. The calendar button updates
+  target with the selected value."""
+#  print "args: %s %s %s %s" % (data,row,target,path)
+  datebut = gtk.Button()
+  datebut.show()
+  image = gtk.Image()
+  image.set_from_file("img/date.png")
+  datebut.set_image(image)
+  datebut.unset_flags(gtk.CAN_FOCUS)
+  datebut.connect("clicked",dateChoose,target,data,path)
+  row.pack_start(datebut,0,0,2)
 
 def getInf(data,path,default = ""):
   """Returns the value of a key path in the given data, a given default, or an empty string."""
@@ -209,13 +216,15 @@ def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
   if cat == 'p' or cat == 'l': path = [fileid,"info",key]
   for i in range(len(exargs)): path.append(exargs[i])
   self.connect("focus-out-event", checkForChange,data,path)
+  self.connect("activate", checkForChange,None,data,path)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
 def activateNoteEntry(self, scroll, data, fileid, i,date):
   cat = data.get("cat")
   path = []
-  if cat == 'l': path = [fileid,"info","notes",i]
+  if cat == 'l': path = [fileid,"info","notes",i,"content"]
   self.connect("focus-out-event", checkForChange,data,path,date)
+  self.connect("activate", checkForChange,None,data,path,date)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
 def checkForChange(self,event,data,path,optionaltarget = None):
@@ -268,12 +277,12 @@ def markChanged(self,cat,path):
           print "Could not mark " + path[6] + " as changed."
           return
       else:
-        say("Path too long")
+        say("Path too long: %s" % path)
         return
       people[path[0]]['changed'] = True
       if config['debug'] > 2: print "Value set: " + getInf(people.get(path[0]),path[1:])
     else:
-      print "Invalid path"
+      print "markChanged: Invalid person path (%s)" % path
       return
   elif cat == 'l':
     global places
@@ -310,12 +319,12 @@ def markChanged(self,cat,path):
           print "Could not mark " + path[6] + " as changed."
           return
       else:
-        say("Path too long")
+        say("Path too long: %s" % path)
         return
       places[path[0]]['changed'] = True
       if config['debug'] > 2: print "Value set: " + getInf(places.get(path[0]),path[1:])
     else:
-      print "Invalid path"
+      print "markChanged: Invalid place path (%s)" % path
       return
 
 def expandTitles(value):
@@ -528,6 +537,7 @@ def activateRelEntry(self,scroll,data,fileid,relid,key,event = None):
   else:
     path.append(key)
   self.connect("focus-out-event", checkForChange,data,path)
+  self.connect("activate", checkForChange,None,data,path)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
 def scrollOnTab(caller,x,scroll):
@@ -551,25 +561,28 @@ def scrollOnTab(caller,x,scroll):
 def customlabel(cat,text,tab,close = 0):
   icon = None
   if cat == 'p':
-    icon = "img/person.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/person.png")
   if cat == 'l':
-    icon = "img/place.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/place.png")
   if cat == 'c':
-    icon = "img/city.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/city.png")
   if cat == 's':
-    icon = "img/state.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/state.png")
   if cat == 'o':
-    icon = "img/org.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/org.png")
   if cat == 'i':
-    icon = "img/item.png"
+    icon = gtk.Image()
+    icon.set_from_file("img/item.png")
   row = gtk.HBox()
   label = gtk.Label(text)
   image = None
   if icon:
-    icon = os.path.abspath(icon)
-  if os.path.exists(icon):
-    image = gtk.Image()
-    image.set_from_file(icon)
+    image = icon
     image.show()
   label.show()
   row.show()
@@ -599,6 +612,14 @@ def sayBox(parent,text,text2 = None,text3 = None,text4 = None,text5 = None):
   askbox.destroy()
   return answer
 
+def addLoadSubmenuItem(lm, num):
+  itemMore = gtk.MenuItem(str(num) + " _More",True)
+  lm.append(itemMore)
+  itemMore.show()
+  molo = gtk.Menu()
+  molo.show()
+  itemMore.set_submenu(molo)
+  return molo
 
 def addHelpMenu(self):
   itemH = gtk.MenuItem("_Help",True)

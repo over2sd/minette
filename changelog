@@ -1,3 +1,13 @@
+2012-03-05:
+- Added place menus
+- Added hotkeys to load menus
+- Added clarifiers to some error messages
+- Added calendar window buttons to place dates
+- Added check for change on hitting Enter to entry boxes
+
+2012-03-02:
+- Chased down some bugs introduced by expanding person functions to work with places
+
 2012-02-29:
 - Nearing completion of place info tab
 

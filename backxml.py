@@ -1,3 +1,6 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
 import codecs
 from linecache import getline
 import os
@@ -484,7 +487,8 @@ def savePlace(fileid,data):
   fn = fileid + ".xml"
   place = etree.Element("place")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["commonname","name","start","scue","end","ecue","stories","mention","desc","address","loc","locfile","state","statefile","note", "relat","update"]
+  tags = ["commonname","name","start","scue","end","ecue","stories","mention","desc","address","loc","locfile","state",\
+"statefile","note", "relat","update"]
   reltags = ["related", "relation", "file", "rtype", "events", "cat", "realm"]
   for tag in tags:
     if tag == "relat":
@@ -517,19 +521,22 @@ def savePlace(fileid,data):
       else:
         print "no relations found"
     elif tag == "note":
-      for i in range(len(info[tag])):
-        note = etree.Element(tag)
-        di = info[tag].get(str(i))
-        if di:
-          value = di.get("content")
-          if value is not None:
-            etree.SubElement(note,"content").text = value[0]
-            value = di.get("date")
+      if info.get(tag):
+        for i in range(len(info[tag])):
+          note = etree.Element(tag)
+          di = info[tag].get(str(i))
+          if di:
+            value = di.get("content")
             if value is not None:
-              etree.SubElement(note,"date").text = value[0]
-              place.append(note)
+              etree.SubElement(note,"content").text = value[0]
+              value = di.get("date")
+              if value is not None:
+                etree.SubElement(note,"date").text = value[0]
+                place.append(note)
+      else:
+        print "no notes"
     elif tag == "update":
-      etree.SubElement(place,tag).text = skrTimeStamp(config['datestyle'])
+      etree.SubElement(place,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
       value = info.get(tag)
       if value is None: value = ['',False]
@@ -544,7 +551,7 @@ def savePlace(fileid,data):
   start += "\"?>\n<!DOCTYPE place SYSTEM \"place.dtd\">\n"
   finaloutput = start + out
   if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml~")
+  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
   try:
     with codecs.open(fn,'wU','UTF-8') as f:
       f.write(finaloutput)

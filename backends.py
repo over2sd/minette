@@ -216,17 +216,27 @@ def readfile(fn,verbose = True):
 
 def savePerson(fileid,data):
   global config
+  success = False
   if config['outformat'] == "sql":
-    return backsql.savePerson(fileid,data)
+    success = backsql.savePerson(fileid,data)
   else:
-    return backxml.savePerson(fileid,data)
+    success = backxml.savePerson(fileid,data)
+  if success and fileid not in worldList['p']:
+    worldList['p'].append(fileid)
+    writeListFile()
+  return success
 
 def savePlace(fileid,data):
   global config
+  success = False
   if config['outformat'] == "sql":
-    return backsql.savePlace(fileid,data)
+    success = backsql.savePlace(fileid,data)
   else:
-    return backxml.savePlace(fileid,data)
+    success = backxml.savePlace(fileid,data)
+  if success and fileid not in worldList['l']:
+    worldList['l'].append(fileid)
+    writeListFile()
+  return success
 
 def writefile(fn,lines,create = False):
   if create or os.path.exists(os.path.abspath(fn)):
