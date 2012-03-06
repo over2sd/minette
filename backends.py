@@ -172,12 +172,25 @@ def getCityList(order = 0):
   else:
     return backxml.getCityList(order)
 
+def getStateList(order = 0):
+  if config['informat'] == "sql":
+    return backsql.getStateList(order)
+  else:
+    return backxml.getStateList(order)
+
 def idExists(fileid,rectyp):
   global config
   if config['informat'] == "sql":
     backsql.idExists(fileid,rectyp)
   else:
     backxml.idExists(fileid)
+
+def loadCity(fileid):
+  global config
+  if config['informat'] == "sql":
+    return backsql.loadCity(fileid)
+  else:
+    return backxml.loadCity(fileid)
 
 def loadPerson(fileid):
   global config
@@ -213,6 +226,18 @@ def readfile(fn,verbose = True):
   else:
     if verbose: bsay(None,"File not found: %s" % fn)
   return lines
+
+def saveCity(fileid,data):
+  global config
+  success = False
+  if config['outformat'] == "sql":
+    success = backsql.saveCity(fileid,data)
+  else:
+    success = backxml.saveCity(fileid,data)
+  if success and fileid not in worldList['c']:
+    worldList['c'].append(fileid)
+    writeListFile()
+  return success
 
 def savePerson(fileid,data):
   global config

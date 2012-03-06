@@ -440,7 +440,7 @@ def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",t
     say(four)
 
 def mkPerson(callingWidget,fileid,tabs):
-  global worldList
+  global people
   if idExists(fileid,'p'):
     say("Existing fileid! Loading instead...")
   else:

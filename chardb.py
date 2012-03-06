@@ -7,10 +7,11 @@ import gtk
 
 from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,writeListFile)
+from city import addCityMenu
 from common import addHelpMenu
 from globdata import config
-from person import (displayPerson, addPersonMenu,saveThisP)
-from place import (addPlaceMenu,)
+from person import addPersonMenu
+from place import addPlaceMenu
 from status import status
 from story import storyEditor
 from getmod import recordSelectBox
@@ -55,8 +56,6 @@ class Base:
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
     if config['startnew']: getFileid(self,self.tabs)
-#    displayPerson("?","doe-john",self.tabs)
-#    saveThisP("?","doe-john")
     gtk.main()
 
   def firstRunTab(base,tabrow):
@@ -104,6 +103,7 @@ This tutorial will only display as long as you do not use a configuration file. 
 # Person
     addPersonMenu(self)
     addPlaceMenu(self)
+    addCityMenu(self)
     addHelpMenu(self)
 
   def delete_event(self,widget,event,data=None):

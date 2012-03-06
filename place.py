@@ -103,7 +103,6 @@ def buildLocRow(scroll,data,fileid):
   row.show()
   label = gtk.Label("Location:")
   label.show()
-  label
   row.pack_start(label,False,False,2)
   label.set_width_chars(20)
   label.set_alignment(1,0.5)
@@ -117,11 +116,12 @@ def buildLocRow(scroll,data,fileid):
   keys = []
   i = 0
   for key in sorted(choices.keys()):
-    loc.append_text("%s, %s" % (choices[key][0],choices[key][2]))
-    keys.append(key)
-    if g == key or g == choices[key][0]:
-      selected = i
-    i += 1
+    if choices.get(key) and choices[key][0] and choices[key][2]:
+      loc.append_text("%s, %s" % (choices[key][0],choices[key][2]))
+      keys.append(key)
+      if g == key or g == choices[key][0]:
+        selected = i
+      i += 1
   loc.set_active(selected)
   loc.connect("changed",setLocCombo,fileid)
   loc.connect("move-active",setLocCombo,fileid)
@@ -364,9 +364,12 @@ def initLinfo(self, fileid):
     for i in sorted(notes.keys()):
       dval = notes[i].get("date")
       cval = notes[i].get("content")
+      if dval: dval = dval[0]
+      if cval: cval = cval[0]
       if dval and cval: addNote(self,scroll,notebox,fileid,dval,cval,i)
 
 def mkPlace(callingWidget,fileid,tabs):
+  global places
   if idExists(fileid,'l'):
     say("Existing fileid! Loading instead...")
   else:

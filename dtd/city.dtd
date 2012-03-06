@@ -1,4 +1,4 @@
-<!ELEMENT city ( name, state, statefile, start?, scue?, end?, ecue?, place* ) >
+<!ELEMENT city ( name, state, statefile, start?, scue?, end?, ecue?, place*,update ) >
 <!ELEMENT state ( #PCDATA )>
 <!ELEMENT statefile ( #PCDATA )>
 <!ELEMENT start ( #PCDATA )>
@@ -9,3 +9,4 @@
 <!ELEMENT name ( #PCDATA )>
 <!ELEMENT file ( #PCDATA )>
 <!ELEMENT note ( #PCDATA )>
+<!ELEMENT update ( #PCDATA )>

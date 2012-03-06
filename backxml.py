@@ -8,12 +8,14 @@ import re
 import xml.etree.ElementTree as etree
 
 import common
-from globdata import (config,worldList,people,places)
+from globdata import (config,worldList,cities,people,places)
 from status import status
 import xmlout
 
 locs = {}
 lockeys = {}
+states = {}
+statekeys = {}
 
 def getCityList(order):
   global locs
@@ -34,9 +36,9 @@ def getCityList(order):
     if not len(locs): getCityList(0)
     if not len(lockeys):
       for loc in locs:
-        cityloc = None
+        cityloc = [None,None,None]
         if len(city) > 0: cityloc = getCityLoc(loc)
-        if cityloc:
+        if cityloc[0] and cityloc[2]:
           lockeys["%s, %s" % (cityloc[0],cityloc[2])] = loc
     return lockeys
 
@@ -51,16 +53,110 @@ def getCityLoc(fileid):
       root = tree.getroot()
   except IOError as e:
     print " Could not open configuration file: %s" % e
-  print root
-  cityname = root.find("name").text.strip()
-  statename = root.find("state").text.strip()
-  statefile = root.find("statefile").text.strip()
+  cityname = None
+  statename = None
+  statefile = None
+  if root.find("name"): cityname = root.find("name").text.strip()
+  if root.find("state"): statename = root.find("state").text.strip()
+  if root.find("statefile"): statefile = root.find("statefile").text.strip()
   return [cityname,statefile,statename]
+
+def getStateList(order):
+  global states
+  global statekeys
+  if not len(worldList): populateWorld()
+#  else:
+#    print len(worldList['c'])
+  if len(states):
+    return states
+  elif order == 0:
+    for state in worldList['s']:
+      statename = None
+      if len(states) > 0: statename = getStateName(state)
+      if statename:
+        states[state] = statename
+    return states
+  elif order == 1:
+    if not len(states): getStateList(0)
+    if not len(statekeys):
+      for state in states:
+        statename = None
+        if len(state) > 0: statename = getStateName(state)
+        if statename:
+          statekeys["%s" % statename] = state
+    return statekeys
+
+def getStateName(fileid):
+  root = etree.Element("state")
+  fileid = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"reading city location from XML... '" + fileid + "'")
+  try:
+    with codecs.open(fileid,'rU','utf-8') as f:
+      tree = etree.parse(f)
+      f.close()
+      root = tree.getroot()
+  except IOError as e:
+    print " Could not open configuration file: %s" % e
+  print root
+  statename = root.find("name").text.strip()
+  return statename
 
 def idExists(fileid):
   global config
   if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml") + "...",
   return os.path.exists(os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml"))
+
+def loadCity(fileid):
+  """Given an id (filename) matching an XML file in the appropriate
+  directory, loads the tree from the file and pushes its data into
+  two dictionaries, which it returns as a tuple.
+  """
+  dinf = {}
+  root = etree.Element("city")
+  text = None
+  # TODO: put this in a global variable, and make a function to populate it from the DTD.
+  tags = ["name","state","statefile","start","scue","end","ecue","place"]
+  for tag in tags:
+    dinf[tag] = ["",False]
+  if not dinf.get("places"): dinf['places'] = {}
+  if not idExists(fileid):
+    status.push(0,"new city created... '" + fileid + "'")
+    return dinf
+  fileid = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"loading city from XML... '" + fileid + "'")
+  try:
+    with codecs.open(fileid,'rU','utf-8') as f:
+      tree = etree.parse(f)
+      f.close()
+      root = tree.getroot()
+  except IOError as e:
+    print "c: Could not open configuration file: %s" % e
+
+  ir = 0
+  for i in range(len(root)):
+    if root[i].tag is not None:
+      if root[i].tag == "place":
+        if len(root[i]) > 0:
+          node = ""
+          node = root[i].find("file")
+          if node:
+            node = node.strip()
+            dinf['places'][node] = {}
+            for j in root[i]:
+              if j.tag and j.text and j.tag != "file":
+                dinf['places'][node][j.tag] = [j.text.strip(),False]
+            if config['debug'] > 3: print dinf['places'][node]
+          else:
+            if config['debug'] > 0:
+              print "Invalid place tag:"
+              for c in root[i]:
+                print c.tag
+        else: # no relat length
+          if config['debug'] > 0: print "Empty place tag."
+      elif root[i].text is not None:
+        dinf[root[i].tag] = [root[i].text.strip(), False]
+        if config['debug'] > 2: print str(i) + " ",
+  return dinf
 
 def loadPerson(fileid):
   """Given an id (filename) matching an XML file in the appropriate
@@ -384,6 +480,63 @@ def populateWorld():
       if not len(worldList[key][0]):
         worldList[key] = []
   if config['debug'] > 3: print worldList
+
+def saveCity(fileid,data):
+  """Given a filename, saves a city's values to an "id" XML file.
+  """
+  global cities
+  info = data.get('info')
+  fn = fileid + ".xml"
+  city = etree.Element("city")
+  # TODO: put this in a global variable, and make a function to populate it from the DTD.
+  tags = ["name","state","statefile","start","scue","end","ecue","places","update"]
+  for tag in tags:
+    if tag == "places":
+      nodes = info.get("places")
+      for node in nodes:
+        if node.get("name"):
+          connected = etree.Element("place")
+          value = info['places'][node].get("name")
+          if value is None: value = ['',False]
+          etree.SubElement(connected,t).text = value[0]
+          value = node
+          if value is None: value = ''
+          etree.SubElement(connected,t).text = value
+          value = info['places'][node].get("note")
+          if value is not None: etree.SubElement(connected,t).text = value[0]
+          city.append(connected)
+        else:
+          print "A required tag is missing from place %s." % node
+      else:
+        print "no places found"
+    elif tag == "update":
+      etree.SubElement(city,tag).text = common.skrTimeStamp(config['datestyle'])
+    else:
+      value = info.get(tag)
+      if value is None: value = ['',False]
+      etree.SubElement(city,tag).text = value[0]
+  out = ""
+  try:
+    out = etree.tostring(city,pretty_print=True)
+  except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
+    out = xmlout.prettyXML(city)
+  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
+  start += os.path.join(config['xslurl'],"city.xsl")
+  start += "\"?>\n<!DOCTYPE person SYSTEM \"city.dtd\">\n"
+  finaloutput = start + out
+  if config['debug'] > 0: print finaloutput
+  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
+  try:
+    with codecs.open(fn,'wU','UTF-8') as f:
+      f.write(finaloutput)
+      f.close()
+  except IOError as e:
+    message = "The file %s could not be saved: %s" % (fn,e)
+    bsay("?",message)
+    status.push(0,message)
+    return False
+  cities[fileid]['changed'] = False
+  return True
 
 def savePerson(fileid,data):
   """Given a filename, saves a person's values to an "id" XML file.

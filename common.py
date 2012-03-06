@@ -78,7 +78,63 @@ def dateChoose(caller,target,data,path):
   askbox.destroy()
   checkForChange(target,None,data,path)
 
+def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser):
+  target.vbox = gtk.VBox()
+  target.vbox.show()
+  target.vbox.ftabs = gtk.Notebook()
+  target.vbox.ftabs.show()
+  bbar = gtk.HButtonBox()
+  bbar.show()
+  bbar.set_spacing(2)
+  save = gtk.Button("Save")
+  image = gtk.Image()
+  image.set_from_file("img/save.png")
+  save.set_image(image)
+  save.connect("clicked",saveFunc,fileid)
+  save.show()
+  bbar.pack_start(save)
+  if config['debug'] > 0:
+    report = gtk.Button("Report")
+    image = gtk.Image()
+    image.set_from_file("img/report.png")
+    report.set_image(image)
+    report.connect("clicked",showFunc,fileid)
+    report.show()
+    bbar.pack_start(report)
+  # endif
 
+# other buttons...   reload,etc.   ...go here
+
+  close = gtk.Button("Close")
+  image = gtk.Image()
+  image.set_from_file("img/close.png")
+  close.set_image(image)
+  close.show_all()
+  close.connect("clicked",preCloser,fileid,target.vbox)
+  bbar.pack_end(close)
+  target.vbox.pack_start(bbar,False,False,2)
+  target.vbox.pack_start(target.vbox.ftabs,True,True,2)
+  target.labelname = customlabel(cat,fileid,target.vbox)
+  target.labelname.show_all()
+  target.append_page(target.vbox,target.labelname)
+#  if warnme and config['openduplicatetabs']:
+#    target.vbox.ftabs.<function to change background color as warning>
+#    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
+#    Here, attach ftabs to warning VBox
+#  else:
+#    Here, attach ftabs to target
+
+def displayStage2(target,labelWidget):
+  target.sw = gtk.ScrolledWindow()
+  target.sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  target.sw.show()
+  target.append_page(target.sw,labelWidget)
+  target.set_tab_label_packing(target.sw,True,True,gtk.PACK_START)
+  page = gtk.VBox()
+  page.show()
+  target.sw.add_with_viewport(page)
+  page.set_border_width(5)
+  return page
 
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
