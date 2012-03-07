@@ -8,7 +8,7 @@ import re
 import xml.etree.ElementTree as etree
 
 import common
-from globdata import (config,worldList,cities,people,places)
+from globdata import (config,worldList,cities,people,places,printStack)
 from status import status
 import xmlout
 
@@ -56,9 +56,9 @@ def getCityLoc(fileid):
   cityname = None
   statename = None
   statefile = None
-  if root.find("name"): cityname = root.find("name").text.strip()
-  if root.find("state"): statename = root.find("state").text.strip()
-  if root.find("statefile"): statefile = root.find("statefile").text.strip()
+  if root.find("name") is not None: cityname = root.find("name").text.strip()
+  if root.find("state") is not None: statename = root.find("state").text.strip()
+  if root.find("statefile") is not None: statefile = root.find("statefile").text.strip()
   return [cityname,statefile,statename]
 
 def getStateList(order):
@@ -72,7 +72,7 @@ def getStateList(order):
   elif order == 0:
     for state in worldList['s']:
       statename = None
-      if len(states) > 0: statename = getStateName(state)
+      if len(state) > 0: statename = getStateName(state)
       if statename:
         states[state] = statename
     return states
@@ -97,7 +97,6 @@ def getStateName(fileid):
       root = tree.getroot()
   except IOError as e:
     print " Could not open configuration file: %s" % e
-  print root
   statename = root.find("name").text.strip()
   return statename
 

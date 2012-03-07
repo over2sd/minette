@@ -1,3 +1,12 @@
+2012-03-07:
+- Fixed bug in checkForChange so cities can be checked
+- Made markChanged more compact
+- Merged preRead functions and moved the merged version to common module
+- Fixed an error in the calendar dialog that made it impossible to select month/year by typing them in
+- Fixed bugs found yesterday preventing city/state droplists from working
+- Decided not to move list populators to populateWorld at this time
+- Made some output more informative
+
 2012-03-06:
 - Added city menus
 - Started city display

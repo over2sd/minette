@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadCity,idExists,saveCity,getStateList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay)
+say,bsay,kill)
 from globdata import (cities,worldList,config)
 from status import status
 
@@ -149,7 +149,7 @@ def initCinfo(self, fileid):
   label.set_alignment(0,0)
   label.show()
   self.namelabelbox.pack_start(label,1,1,2)
-  self.pack_start(self.namelabelbox)
+  self.pack_start(self.namelabelbox,0,0,1)
   self.s1 = gtk.HSeparator()
   self.pack_start(self.s1,False,False,2)
   self.s1.show()
@@ -205,6 +205,10 @@ def initCinfo(self, fileid):
   activateInfoEntry(ecue,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
+  self.notebox = gtk.VBox()
+  self.notebox.show()
+  self.pack_start(self.notebox,True,False,2)
+
 
 def mkCity(callingWidget,fileid,tabs):
   global cities
@@ -232,7 +236,7 @@ def preClose(caller,fileid,target = None):
       result = asker.run()
       asker.destroy()
   if result == -8: # Yes
-    print "Destroying tab"
+    print "Destroying tab %s" % fileid
     kill(caller,target)
     return True
   else: # No

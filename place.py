@@ -21,7 +21,7 @@ from getmod import (getPlaceConnections,recordSelectBox)
 
 def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   path = [fileid,"info","notes"]
-  if not preReadl(True,path,3):
+  if not preRead(True,'l',path,3):
     return
   data = places.get(fileid)
   if i == 0:
@@ -396,7 +396,7 @@ def preClose(caller,fileid,target = None):
       result = asker.run()
       asker.destroy()
   if result == -8: # Yes
-    print "Destroying tab"
+    print "Destroying tab %s" % fileid
     kill(caller,target)
     return True
   else: # No

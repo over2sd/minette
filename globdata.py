@@ -10,3 +10,5 @@ config = {}
 worldList = {}
 stories = {}
 relsP = {}
+
+from debug import printStack

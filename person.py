@@ -807,7 +807,7 @@ def preClose(caller,fileid,target = None):
       result = asker.run()
       asker.destroy()
   if result == -8: # Yes
-    print "Destroying tab"
+    print "Destroying tab %s" % fileid
     kill(caller,target)
     return True
   else: # No

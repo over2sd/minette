@@ -10,8 +10,7 @@ import datetime
 import time
 
 from choices import myStories
-from globdata import (config,people,places,stories)
-import preread
+from globdata import (cities,config,people,places,stories,printStack)
 from status import status
 import story
 
@@ -58,8 +57,8 @@ def dateChoose(caller,target,data,path):
   year.set_text(str(y))
   row = gtk.HBox()
   row.show()
-  month.connect("activate",lambda x,y: cal.select_month(int(month.get_text()),int(year.get_text())))
-  year.connect("activate",lambda x,y: cal.select_month(int(month.get_text()),int(year.get_text())))
+  month.connect("activate",lambda x: cal.select_month(int(month.get_text())-1,int(year.get_text())))
+  year.connect("activate",lambda x: cal.select_month(int(month.get_text())-1,int(year.get_text())))
   row.pack_start(gtk.Label("Month:"),0,0,2)
   row.pack_start(month,0,0,2)
   row.pack_start(gtk.Label("Year:"),0,0,2)
@@ -135,6 +134,88 @@ def displayStage2(target,labelWidget):
   target.sw.add_with_viewport(page)
   page.set_border_width(5)
   return page
+
+def preRead(force,cat,path,depth = 0,retries = 0):
+  """Using the global dict for the given category, and given a list of keys 'path' and an integer 'depth',
+  checks a path in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function
+  will build missing tree branches, to allow you to write to the endpoint. Do not call force with a
+  path/depth ending in a list, tuple, or something other than a dict, which this function produces. Call
+  force on one path higher.
+  """
+  root = None
+  if cat == 'p':
+    global people
+    root = people
+  elif cat == 'l':
+    global places
+    root = places
+  elif cat == 'c':
+    global cities
+    root = cities
+
+  if not root:
+    print "preRead: Invalid category?"
+    return False
+  if depth > len(path): depth = len(path)
+  if depth > 7: depth = 7
+  if path[0] in root.keys():
+    if depth <= 1:
+      return True
+    if path[1] in root[path[0]].keys():
+      if depth <= 2:
+        return True
+      if path[2] in root[path[0]][path[1]].keys():
+        if depth <= 3:
+          return True
+        if path[3] in root[path[0]][path[1]][path[2]].keys():
+          if depth <= 4:
+            return True
+          if path[4] in root[path[0]][path[1]][path[2]][path[3]].keys():
+            if depth <= 5:
+              return True
+            if path[5] in root[path[0]][path[1]][path[2]][path[3]][path[4]].keys():
+              if depth <= 6:
+                return True
+              if path[6] in root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]].keys():
+                return True # Maximum depth reached
+              elif force:
+                root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = {}
+                if retries >= depth: force = False
+                return preRead(force,cat,path,depth,retries + 1)
+              else: # Not found, and not forcing it to be found
+                return False
+            elif force:
+              root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = {}
+              if retries >= depth: force = False
+              return preRead(force,cat,path,depth,retries + 1)
+            else: # Not found, and not forcing it to be found
+              return False
+          elif force:
+            root[path[0]][path[1]][path[2]][path[3]][path[4]] = {}
+            if retries >= depth: force = False
+            return preRead(force,cat,path,depth,retries + 1)
+          else: # Not found, and not forcing it to be found
+            return False
+        elif force:
+          root[path[0]][path[1]][path[2]][path[3]] = {}
+          if retries >= depth: force = False
+          return preRead(force,cat,path,depth,retries + 1)
+        else: # Not found, and not forcing it to be found
+          return False
+      elif force:
+        root[path[0]][path[1]][path[2]] = {}
+        if retries >= depth: force = False
+        return preRead(force,cat,path,depth,retries + 1)
+      else: # Not found, and not forcing it to be found
+        return False
+    elif force:
+      root[path[0]][path[1]] = {}
+      if retries >= depth: force = False
+      return preRead(force,cat,path,depth,retries + 1)
+    else: # Not found, and not forcing it to be found
+      return False
+  else: # First level (fileid) can't be generated.
+    return False
 
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
@@ -269,7 +350,8 @@ def getInf(data,path,default = ""):
 def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
   cat = data.get("cat")
   path = []
-  if cat == 'p' or cat == 'l': path = [fileid,"info",key]
+#  if cat in ['p','l','c']:
+  path = [fileid,"info",key]
   for i in range(len(exargs)): path.append(exargs[i])
   self.connect("focus-out-event", checkForChange,data,path)
   self.connect("activate", checkForChange,None,data,path)
@@ -292,6 +374,67 @@ def checkForChange(self,event,data,path,optionaltarget = None):
       optionaltarget.set_text(skrTimeStamp(config['datestyle']))
       markChanged(optionaltarget,data.get("cat"),path)
 
+def markChanged(self,cat,path):
+  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
+  end = len(path)
+  value = ["",False]
+  value[1] = True
+  value[0] = self.get_text()
+  root = None
+  goforit = False
+  if cat == 'p':
+    global people
+    root = people
+  elif cat == 'l':
+    global places
+    root = places
+  elif cat == 'c':
+    global cities
+    root = cities
+
+  if root:
+    goforit = preRead(True,cat,path[:-1],end)
+    if goforit:
+      if end == 3:
+        try:
+          root[path[0]][path[1]][path[2]] = value
+        except KeyError:
+          print "Could not mark " + path[2] + " as changed."
+          return
+      elif end == 4:
+        try:
+          root[path[0]][path[1]][path[2]][path[3]] = value
+        except KeyError:
+          print "Could not mark " + path[3] + " as changed."
+          return
+      elif end == 5:
+        try:
+          root[path[0]][path[1]][path[2]][path[3]][path[4]] = value
+        except KeyError:
+          print "Could not mark " + path[4] + " as changed."
+          return
+      elif end == 6:
+        try:
+          root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
+        except KeyError:
+          print "Could not mark " + path[5] + " as changed."
+          return
+      elif end == 7:
+        try:
+          root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
+        except KeyError:
+          print "Could not mark " + path[6] + " as changed."
+          return
+      else:
+        say("Path too long: %s" % path)
+        return
+      root[path[0]]['changed'] = True
+      if config['debug'] > 2: print "Value set: " + getInf(root.get(path[0]),path[1:])
+    else:
+      print "markChanged: Invalid person path (%s)" % path
+      return
+
+"""
 def markChanged(self,cat,path):
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
   end = len(path)
@@ -382,6 +525,7 @@ def markChanged(self,cat,path):
     else:
       print "markChanged: Invalid place path (%s)" % path
       return
+"""
 
 def expandTitles(value):
   global stories
@@ -417,12 +561,12 @@ def setStories(caller,data,fileid,x,parent):
   if value:
     if cat == 'p':
       global people
-      if preread.preReadp(False,[fileid,"info","stories"],3):
+      if preRead(False,cat,[fileid,"info","stories"],3):
         people[fileid]['info']['stories'] = [value,True]
         people[fileid]['changed'] = True
     elif cat == 'l':
       global places
-      if preread.preReadl(False,[fileid,"info","stories"],3):
+      if preRead(False,cat,[fileid,"info","stories"],3):
         places[fileid]['info']['stories'] = [value,True]
         places[fileid]['changed'] = True
     if config.get('showstories') == "titlelist":
