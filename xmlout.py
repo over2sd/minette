@@ -57,7 +57,14 @@ def prettyXML(root):
             specialtext += wrapelement(j.tag,j.text,2)
         if config['printemptyXMLtags'] or len(specialtext) > 2:
           out += wrapelement(root[i].tag,specialtext,1)
-      elif len(root[i].text) > 0:
+      elif root[i].tag == "place":
+        specialtext = "\n"
+        for j in root[i]:
+          if config['printemptyXMLtags'] or len(j.text) > 0:
+            specialtext += wrapelement(j.tag,j.text,2)
+        if config['printemptyXMLtags'] or len(specialtext) > 2:
+          out += wrapelement(root[i].tag,specialtext,1)
+      elif root[i].text is not None and len(root[i].text) > 0:
         out += wrapelement(root[i].tag,root[i].text,1)
       elif config['printemptyXMLtags']:
         out += wrapelement(root[i].tag,'',1)

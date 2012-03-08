@@ -292,14 +292,17 @@ def initPrels(self, fileid,tabs):
 def displayPerson(callingWidget,fileid, tabrow):
   global people
   warnme = False
-  if people.get(fileid,None) and people[fileid].get("tab"):
-    warnme = True
-    if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
-      status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
-      for i in range(len(tabrow)):
-        if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
-          tabrow.set_current_page(i)
-      return # No need to load again. If revert needed, use a different function
+  if people.get(fileid,None):
+    tab = people[fileid].get("tab")
+    if tab is not None:
+      warnme = True
+      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+        status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+        tabrow.set_current_page(tab)
+        for i in range(len(tabrow)):
+          if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
+            tabrow.set_current_page(i)
+        return # No need to load again. If revert needed, use a different function
   else:
     p = loadPerson(fileid)
     people[fileid] = {}
@@ -817,4 +820,8 @@ def preClose(caller,fileid,target = None):
 def tabdestroyed(caller,fileid):
   """Deletes the person's fileid key from people dict so the person can be reloaded."""
   global people
-  del people[fileid]
+  try:
+    del people[fileid]
+  except KeyError:
+    printPretty(people)
+    raise

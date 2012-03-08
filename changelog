@@ -1,3 +1,8 @@
+2012-03-08:
+- Added some data normalization checks
+- Finished listing places on city info tab
+- Fixed error in saveCity(XML) that didn't allow saving of places list
+
 2012-03-07:
 - Fixed bug in checkForChange so cities can be checked
 - Made markChanged more compact

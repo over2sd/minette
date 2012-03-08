@@ -49,10 +49,10 @@ def getCityList(order):
 
 def getCityLoc(fileid):
   root = etree.Element("place")
-  fileid = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"reading city location from XML... '" + fileid + "'")
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"reading city location from XML... '" + fn + "'")
   try:
-    with codecs.open(fileid,'rU','utf-8') as f:
+    with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
       f.close()
       root = tree.getroot()
@@ -65,6 +65,13 @@ def getCityLoc(fileid):
   if root.find("state") is not None: statename = root.find("state").text.strip()
   if root.find("statefile") is not None: statefile = root.find("statefile").text.strip()
   return [cityname,statefile,statename]
+
+def getPlaceList(pretty):
+  if pretty:
+    printPretty(placeList)
+  else:
+    print placeList
+  return True
 
 def getPlacesIn(city):
   state = common.getInf(cities.get(city),["info","statefile"],None)
@@ -110,10 +117,10 @@ def getStateList(order):
 
 def getStateName(fileid):
   root = etree.Element("state")
-  fileid = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"reading city location from XML... '" + fileid + "'")
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"reading city location from XML... '" + fn + "'")
   try:
-    with codecs.open(fileid,'rU','utf-8') as f:
+    with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
       f.close()
       root = tree.getroot()
@@ -163,8 +170,9 @@ def loadCity(fileid):
         if len(root[i]) > 0:
           node = ""
           node = root[i].find("file")
-          if node:
-            node = node.strip()
+          if node.text:
+            node = node.text.strip()
+            node = common.validateFileid(node)
             dinf['places'][node] = {}
             for j in root[i]:
               if j.tag and j.text and j.tag != "file":
@@ -174,12 +182,14 @@ def loadCity(fileid):
             if config['debug'] > 0:
               print "Invalid place tag:"
               for c in root[i]:
-                print c.tag + ': ' + c.text
+                print c.tag + ': ' + c.text,
         else: # no relat length
           if config['debug'] > 0: print "Empty place tag."
       elif root[i].text is not None:
         if root[i].tag == "statefile":
           statefile = root[i].text.strip()
+          statefile = common.validateFileid(statefile)
+          if statefile is None: statefile = ""
         elif root[i].tag == "state":
           statename = root[i].text.strip()
         elif root[i].tag == "name":
@@ -236,8 +246,9 @@ def loadPerson(fileid):
         if len(root[i]) > 0:
           node = ""
           node = root[i].find("file")
-          if node:
-            node = node.strip()
+          if node is not None and node.text:
+            node = node.text.strip()
+            node = common.validateFileid(node)
             drel[node] = {}
             for j in root[i]:
               if j.tag == "events":
@@ -380,6 +391,7 @@ def loadPlace(fileid):
           node = root[i].find("file").text.strip()
         except AttributeError:
           bsay("?","XML formatting error in %s! Probably an empty relat tag." % fileid)
+        node = common.validateFileid(node)
         drel[node] = {}
         for j in root[i]:
           if j.tag == "events":
@@ -411,10 +423,14 @@ def loadPlace(fileid):
       elif root[i].text is not None:
         if root[i].tag == "statefile":
           statef = root[i].text.strip()
+          statef = common.validateFileid(statef)
+          if statef is None: statef = ""
         elif root[i].tag == "state":
           state = root[i].text.strip()
         elif root[i].tag == "locfile":
           cityf = root[i].text.strip()
+          cityf = common.validateFileid(cityf)
+          if cityf is None: cityf = ""
         elif root[i].tag == "loc":
           city = root[i].text.strip()
         elif root[i].tag == "name":
@@ -534,6 +550,11 @@ def populateWorld():
     printPretty(placeList)
 
 def pushLoc(statefile,statename = "",cityfile = "",cityname = "",placefile = "",placename = ""):
+  for f in [statefile,cityfile,placefile]:
+    if f is None:
+      f = ""
+  if config['debug'] > 3:
+    printPretty([statefile,cityfile,placefile])
   if len(statefile) > 0:
     if statefile.find(".xml") > -1: statefile = statefile.split('.')[0]
     if not placeList.get(statefile): placeList[statefile] = {}
@@ -547,6 +568,12 @@ def pushLoc(statefile,statename = "",cityfile = "",cityname = "",placefile = "",
       if len(placefile) > 0:
         if placefile.find(".xml") > -1: placefile = placefile.split('.')[0]
         if len(placename) > 0 and len(placefile) > 0: placeList[statefile][cityfile][placefile] = placename
+    elif len(placefile) > 0:
+      print "Could not place ",
+      printPretty([statefile,cityfile,placefile])
+  elif len(placefile) > 0:
+    print "Could not place ",
+    printPretty([statefile,cityfile,placefile])
 
 def saveCity(fileid,data):
   """Given a filename, saves a city's values to an "id" XML file.
@@ -560,20 +587,23 @@ def saveCity(fileid,data):
   for tag in tags:
     if tag == "places":
       nodes = info.get("places")
-      for node in nodes:
-        if node.get("name"):
-          connected = etree.Element("place")
-          value = info['places'][node].get("name")
-          if value is None: value = ['',False]
-          etree.SubElement(connected,t).text = value[0]
-          value = node
-          if value is None: value = ''
-          etree.SubElement(connected,t).text = value
-          value = info['places'][node].get("note")
-          if value is not None: etree.SubElement(connected,t).text = value[0]
-          city.append(connected)
-        else:
-          print "A required tag is missing from place %s." % node
+      if nodes is not None:
+        for node in nodes.keys():
+          if nodes[node].get("name"):
+            connected = etree.Element("place")
+            value = info['places'][node].get("name")
+            if value is None: value = ['',False]
+            etree.SubElement(connected,"name").text = value[0]
+            value = node
+            if value is None: value = ''
+            etree.SubElement(connected,"file").text = value
+            value = info['places'][node].get("note")
+            if value is not None and len(value[0]) > 0: etree.SubElement(connected,"note").text = value[0]
+            city.append(connected)
+            for t in range(len(connected)):
+              print "%s: %s" % (connected[t].tag,connected[t].text)
+          else:
+            print "A required tag is missing from place %s." % node
       else:
         print "no places found"
     elif tag == "update":
@@ -583,6 +613,7 @@ def saveCity(fileid,data):
       if value is None: value = ['',False]
       etree.SubElement(city,tag).text = value[0]
   out = ""
+  print etree.tostring(city)
   try:
     out = etree.tostring(city,pretty_print=True)
   except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"

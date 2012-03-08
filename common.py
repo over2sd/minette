@@ -10,6 +10,7 @@ import datetime
 import time
 
 from choices import myStories
+from debug import printPretty
 from globdata import (cities,config,people,places,stories,printStack)
 from status import status
 import story
@@ -106,7 +107,7 @@ def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser):
 
   close = gtk.Button("Close")
   image = gtk.Image()
-  image.set_from_file("img/close.png")
+  image.set_from_file("img/subtract.png")
   close.set_image(image)
   close.show_all()
   close.connect("clicked",preCloser,fileid,target.vbox)
@@ -217,6 +218,10 @@ def preRead(force,cat,path,depth = 0,retries = 0):
   else: # First level (fileid) can't be generated.
     return False
 
+def reorderTabs(tabs):
+  """Functions looks at a notebook and reorders the tab numbers after one is closed"""
+  pass
+
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
   t = (y,m,d,0,0,0,0,0,0)
@@ -242,6 +247,7 @@ def parseDate(date):
 
 def validateFileid(fileid):
   output = ""
+  if fileid.find(".xml"): fileid = fileid.split('.')[0] # No file extension allowed
   match = re.match(r'^[\w-]+$',fileid)
   if match: output = match.group()
   if len(output) > 0: return output
@@ -327,7 +333,7 @@ def placeCalendarButton(data,row,target,path):
   row.pack_start(datebut,0,0,2)
 
 def getInf(data,path,default = ""):
-  """Returns the value of a key path in the given data, a given default, or an empty string."""
+  """Returns the value of a key path (which must be a list) in the given data, a given default, or an empty string."""
   end = len(path) - 1
   if not data or end < 0:
     printPretty("Bad data to getInf: %s %s" % (data, path))
@@ -336,18 +342,25 @@ def getInf(data,path,default = ""):
   while i < end:
     if config['debug'] > 5: printPretty(str(data) + '\n')
     if data.get(path[i]):
+      if config['debug'] > 4: print "seeking %s in %s" % (path[i],data.keys())
       data = data[path[i]]
       i += 1
     else:
       return default
   value = default
-  try:
-    (value,mod) = data.get(path[-1],(default,False))
-  except ValueError as e:
-    printPretty("%s yields %s with %s" % (path,data.get(path[-1],(default,False)),e))
+  if default in [{},[]]: # expecting dict or list
+    if config['debug'] > 4: print "expecting {}/[]"
+    value = data.get(path[-1],default)
+  else: # expecting string, numeric, etc, that should be part of a [value,bool] pair
+    try:
+      (value,mod) = data.get(path[-1],(default,False))
+    except ValueError as e:
+      printPretty("getInf: (nonfatal) %s yields %s with error %s" % (path,data.get(path[-1],(default,False)),e),False)
   return value
 
 def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
+  if config['debug'] > 4:
+    printPretty("%s\n%s" % (data,[fileid,key,exargs]))
   cat = data.get("cat")
   path = []
 #  if cat in ['p','l','c']:

@@ -178,6 +178,15 @@ def getPlacesIn(city):
   else:
     return backxml.getPlacesIn(city)
 
+def getPlaceList(pretty = 1):
+  if config['informat'] == "sql":
+    return backsql.getPlaceList(pretty)
+  else:
+    return backxml.getPlaceList(pretty)
+
+def getPlaceListGTK(caller,pretty = 1):
+  return getPlaceList(pretty)
+
 def getStateList(order = 0):
   if config['informat'] == "sql":
     return backsql.getStateList(order)
@@ -213,11 +222,16 @@ def loadPlace(fileid):
     return backxml.loadPlace(fileid)
 
 def populateWorld():
-  global config
   if config['informat'] == "sql":
     backsql.populateWorld()
   else:
     backxml.populateWorld()
+
+def pushLoc(statefile,statename = "",cityfile = "",cityname = "",placefile = "",placename = ""):
+  if config['informat'] == "sql":
+    backsql.pushLoc(statefile,statename,cityfile,cityname,placefile,placename)
+  else:
+    backxml.pushLoc(statefile,statename,cityfile,cityname,placefile,placename)
 
 def readfile(fn,verbose = True):
   lines = []

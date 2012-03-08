@@ -138,14 +138,17 @@ def buildLocRow(scroll,data,fileid):
 def displayPlace(callingWidget,fileid, tabrow):
   global places
   warnme = False
-  if places.get(fileid,None) and places[fileid].get("tab"):
-    warnme = True
-    if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
-      status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
-      for i in range(len(tabrow)):
-        if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
-          tabrow.set_current_page(i)
-      return # No need to load again. If revert needed, use a different function
+  if places.get(fileid,None):
+    tab = places[fileid].get("tab")
+    if tab is not None:
+      warnme = True
+      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+        status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+        tabrow.set_current_page(tab)
+        for i in range(len(tabrow)):
+          if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
+            tabrow.set_current_page(i)
+        return # No need to load again. If revert needed, use a different function
   else:
     L = loadPlace(fileid)
     places[fileid] = {}
@@ -441,5 +444,9 @@ def showPlace(caller,fileid):
 def tabdestroyed(caller,fileid):
   """Deletes the place's fileid key from places dict so the place can be reloaded."""
   global places
-  del places[fileid]
+  try:
+    del places[fileid]
+  except KeyError:
+    printPretty(places)
+    raise
 

@@ -7,12 +7,13 @@ import gtk
 from math import floor
 
 
-from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn)
+from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill)
+say,bsay,kill,markChanged)
 from debug import printPretty
 from globdata import (cities,worldList,config)
+from place import displayPlace
 from status import status
 
 def addCityMenu(self):
@@ -108,14 +109,17 @@ def choosePlace():
 def displayCity(callingWidget,fileid, tabrow):
   global cities
   warnme = False
-  if cities.get(fileid,None) and cities[fileid].get("tab"):
-    warnme = True
-    if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
-      status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
-      for i in range(len(tabrow)):
-        if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
-          tabrow.set_current_page(i)
-      return # No need to load again. If revert needed, use a different function
+  if cities.get(fileid,None):
+    tab = cities[fileid].get("tab")
+    if tab is not None:
+      warnme = True
+      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+        status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+        tabrow.set_current_page(tab)
+        for i in range(len(tabrow)):
+          if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
+            tabrow.set_current_page(i)
+        return # No need to load again. If revert needed, use a different function
   else:
     cities[fileid] = {}
     cities[fileid]['info'] = loadCity(fileid)
@@ -126,7 +130,7 @@ def displayCity(callingWidget,fileid, tabrow):
   tabrow.labeli = gtk.Label("Information")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initCinfo(tabrow.vbox.ftabs.infpage, fileid)
+  initCinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   cities[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
@@ -138,7 +142,7 @@ def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",t
   else:
     say(four)
 
-def initCinfo(self, fileid):
+def initCinfo(self, fileid,tabs):
   data = {}
   scroll = self.get_parent()
   try:
@@ -224,12 +228,25 @@ def initCinfo(self, fileid):
   image.show()
   addbut.set_image(image)
   addbut.show()
+  path = ["info","places"]
+  state = validateFileid(getInf(data,["info","statefile"],""))
+  cityname = getInf(data,["info","name"],"")
+  cityplaces = getInf(data,path,{})
+  for l in cityplaces.keys():
+    fi = l
+    name = getInf(cityplaces,[l,"name"],"")
+    pushLoc(state,"",fileid,cityname,fi,name)
   lbook = getPlacesIn(fileid)
   addbut.connect("clicked",choosePlace,self.notebox,lbook)
   box.pack_end(addbut,False,False,1)
   self.notebox.pack_start(box,False,False,1)
   for l in lbook.keys():
-    packPlace(self.notebox,scroll,l,lbook[l])
+    if l != "_name":
+      newplace = False
+      if l not in cityplaces.keys():
+        newplace = True
+        pushPlace(fileid,l,lbook[l])
+      packPlace(self.notebox,scroll,data,fileid,l,lbook[l],tabs,newplace)
 
 def mkCity(callingWidget,fileid,tabs):
   global cities
@@ -243,11 +260,35 @@ def mkCity(callingWidget,fileid,tabs):
     saveThisC(callingWidget,fileid)
   displayCity(callingWidget,fileid,tabs)
 
-def packPlace(box,scroll,placef,value):
+def packPlace(box,scroll,data,cityf,placef,value,tabs,newplace):
   row = gtk.HBox()
   row.show()
-  
-
+  note = ""
+  x = getInf(data,["info","places"],{})
+  if x.get(placef) is not None: note = getInf(x,[placef,"note"],"")
+  plbut = gtk.Button(value)
+  plentry = gtk.Entry()
+  plbut.show()
+  plentry.show()
+  plbut.set_size_request(100,12)
+  plbut.connect("clicked",displayPlace,placef,tabs)
+  row.pack_start(plbut,1,1,2)
+  label = gtk.Label("Note:")
+  label.show()
+  row.pack_start(label,0,0,2)
+  row.pack_start(plentry,1,1,2)
+  plentry.set_text(note)
+  activateInfoEntry(plentry,scroll,data,cityf,"places",2,[placef,"note"])
+  if newplace: markChanged(plentry,'c',[cityf,"info","places",placef,"note"])
+  killbut = gtk.Button("Unregister")
+  killbut.show()
+  image = gtk.Image()
+  image.show()
+  image.set_from_file("img/subtract.png")
+  killbut.set_image(image)
+  killbut.connect("clicked",unlinkPlace,row,cityf,placef)
+  row.pack_start(killbut,0,0,1)
+  box.pack_start(row,0,0,1)
 
 def preClose(caller,fileid,target = None):
   result = -8
@@ -269,6 +310,17 @@ def preClose(caller,fileid,target = None):
   else: # No
     print "Cancel"
     return False
+
+def pushPlace(city,fi,name):
+  global cities
+  if not cities.get(city) or not cities[city].get("info"):
+    return False
+  if not cities[city]["info"].get("places"):
+    cities[city]["info"]["places"] = {}
+  if not cities[city]["info"]["places"].get(fi):
+    cities[city]["info"]["places"][fi] = {}
+  cities[city]["info"]["places"][fi]["name"] = [name,True]
+  return True
 
 def saveThisC(caller,fileid):
   global status
@@ -304,10 +356,22 @@ def setStateCombo(widget,fileid):
 
 def showCity(caller,fileid):
   if cities.get(fileid):
-    print cities[fileid]
+    printPretty(cities[fileid])
 
 def tabdestroyed(caller,fileid):
   """Deletes the place's fileid key from places dict so the place can be reloaded."""
   global cities
-  del cities[fileid]
+  try:
+    del cities[fileid]
+  except KeyError:
+    printPretty(cities)
+    raise
 
+def unlinkPlace(caller,row,cityf,placef):
+  global cities
+  caller.set_sensitive(False)
+  path = [cityf,"info","places",placef]
+  if cities.get(path[0]) is not None and cities[path[0]].get(path[1]) is not None and cities[path[0]][path[1]].get(path[2]) is not None and cities[path[0]][path[1]][path[2]].get(path[3]) is not None:
+    del cities[path[0]][path[1]][path[2]][path[3]]
+    cities[path[0]]["changed"] = True
+  kill(caller,row)

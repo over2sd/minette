@@ -6,7 +6,8 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,writeListFile)
+from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
+writeListFile,getPlaceListGTK)
 from city import addCityMenu
 from common import addHelpMenu
 from globdata import config
@@ -85,6 +86,11 @@ This tutorial will only display as long as you do not use a configuration file. 
     w.set_accel_group(self.accgroup)
     w.show()
     itemW.set_submenu(w)
+    if config['debug'] > 0:
+      itemWS = gtk.MenuItem("_Show placeList",True)
+      itemWS.show()
+      w.append(itemWS)
+      itemWS.connect("activate",getPlaceListGTK)
     itemWT = gtk.MenuItem("S_tory Editor",True)
     itemWT.show()
     w.append(itemWT)
