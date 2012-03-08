@@ -8,10 +8,12 @@ import re
 import xml.etree.ElementTree as etree
 
 import common
+from debug import printPretty
 from globdata import (config,worldList,cities,people,places,printStack)
 from status import status
 import xmlout
 
+placeList = {}
 locs = {}
 lockeys = {}
 states = {}
@@ -27,10 +29,13 @@ def getCityList(order):
     return locs
   elif order == 0:
     for city in worldList['c']:
-      cityloc = None
+      cityloc = [None,None,None]
       if len(city) > 0: cityloc = getCityLoc(city)
       if cityloc:
         locs[city] = cityloc
+        if cityloc[0] is not None and cityloc[1] is not None and cityloc[2] is not None:
+          (cityname,state,statename) = cityloc
+          if state is not None and city is not None: pushLoc(state,statename,city,cityname)
     return locs
   elif order == 1:
     if not len(locs): getCityList(0)
@@ -38,7 +43,7 @@ def getCityList(order):
       for loc in locs:
         cityloc = [None,None,None]
         if len(city) > 0: cityloc = getCityLoc(loc)
-        if cityloc[0] and cityloc[2]:
+        if cityloc[0] is not None and cityloc[2] is not None:
           lockeys["%s, %s" % (cityloc[0],cityloc[2])] = loc
     return lockeys
 
@@ -61,6 +66,22 @@ def getCityLoc(fileid):
   if root.find("statefile") is not None: statefile = root.find("statefile").text.strip()
   return [cityname,statefile,statename]
 
+def getPlacesIn(city):
+  state = common.getInf(cities.get(city),["info","statefile"],None)
+  if state.find(".xml") > -1: state = state.split('.')[0]
+  if city.find(".xml") > -1: city = city.split('.')[0]
+  if state:
+    data = placeList.get(state)
+    if data is not None:
+      data = placeList[state].get(city)
+      if data is not None:
+        return data
+      else:
+        common.say("City %s not found in placeList" %city)
+    else:
+      common.say("State %s not found in placeList" % state)
+  return {}
+
 def getStateList(order):
   global states
   global statekeys
@@ -75,6 +96,7 @@ def getStateList(order):
       if len(state) > 0: statename = getStateName(state)
       if statename:
         states[state] = statename
+        pushLoc(state,statename)
     return states
   elif order == 1:
     if not len(states): getStateList(0)
@@ -113,6 +135,9 @@ def loadCity(fileid):
   dinf = {}
   root = etree.Element("city")
   text = None
+  statename = ""
+  statefile = ""
+  cityname = ""
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
   tags = ["name","state","statefile","start","scue","end","ecue","place"]
   for tag in tags:
@@ -121,10 +146,10 @@ def loadCity(fileid):
   if not idExists(fileid):
     status.push(0,"new city created... '" + fileid + "'")
     return dinf
-  fileid = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"loading city from XML... '" + fileid + "'")
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"loading city from XML... '" + fn + "'")
   try:
-    with codecs.open(fileid,'rU','utf-8') as f:
+    with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
       f.close()
       root = tree.getroot()
@@ -149,12 +174,19 @@ def loadCity(fileid):
             if config['debug'] > 0:
               print "Invalid place tag:"
               for c in root[i]:
-                print c.tag
+                print c.tag + ': ' + c.text
         else: # no relat length
           if config['debug'] > 0: print "Empty place tag."
       elif root[i].text is not None:
+        if root[i].tag == "statefile":
+          statefile = root[i].text.strip()
+        elif root[i].tag == "state":
+          statename = root[i].text.strip()
+        elif root[i].tag == "name":
+          cityname = root[i].text.strip()
         dinf[root[i].tag] = [root[i].text.strip(), False]
         if config['debug'] > 2: print str(i) + " ",
+  if len(statefile) > 0: pushLoc(statefile,statename,fileid,cityname)
   return dinf
 
 def loadPerson(fileid):
@@ -187,10 +219,10 @@ def loadPerson(fileid):
   if not idExists(fileid):
     status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
-  fileid = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"loading person from XML... '" + fileid + "'")
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"loading person from XML... '" + fn + "'")
   try:
-    with codecs.open(fileid,'rU','utf-8') as f:
+    with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
       f.close()
       root = tree.getroot()
@@ -313,6 +345,11 @@ def loadPlace(fileid):
   drel = {}
   root = etree.Element("place")
   text = None
+  city = ""
+  cityf = ""
+  state = ""
+  statef = ""
+  placename = ""
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
   tags = ["commonname","name","start","scue","end","ecue","stories","mention","desc","address","loc","locfile","state","statefile","note", "relat","update"]
   tags.remove("note")
@@ -324,10 +361,10 @@ def loadPlace(fileid):
   if not idExists(fileid):
     status.push(0,"new place created... '" + fileid + "'")
     return (dinf,drel)
-  fileid = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"loading place from XML... '" + fileid + "'")
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"loading place from XML... '" + fn + "'")
   try:
-    with codecs.open(fileid,'rU','utf-8') as f:
+    with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
       f.close()
       root = tree.getroot()
@@ -372,9 +409,19 @@ def loadPlace(fileid):
 #      elif root[i].tag == "formocc":
 #        print ",",
       elif root[i].text is not None:
+        if root[i].tag == "statefile":
+          statef = root[i].text.strip()
+        elif root[i].tag == "state":
+          state = root[i].text.strip()
+        elif root[i].tag == "locfile":
+          cityf = root[i].text.strip()
+        elif root[i].tag == "loc":
+          city = root[i].text.strip()
+        elif root[i].tag == "name":
+          placename = root[i].text.strip()
         dinf[root[i].tag] = [root[i].text.strip(), False]
         if config['debug'] > 2: print str(i) + " ",
-#  print str(dinf)
+  if len(statef) > 0 and len(cityf) > 0: pushLoc(statef,state,cityf,city,fileid,placename)
   return (dinf,drel)
 
 def populateWorld():
@@ -478,7 +525,28 @@ def populateWorld():
     if len(worldList[key]):
       if not len(worldList[key][0]):
         worldList[key] = []
-  if config['debug'] > 3: print worldList
+  for s in worldList['s']:
+    pushLoc(s)
+  getStateList(0)
+  getCityList(0)
+  if config['debug'] > 3:
+    printPretty(worldList)
+    printPretty(placeList)
+
+def pushLoc(statefile,statename = "",cityfile = "",cityname = "",placefile = "",placename = ""):
+  if len(statefile) > 0:
+    if statefile.find(".xml") > -1: statefile = statefile.split('.')[0]
+    if not placeList.get(statefile): placeList[statefile] = {}
+    if len(statename) > 0:
+      if not placeList[statefile].get("_name"): placeList[statefile]['_name'] = statename
+    if len(cityfile) > 0:
+      if cityfile.find(".xml") > -1: cityfile = cityfile.split('.')[0]
+      if not placeList[statefile].get(cityfile): placeList[statefile][cityfile] = {}
+      if not placeList[statefile][cityfile].get("_name") and len(cityname) > 0:
+        placeList[statefile][cityfile]['_name'] = cityname
+      if len(placefile) > 0:
+        if placefile.find(".xml") > -1: placefile = placefile.split('.')[0]
+        if len(placename) > 0 and len(placefile) > 0: placeList[statefile][cityfile][placefile] = placename
 
 def saveCity(fileid,data):
   """Given a filename, saves a city's values to an "id" XML file.
@@ -715,3 +783,16 @@ def savePlace(fileid,data):
     return False
   places[fileid]['changed'] = False
   return True
+
+def updateLocs(cityname,locfile,statefile):
+  global locs
+  global lockeys
+  statename = getStateName(statefile)
+  if statename:
+    cityloc = [None,None,None]
+    if len(city) > 0: cityloc = getCityLoc(loc)
+    if cityloc[0] and cityloc[2]:
+      del lockeys["%s, %s" % (cityloc[0],cityloc[2])]
+    lockeys["%s, %s" % (cityname,statename)] = locfile
+    cityloc = [cityname,statefile,statename]
+    locs[locfile] = cityloc

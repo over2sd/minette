@@ -4,8 +4,12 @@
 - Merged preRead functions and moved the merged version to common module
 - Fixed an error in the calendar dialog that made it impossible to select month/year by typing them in
 - Fixed bugs found yesterday preventing city/state droplists from working
-- Decided not to move list populators to populateWorld at this time
+- Decided not to move list populators to populateWorld at this time but just add a call to populateWorld
 - Made some output more informative
+- Started transition to a nested dictionary for city/state file and name list storage
+- Decided nested dictionary and city/state lists both needed, for now
+- Made some debug functions to improve my QoL
+- Started working on place listings in city info tab
 
 2012-03-06:
 - Added city menus

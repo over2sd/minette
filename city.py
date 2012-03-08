@@ -7,10 +7,11 @@ import gtk
 from math import floor
 
 
-from backends import (loadCity,idExists,saveCity,getStateList)
+from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
 say,bsay,kill)
+from debug import printPretty
 from globdata import (cities,worldList,config)
 from status import status
 
@@ -101,6 +102,9 @@ def buildStateRow(scroll,data,fileid):
     row.pack_start(value,True,True,2)
   return row
 
+def choosePlace():
+  pass
+
 def displayCity(callingWidget,fileid, tabrow):
   global cities
   warnme = False
@@ -143,13 +147,10 @@ def initCinfo(self, fileid):
     print "initCinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
   scroll = self.get_parent()
-  self.namelabelbox = gtk.HBox()
-  self.namelabelbox.show()
   label = gtk.Label("City:")
   label.set_alignment(0,0)
   label.show()
-  self.namelabelbox.pack_start(label,1,1,2)
-  self.pack_start(self.namelabelbox,0,0,1)
+  self.pack_start(label,0,0,1)
   self.s1 = gtk.HSeparator()
   self.pack_start(self.s1,False,False,2)
   self.s1.show()
@@ -208,7 +209,27 @@ def initCinfo(self, fileid):
   self.notebox = gtk.VBox()
   self.notebox.show()
   self.pack_start(self.notebox,True,False,2)
-
+  label = gtk.Label("Places")
+  label.set_alignment(0,0)
+  label.show()
+  self.notebox.pack_start(label,0,0,1)
+  s1 = gtk.HSeparator()
+  self.notebox.pack_start(s1,False,False,2)
+  s1.show()
+  box = gtk.HBox()
+  box.show()
+  addbut = gtk.Button("Register Place")
+  image = gtk.Image()
+  image.set_from_file("img/add.png")
+  image.show()
+  addbut.set_image(image)
+  addbut.show()
+  lbook = getPlacesIn(fileid)
+  addbut.connect("clicked",choosePlace,self.notebox,lbook)
+  box.pack_end(addbut,False,False,1)
+  self.notebox.pack_start(box,False,False,1)
+  for l in lbook.keys():
+    packPlace(self.notebox,scroll,l,lbook[l])
 
 def mkCity(callingWidget,fileid,tabs):
   global cities
@@ -221,6 +242,12 @@ def mkCity(callingWidget,fileid,tabs):
     cities[fileid]['cat'] = 'c'
     saveThisC(callingWidget,fileid)
   displayCity(callingWidget,fileid,tabs)
+
+def packPlace(box,scroll,placef,value):
+  row = gtk.HBox()
+  row.show()
+  
+
 
 def preClose(caller,fileid,target = None):
   result = -8
@@ -267,6 +294,8 @@ def setState(caller,fileid,key):
       cities[fileid]['info']['state'] = [lockeys[key],True]
       cities[fileid]['changed'] = True
       if config['debug'] > 0: print "New State: %s" % key
+      cityname = cities[fileid]['info'].get("name",None)
+      if cityname: updateLocs(cityname,fileid,key)
   else:
     bsay(None,"setState: Could not set state for %s." % fileid)
 

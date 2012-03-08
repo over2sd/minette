@@ -9,9 +9,8 @@ from math import floor
 from backends import (loadPlace, savePlace, config, writeListFile, idExists,worldList,killListFile,getCityList)
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
-skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton)
+skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead)
 from globdata import (config,places,worldList)
-from preread import preReadl
 from status import status
 from story import (storyPicker,)
 """

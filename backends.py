@@ -172,6 +172,12 @@ def getCityList(order = 0):
   else:
     return backxml.getCityList(order)
 
+def getPlacesIn(city):
+  if config['informat'] == "sql":
+    return backsql.getPlacesIn(city)
+  else:
+    return backxml.getPlacesIn(city)
+
 def getStateList(order = 0):
   if config['informat'] == "sql":
     return backsql.getStateList(order)
@@ -262,6 +268,12 @@ def savePlace(fileid,data):
     worldList['l'].append(fileid)
     writeListFile()
   return success
+
+def updateLocs(cityname,locfile,statefile):
+  if config['informat'] == "sql":
+    backsql.updateLocs(cityname,locfile,statefile)
+  else:
+    backxml.updateLocs(cityname,locfile,statefile)
 
 def writefile(fn,lines,create = False):
   if create or os.path.exists(os.path.abspath(fn)):

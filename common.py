@@ -316,7 +316,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
 def placeCalendarButton(data,row,target,path):
   """Puts a nice little calendar button in row. The calendar button updates
   target with the selected value."""
-#  print "args: %s %s %s %s" % (data,row,target,path)
+#  printPretty("args: %s %s %s %s" % (data,row,target,path))
   datebut = gtk.Button()
   datebut.show()
   image = gtk.Image()
@@ -330,11 +330,11 @@ def getInf(data,path,default = ""):
   """Returns the value of a key path in the given data, a given default, or an empty string."""
   end = len(path) - 1
   if not data or end < 0:
-    print "Bad data to getInf: %s %s" % (data, path)
+    printPretty("Bad data to getInf: %s %s" % (data, path))
     return default
   i = 0
   while i < end:
-    if config['debug'] > 5: print str(data) + '\n'
+    if config['debug'] > 5: printPretty(str(data) + '\n')
     if data.get(path[i]):
       data = data[path[i]]
       i += 1
@@ -344,7 +344,7 @@ def getInf(data,path,default = ""):
   try:
     (value,mod) = data.get(path[-1],(default,False))
   except ValueError as e:
-    print "%s yields %s with %s" % (path,data.get(path[-1],(default,False)),e)
+    printPretty("%s yields %s with %s" % (path,data.get(path[-1],(default,False)),e))
   return value
 
 def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
@@ -431,101 +431,8 @@ def markChanged(self,cat,path):
       root[path[0]]['changed'] = True
       if config['debug'] > 2: print "Value set: " + getInf(root.get(path[0]),path[1:])
     else:
-      print "markChanged: Invalid person path (%s)" % path
+      printPretty("markChanged: Invalid path (%s)" % path)
       return
-
-"""
-def markChanged(self,cat,path):
-  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
-  end = len(path)
-  value = ["",False]
-  value[1] = True
-  value[0] = self.get_text()
-  if cat == 'p':
-    global people
-    goforit = preread.preReadp(True,path[:-1],end)
-    if goforit:
-      if end == 3:
-        try:
-          people[path[0]][path[1]][path[2]] = value
-        except KeyError:
-          print "Could not mark " + path[2] + " as changed."
-          return
-      elif end == 4:
-        try:
-          people[path[0]][path[1]][path[2]][path[3]] = value
-        except KeyError:
-          print "Could not mark " + path[3] + " as changed."
-          return
-      elif end == 5:
-        try:
-          people[path[0]][path[1]][path[2]][path[3]][path[4]] = value
-        except KeyError:
-          print "Could not mark " + path[4] + " as changed."
-          return
-      elif end == 6:
-        try:
-          people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
-        except KeyError:
-          print "Could not mark " + path[5] + " as changed."
-          return
-      elif end == 7:
-        try:
-          people[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
-        except KeyError:
-          print "Could not mark " + path[6] + " as changed."
-          return
-      else:
-        say("Path too long: %s" % path)
-        return
-      people[path[0]]['changed'] = True
-      if config['debug'] > 2: print "Value set: " + getInf(people.get(path[0]),path[1:])
-    else:
-      print "markChanged: Invalid person path (%s)" % path
-      return
-  elif cat == 'l':
-    global places
-    goforit = preread.preReadl(True,path[:-1],end)
-    if goforit:
-      if end == 3:
-        try:
-          places[path[0]][path[1]][path[2]] = value
-        except KeyError:
-          print "Could not mark " + path[2] + " as changed."
-          return
-      elif end == 4:
-        try:
-          places[path[0]][path[1]][path[2]][path[3]] = value
-        except KeyError:
-          print "Could not mark " + path[3] + " as changed."
-          return
-      elif end == 5:
-        try:
-          places[path[0]][path[1]][path[2]][path[3]][path[4]] = value
-        except KeyError:
-          print "Could not mark " + path[4] + " as changed."
-          return
-      elif end == 6:
-        try:
-          places[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
-        except KeyError:
-          print "Could not mark " + path[5] + " as changed."
-          return
-      elif end == 7:
-        try:
-          places[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
-        except KeyError:
-          print "Could not mark " + path[6] + " as changed."
-          return
-      else:
-        say("Path too long: %s" % path)
-        return
-      places[path[0]]['changed'] = True
-      if config['debug'] > 2: print "Value set: " + getInf(places.get(path[0]),path[1:])
-    else:
-      print "markChanged: Invalid place path (%s)" % path
-      return
-"""
 
 def expandTitles(value):
   global stories
@@ -686,7 +593,7 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
     else:
       x = "relations"
       if side == "info": x = "info"
-      if config['debug'] > 0: print "%s %s %s %s %s %s %s" % (caller,target,data,fileid,side,key,boxwidth)
+      if config['debug'] > 0: printPretty("%s %s %s %s %s %s %s" % (caller,target,data,fileid,side,key,boxwidth))
       print "Record %s has no %s!" % (fileid,x)
       err = True
   else:
