@@ -9,7 +9,8 @@ from math import floor
 from backends import (loadPlace, savePlace, config, writeListFile, idExists,worldList,killListFile,getCityList)
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
-skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead)
+skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
+displayStage2)
 from globdata import (config,places,worldList)
 from status import status
 from story import (storyPicker,)
@@ -156,75 +157,15 @@ def displayPlace(callingWidget,fileid, tabrow):
     places[fileid]['relat'] = L[1]
     places[fileid]['changed'] = False
     places[fileid]['cat'] = 'l'
-  tabrow.vbox = gtk.VBox()
-  tabrow.vbox.show()
+  displayStage1(tabrow,fileid,'l',saveThisL,showPlace,preClose,displayPlace)
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
-  tabrow.vbox.ltabs = gtk.Notebook()
-  tabrow.vbox.ltabs.show()
-  bbar = gtk.HButtonBox()
-  bbar.show()
-  bbar.set_spacing(2)
-  save = gtk.Button("Save")
-  image = gtk.Image()
-  image.set_from_file("img/save.png")
-  save.set_image(image)
-  save.connect("clicked",saveThisL,fileid)
-  save.show()
-  bbar.pack_start(save)
-  if config['debug'] > 0:
-    report = gtk.Button("Report")
-    image = gtk.Image()
-    image.set_from_file("img/report.png")
-    report.set_image(image)
-    report.connect("clicked",showPlace,fileid)
-    report.show()
-    bbar.pack_start(report)
-  # endif
-
-# other buttons...   reload,etc.   ...go here
-
-  close = gtk.Button("Close")
-  image = gtk.Image()
-  image.set_from_file("img/close.png")
-  close.set_image(image)
-  close.show_all()
-  close.connect("clicked",preClose,fileid,tabrow.vbox)
-  bbar.pack_end(close)
-  tabrow.vbox.pack_start(bbar,False,False,2)
-  tabrow.vbox.pack_start(tabrow.vbox.ltabs,True,True,2)
-  tabrow.labelname = customlabel('l',fileid,tabrow.vbox)
-  tabrow.labelname.show_all()
-  tabrow.append_page(tabrow.vbox,tabrow.labelname)
-#  if warnme and config['openduplicatetabs']:
-#    tabrow.ltabs.<function to change background color as warning>
-#    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
-#    Here, attach ltabs to warning VBox
-#  else:
-#    Here, attach ltabs to tabrow
-
   tabrow.labeli = gtk.Label("Information")
   tabrow.labelr = gtk.Label("Characters")
-  tabrow.vbox.ltabs.swi = gtk.ScrolledWindow()
-  tabrow.vbox.ltabs.swr = gtk.ScrolledWindow()
-  tabrow.vbox.ltabs.swi.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.vbox.ltabs.swr.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.vbox.ltabs.swi.show()
-  tabrow.vbox.ltabs.swr.show()
-  tabrow.vbox.ltabs.append_page(tabrow.vbox.ltabs.swi,tabrow.labeli)
-  tabrow.vbox.ltabs.append_page(tabrow.vbox.ltabs.swr,tabrow.labelr)
-  tabrow.vbox.ltabs.set_tab_label_packing(tabrow.vbox.ltabs.swi,True,True,gtk.PACK_START)
-  tabrow.vbox.ltabs.set_tab_label_packing(tabrow.vbox.ltabs.swr,True,True,gtk.PACK_START)
-  tabrow.vbox.ltabs.swi.infpage = gtk.VBox()
-  tabrow.vbox.ltabs.swr.relpage = gtk.VBox()
-  tabrow.vbox.ltabs.swi.infpage.show()
-  tabrow.vbox.ltabs.swr.relpage.show()
-  tabrow.vbox.ltabs.swi.add_with_viewport(tabrow.vbox.ltabs.swi.infpage)
-  tabrow.vbox.ltabs.swr.add_with_viewport(tabrow.vbox.ltabs.swr.relpage)
-  tabrow.vbox.ltabs.swi.infpage.set_border_width(5)
-  tabrow.vbox.ltabs.swr.relpage.set_border_width(5)
+  tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
+  tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initLinfo(tabrow.vbox.ltabs.swi.infpage, fileid)
-#  initLrels(tabrow.vbox.ltabs.swr.relpage, fileid,tabrow)
+  initLinfo(tabrow.vbox.ftabs.infpage, fileid)
+#  initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   places[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 

@@ -78,7 +78,7 @@ def dateChoose(caller,target,data,path):
   askbox.destroy()
   checkForChange(target,None,data,path)
 
-def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser):
+def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener):
   target.vbox = gtk.VBox()
   target.vbox.show()
   target.vbox.ftabs = gtk.Notebook()
@@ -102,6 +102,13 @@ def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser):
     report.show()
     bbar.pack_start(report)
   # endif
+  revert = gtk.Button("Reload")
+  image = gtk.Image()
+  image.set_from_file("img/rev.png")
+  revert.set_image(image)
+  revert.show_all()
+  revert.connect("clicked",reloadThis,preCloser,opener,fileid,target.vbox,target)
+  bbar.pack_start(revert)
 
 # other buttons...   reload,etc.   ...go here
 
@@ -217,6 +224,11 @@ def preRead(force,cat,path,depth = 0,retries = 0):
       return False
   else: # First level (fileid) can't be generated.
     return False
+
+def reloadThis(caller,closer,opener,fileid,mark,target):
+  status.push(0,"Attempting to reload %s..." % fileid)
+  closer(caller,fileid,mark)
+  opener(caller,fileid,target)
 
 def reorderTabs(tabs):
   """Functions looks at a notebook and reorders the tab numbers after one is closed"""

@@ -4,6 +4,7 @@ import gtk
 
 from choices import getRelsP
 from common import askBoxProcessor
+from debug import printPretty
 from globdata import worldList
 
 def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need relation's gender than person's
@@ -21,8 +22,9 @@ def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need
 #  elif cat == "animal":
   return d
 
-def recordSelectBox(parent,fileid,title = "Select Record"):
+def recordSelectBox(parent,fileid,title = "",fromtypes = ['l','o','p']):
   global worldList
+  if len(title) == 0: title = "Select Record"
   askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",86))
   answers = {}
   colbox = gtk.HBox()
@@ -34,7 +36,13 @@ def recordSelectBox(parent,fileid,title = "Select Record"):
   bound = 20
   sepcount = 0
   #TODO: Move these to the backends module
-  sepnames = {'p':("People","person"),'l':("Places","place"),'c':("Cities","city"),'s':("States","state"),'i':("Items","item")}
+  sepnames = {}
+  if 'p' in fromtypes: sepnames.update({'p':("People","person")})
+  if 'l' in fromtypes: sepnames.update({'l':("Places","place")})
+  if 'c' in fromtypes: sepnames.update({'c':("Cities","city")})
+  if 'i' in fromtypes: sepnames.update({'i':("Items","item")})
+  if 's' in fromtypes: sepnames.update({'s':("States","state")})
+  if 'o' in fromtypes: sepnames.update({'o':("Organaizations","org")})
   for li in sepnames.keys():
     if worldList.get(li):
       count = len(worldList[li])

@@ -2,6 +2,10 @@
 - Added some data normalization checks
 - Finished listing places on city info tab
 - Fixed error in saveCity(XML) that didn't allow saving of places list
+- Added city-place relation chooser
+- Added reload button to record pages
+- Made record select dialog more flexible and user friendly
+- place and person now use the common function for building display pages
 
 2012-03-07:
 - Fixed bug in checkForChange so cities can be checked

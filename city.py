@@ -7,13 +7,14 @@ import gtk
 from math import floor
 
 
-from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc)
+from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
 say,bsay,kill,markChanged)
 from debug import printPretty
-from globdata import (cities,worldList,config)
-from place import displayPlace
+from getmod import recordSelectBox
+from globdata import (cities,places,worldList,config)
+from place import (displayPlace,saveThisL)
 from status import status
 
 def addCityMenu(self):
@@ -103,8 +104,38 @@ def buildStateRow(scroll,data,fileid):
     row.pack_start(value,True,True,2)
   return row
 
-def choosePlace():
-  pass
+def choosePlace(parent,target,tabs,scroll,data,cityf,title = ""):
+  global status
+  global places
+  place = recordSelectBox(None,cityf,title,'l')
+  if place and place[1] == "place":
+    placename = ""
+    citlist = getCityList(0)
+    statef = validateFileid(citlist.get(cityf,["",""])[1])
+    cityname = citlist.get(cityf,["",""])[0]
+    statename = citlist.get(cityf,["","",""])[2]
+    try:
+      placename = places[place[0]]['info']['name'][0]
+      places[place[0]]['info']['state'] = [statename,True]
+      places[place[0]]['info']['statefile'] = [statef,True]
+      places[place[0]]['info']['loc'] = [cityname,True]
+      places[place[0]]['info']['locfile'] = [cityf,True]
+      places[place[0]]['changed'] = True
+      saveThisL(parent,place[0])
+#      reloadPlaceTab(place[0]) # TODO: Write a function like this
+    except KeyError:
+#      placename = getPlaceNameFromID(place[0])
+      placename = askBox(None,"  Please type the place name that goes with %s" % place[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % place[0])
+      # Maybe some day, I'll make this grab the placename from the file, and automatically load its record for updating
+    if placename == "":
+      status.push(0,"Registering place in %s cancelled" % cityf)
+      return False
+    packPlace(target,scroll,data,cityf,place[0],placename,tabs,True)
+    status.push(0,"Registered %s in %s" % (place[1],cityf))
+    return True
+  else:
+    status.push(0,"Registering place in %s cancelled" % cityf)
+    return False
 
 def displayCity(callingWidget,fileid, tabrow):
   global cities
@@ -125,7 +156,7 @@ def displayCity(callingWidget,fileid, tabrow):
     cities[fileid]['info'] = loadCity(fileid)
     cities[fileid]['changed'] = False
     cities[fileid]['cat'] = 'c'
-  displayStage1(tabrow,fileid,'c',saveThisC,showCity,preClose) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
+  displayStage1(tabrow,fileid,'c',saveThisC,showCity,preClose,displayCity) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
@@ -237,10 +268,10 @@ def initCinfo(self, fileid,tabs):
     name = getInf(cityplaces,[l,"name"],"")
     pushLoc(state,"",fileid,cityname,fi,name)
   lbook = getPlacesIn(fileid)
-  addbut.connect("clicked",choosePlace,self.notebox,lbook)
+  addbut.connect("clicked",choosePlace,self.notebox,tabs,scroll,data,fileid,"Register in %s..." % cityname)
   box.pack_end(addbut,False,False,1)
   self.notebox.pack_start(box,False,False,1)
-  for l in lbook.keys():
+  for l in sorted(lbook.keys()):
     if l != "_name":
       newplace = False
       if l not in cityplaces.keys():
@@ -374,4 +405,5 @@ def unlinkPlace(caller,row,cityf,placef):
   if cities.get(path[0]) is not None and cities[path[0]].get(path[1]) is not None and cities[path[0]][path[1]].get(path[2]) is not None and cities[path[0]][path[1]][path[2]].get(path[3]) is not None:
     del cities[path[0]][path[1]][path[2]][path[3]]
     cities[path[0]]["changed"] = True
+  # TODO: Also unlink from place record, if it's loaded
   kill(caller,row)

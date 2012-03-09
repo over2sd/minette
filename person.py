@@ -9,7 +9,8 @@ from math import floor
 from backends import (loadPerson, savePerson, config, writeListFile, idExists,worldList)
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
-activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,addLoadSubmenuItem)
+activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
+displayStage1,displayStage2,addLoadSubmenuItem)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
 from preread import preReadp
@@ -310,75 +311,15 @@ def displayPerson(callingWidget,fileid, tabrow):
     people[fileid]['relat'] = p[1]
     people[fileid]['changed'] = False
     people[fileid]['cat'] = 'p'
-  tabrow.vbox = gtk.VBox()
-  tabrow.vbox.show()
+  displayStage1(tabrow,fileid,'p',saveThisP,showPerson,preClose,displayPerson)
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
-  tabrow.vbox.ptabs = gtk.Notebook()
-  tabrow.vbox.ptabs.show()
-  bbar = gtk.HButtonBox()
-  bbar.show()
-  bbar.set_spacing(2)
-  save = gtk.Button("Save")
-  image = gtk.Image()
-  image.set_from_file("img/save.png")
-  save.set_image(image)
-  save.connect("clicked",saveThisP,fileid)
-  save.show()
-  bbar.pack_start(save)
-  if config['debug'] > 0:
-    report = gtk.Button("Report")
-    image = gtk.Image()
-    image.set_from_file("img/report.png")
-    report.set_image(image)
-    report.connect("clicked",showPerson,fileid)
-    report.show()
-    bbar.pack_start(report)
-  # endif
-
-  # other buttons...   reload,etc.   ...go here
-
-  close = gtk.Button("Close")
-  image = gtk.Image()
-  image.set_from_file("img/close.png")
-  close.set_image(image)
-  close.show_all()
-  close.connect("clicked",preClose,fileid,tabrow.vbox)
-  bbar.pack_end(close)
-  tabrow.vbox.pack_start(bbar,False,False,2)
-  tabrow.vbox.pack_start(tabrow.vbox.ptabs,True,True,2)
-  tabrow.labelname = customlabel('p',fileid,tabrow.vbox)
-  tabrow.labelname.show_all()
-  tabrow.append_page(tabrow.vbox,tabrow.labelname)
-#  if warnme and config['openduplicatetabs']:
-#    tabrow.ptabs.<function to change background color as warning>
-#    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
-#    Here, attach ptabs to warning VBox
-#  else:
-#    Here, attach ptabs to tabrow
-
   tabrow.labeli = gtk.Label("Information")
   tabrow.labelr = gtk.Label("Relationships")
-  tabrow.vbox.ptabs.swi = gtk.ScrolledWindow()
-  tabrow.vbox.ptabs.swr = gtk.ScrolledWindow()
-  tabrow.vbox.ptabs.swi.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.vbox.ptabs.swr.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
-  tabrow.vbox.ptabs.swi.show()
-  tabrow.vbox.ptabs.swr.show()
-  tabrow.vbox.ptabs.append_page(tabrow.vbox.ptabs.swi,tabrow.labeli)
-  tabrow.vbox.ptabs.append_page(tabrow.vbox.ptabs.swr,tabrow.labelr)
-  tabrow.vbox.ptabs.set_tab_label_packing(tabrow.vbox.ptabs.swi,True,True,gtk.PACK_START)
-  tabrow.vbox.ptabs.set_tab_label_packing(tabrow.vbox.ptabs.swr,True,True,gtk.PACK_START)
-  tabrow.vbox.ptabs.swi.infpage = gtk.VBox()
-  tabrow.vbox.ptabs.swr.relpage = gtk.VBox()
-  tabrow.vbox.ptabs.swi.infpage.show()
-  tabrow.vbox.ptabs.swr.relpage.show()
-  tabrow.vbox.ptabs.swi.add_with_viewport(tabrow.vbox.ptabs.swi.infpage)
-  tabrow.vbox.ptabs.swr.add_with_viewport(tabrow.vbox.ptabs.swr.relpage)
-  tabrow.vbox.ptabs.swi.infpage.set_border_width(5)
-  tabrow.vbox.ptabs.swr.relpage.set_border_width(5)
+  tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
+  tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initPinfo(tabrow.vbox.ptabs.swi.infpage, fileid)
-  initPrels(tabrow.vbox.ptabs.swr.relpage, fileid,tabrow)
+  initPinfo(tabrow.vbox.ftabs.infpage, fileid)
+  initPrels(tabrow.vbox.ftabs.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   people[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
@@ -549,7 +490,7 @@ def listRel(self,r,fileid,relid,scroll,target = None):
         rowmile.pack_start(e,1,1,2)
         row3.add(rowmile)
 
-def connectToPerson(parent,target,tabs,scroll,fileid,title = None):
+def connectToPerson(parent,target,tabs,scroll,fileid,title = ""):
   global status
   relid = recordSelectBox(None,fileid,title)
   if relid and len(relid[1]):
