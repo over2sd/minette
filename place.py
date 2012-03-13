@@ -11,12 +11,12 @@ from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildaro
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
 displayStage2)
+from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
 from status import status
 from story import (storyPicker,)
 """
 from choices import allPlaceCats
-from getmod import (getPlaceConnections,recordSelectBox)
 """
 
 def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
@@ -98,6 +98,55 @@ def addPlaceSubmenu(tabs,ll,places):
     menu_items.connect("activate",displayPlace,i,tabs)
     menu_items.show()
 
+def addRelToBox(self,target,relid,fileid,tabs,scroll):
+  global places
+  cat = relid[1]
+  relid = relid[0]
+  if cat == 'p': global people
+  if preRead(True,'l',[fileid,"relat"],2):
+    name = []
+    rels = {}
+    nameperson = ""
+    if not preRead(False,'l',[fileid,"relat",relid],3):
+      if not preRead(False,'l',fileid,1):
+        pl = loadPlace(relid)
+        inf = pl[0]
+        try:
+          inf.get("foo",None)
+        except AttributeError:
+          print "(l)addRelToBox: Load Error"
+          return
+        try:
+          name = [inf['commonname'][0],inf["name"][0]]
+        except KeyError as e:
+          print "(l)addRelToBox: An error occurred accessing relation %s: %s" % (relid,e)
+          return
+      else:
+        try:
+          name = [people[relid]['info']['commonname'][0],people[relid]['info']['gname'][0],people[relid]['info']['fname'][0]]
+        except KeyError as e:
+          print "(l)addRelToBox: An error occurred accessing person %s: %s" % (relid,e)
+          return
+      if len(name[0]) > 2:
+        nameperson = name[0]
+      elif config['familyfirst']:
+        nameperson = name[2] + " " + name[1]
+      else:
+        nameperson = name[1] + " " + name[2]
+      places[fileid]['relat'][relid] = {}
+      places[fileid]['relat'][relid]['related'] = [nameperson,True]
+      places[fileid]['relat'][relid]['relation'] = ["",False] # Add a dialog here
+      places[fileid]['relat'][relid]['cat'] = [cat,True]
+      places[fileid]['relat'][relid]['rtype'] = ["",False] # Perhaps all these things in one dialog
+      places[fileid]['relat'][relid]['realm'] = ["",False] # Only write this one if user chooses a realm
+      # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids])
+      places[fileid]['relat'][relid]['events'] = {}
+      places[fileid]['changed'] = True
+      listRel(target,places[fileid]['relat'][relid],fileid,relid,scroll,tabs)
+    else:
+      bsay(self,"Not clobbering existing connection to %s!" % relid)
+      return
+
 def buildLocRow(scroll,data,fileid):
   row = gtk.HBox()
   row.show()
@@ -136,6 +185,15 @@ def buildLocRow(scroll,data,fileid):
     row.pack_start(value,True,True,2)
   return row
 
+def connectToPlace(parent,target,tabs,scroll,fileid,title = ""):
+  global status
+  relid = recordSelectBox(None,fileid,title,['l','p']) # TODO: organizations?
+  if relid and len(relid[1]):
+    addRelToBox(parent,target,relid,fileid,tabs,scroll)
+    status.push(0,"Added connection to %s on %s" % (relid[0],fileid))
+  else:
+    status.push(0,"Adding connection on %s cancelled" % fileid)
+
 def displayPlace(callingWidget,fileid, tabrow):
   global places
   warnme = False
@@ -160,12 +218,12 @@ def displayPlace(callingWidget,fileid, tabrow):
   displayStage1(tabrow,fileid,'l',saveThisL,showPlace,preClose,displayPlace)
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
-  tabrow.labelr = gtk.Label("Characters")
+  tabrow.labelr = gtk.Label("Connections")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
   initLinfo(tabrow.vbox.ftabs.infpage, fileid)
-#  initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow)
+  initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   places[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
@@ -311,6 +369,183 @@ def initLinfo(self, fileid):
       if cval: cval = cval[0]
       if dval and cval: addNote(self,scroll,notebox,fileid,dval,cval,i)
 
+def initLrels(self, fileid,tabs):
+  scroll = self.get_parent()
+  global places
+  global config
+  name = []
+  rels = {}
+  nameplace = ""
+  try:
+    name = [places[fileid]['info']['commonname'][0],places[fileid]['info']['name'][0]]
+  except KeyError as e:
+    print "initLrels: An error occurred accessing %s: %s" % (fileid,e)
+    if config['debug'] > 5: print str(places[fileid]['info'].get(e,None))
+    return
+  if places[fileid].get("relat"):
+    rels = places[fileid]['relat']
+  if len(name[0]) > 2:
+    nameplace = name[0]
+  else:
+    nameplace = name[1]
+  self.l1 = gtk.Label(nameplace + " - Place's Connections")
+  self.l1.show()
+  self.l1.set_alignment(0,0)
+  self.b1 = gtk.HBox()
+  self.b1.show()
+  self.addbutton = gtk.Button("Connect to a Related Record")
+  self.addbutton.show()
+  self.b1.add(self.l1)
+  self.b1.add(self.addbutton)
+  self.add(self.b1)
+  self.b1.set_child_packing(self.l1,1,1,2,gtk.PACK_START)
+  self.b1.set_child_packing(self.addbutton,0,0,2,gtk.PACK_START)
+  self.set_child_packing(self.b1,0,0,2,gtk.PACK_START)
+  uncatbox = gtk.VBox()
+  uncatbox.show()
+  if not len(rels):
+    self.norels = gtk.Label("No relations found at load time. New relations added will be sorted in the next load.")
+    self.norels.show()
+    self.add(self.norels)
+  else:
+#    printPretty(rels,True)
+    typed = {}
+    typed['uncat'] = []
+    unname = "New"
+    keys = rels.keys()
+    for key in keys:
+      t = ""
+      if rels[key].get("rtype"):
+        t = rels[key]['rtype'][0]
+      else:
+        typed['uncat'].append(key)
+      if not typed.get(t):
+        typed[t] = []
+      typed[t].append(key)
+    types = ["fam","empl","pat","place"]
+    typedesc = ["Family","Employees","Patrons","Places"]
+    for i in range(len(types)):
+      if typed.get(types[i]):
+        t = types[i]
+        if len(typed[t]):
+          if config['debug'] > 1: print t + ": " + str(len(typed[t]))
+          label = gtk.Label("*** " + typedesc[i] + " ***")
+          label.show()
+          label.set_alignment(0.05,0.5)
+          self.pack_start(label,0,0,2)
+          rule = gtk.HSeparator()
+          rule.show()
+          self.pack_start(rule,0,0,1)
+        keys = typed[t]
+        keys.sort()
+        for key in keys:
+          r = rels[key]
+          listRel(self,r,fileid,key,scroll,tabs)
+    if typed.get("uncat"):
+      unname = "Uncategorized/New"
+    label = gtk.Label("*** %s ***" % unname)
+    label.show()
+    label.set_alignment(0.05,0.5)
+    uncatbox.pack_start(label,0,0,2)
+    rule = gtk.HSeparator()
+    rule.show()
+    uncatbox.pack_start(rule,0,0,1)
+    if typed.get("uncat"):
+      if config['debug'] > 1: print 'uncat' + ": " + str(len(typed['uncat']))
+      keys = typed['uncat']
+      keys.sort()
+      for key in keys:
+        r = rels[key]
+        listRel(uncatbox,r,fileid,key,scroll,tabs)
+  self.add(uncatbox)
+  self.addbutton.connect("clicked",connectToPlace,uncatbox,tabs,scroll,fileid,"Connect to " + nameplace)
+
+def listRel(self,r,fileid,relid,scroll,target = None):
+  if not r.get("related"): return
+  name = r['related'][0]
+  if not r.get("cat"): return
+  cat = r['cat'][0]
+  if not target: target = self.get_parent().get_parent().get_parent().get_parent() #Which is better?
+  namebutton = gtk.Button(relid)
+  namebutton.connect("clicked",displayPlace,relid,target) # passing the target or figuring it from parentage?
+  row1 = gtk.HBox()
+  self.pack_start(row1,0,0,2)
+  row1.pack_start(namebutton,1,1,2)
+  row1.show()
+  namebutton.show()
+  namebutton.set_alignment(0.75,0.05)
+  namebutton.set_size_request(int(self.size_request()[0] * 0.20),10)
+  namelabel = gtk.Label("Name: ")
+  namelabel.show()
+  row1.pack_start(namelabel,0,0,2)
+  namelabel.set_width_chars(6)
+  nameentry = gtk.Entry()
+  nameentry.show()
+  nameentry.set_text(name)
+  activateRelEntry(nameentry,scroll,places.get(fileid),fileid,relid,"related")
+  row1.pack_start(nameentry,1,1)
+  relation = gtk.Label(r['relation'][0])
+  relation.show()
+  relation.set_width_chars(8)
+  row1.pack_start(relation,1,1)
+  relset = gtk.Button("Set")
+  relset.show()
+  relset.set_alignment(0.5,0.5)
+  relset.set_size_request(36,24)
+  data = places.get(relid,None)
+  relset.connect("clicked",selectConnectionL,relation,fileid,relid,name,cat)
+  row1.pack_start(relset,0,0,5)
+  row2 = gtk.HBox()
+  self.pack_start(row2,0,0,2)
+  row2.show()
+  mileadd = gtk.Button("New Milestone")
+  mileadd.show()
+  mileadd.set_alignment(0.75,0.05)
+#  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
+  row2.pack_start(mileadd,0,0,5)
+  dhead = gtk.Label("Date")
+  dhead.show()
+  dhead.set_width_chars(8)
+  row2.pack_start(dhead,1,1,2)
+  ehead = gtk.Label("Event")
+  ehead.show()
+  ehead.set_width_chars(18)
+  row2.pack_start(ehead,1,1,2)
+  row2.show_all()
+  row3 = gtk.VBox()
+  row3.show()
+  self.pack_start(row3,0,0,2)
+  boxwidth = self.size_request()[0]
+  mileadd.connect("clicked",addMilestone,scroll,row3,places.get(fileid),fileid,"relat",relid,boxwidth)
+  if r.get("events"):
+    for i in r['events']:
+#      showMile(row3,r,i,fileid,relid)
+
+#def showMile(row3,r,i,fileid,relid):
+      events = r['events'][i]
+#  print str(events)
+      if events.get("date") and events.get("event"):
+        rowmile = gtk.HBox()
+        rowmile.show()
+        blank = gtk.Label()
+        blank.show()
+        blank.set_width_chars(12)
+        rowmile.pack_start(blank,0,0,2)
+        d = gtk.Entry()
+        d.show()
+        d.set_width_chars(12)
+        d.set_text(events['date'][0])
+        data = places.get(fileid)
+        activateRelEntry(d,scroll,data,fileid,relid,"date",i)
+        rowmile.pack_start(d,1,1,2)
+        e = gtk.Entry()
+        e.show()
+        e.set_width_chars(18)
+        e.set_text(events['event'][0])
+        activateRelEntry(e,scroll,data,fileid,relid,"event",i)
+        rowmile.pack_start(e,1,1,2)
+        row3.add(rowmile)
+
 def mkPlace(callingWidget,fileid,tabs):
   global places
   if idExists(fileid,'l'):
@@ -355,6 +590,78 @@ def saveThisL(caller,fileid):
       status.push(0,"Error encountered saving %s." % fileid)
   else:
     bsay(caller,"saveThisL: Could not find place %s." % fileid)
+
+def selectConnectionL(caller,relation,fileid,relid,nameR,cat):
+  global places
+  nameL = ""
+  try:
+    name = [places[fileid]['info']['commonname'][0],places[fileid]['info']['name'][0]]
+  except KeyError as e:
+    print "selectConnectionL: An error occurred accessing %s: %s" % (fileid,e)
+    return
+  if len(name[0]) > 2:
+    nameL = name[0]
+  else:
+    nameL = name[1]
+  askbox = gtk.Dialog("Choose connection",None,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",86))
+  answers = {}
+  options = getPlaceConnections(cat)
+  for i in options.keys():
+    answers[i] = options[i][0]
+  optlist = []
+  for key, value in sorted(answers.iteritems(), key=lambda (k,v): (v,k)):
+    optlist.append(key)
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label(nameL)
+  label.show()
+  label.set_width_chars(20)
+  row.pack_start(label,True,True,1)
+  label = gtk.Label(nameR)
+  label.show()
+  label.set_width_chars(20)
+  row.pack_start(label,True,True,1)
+  askbox.vbox.pack_start(row,True,True,1)
+  sw = gtk.ScrolledWindow()
+  sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+  sw.set_size_request(400,150)
+  sw.show()
+  box = gtk.VBox()
+  box.show()
+  askbox.vbox.pack_start(sw,True,True,1)
+  sw.add_with_viewport(box)
+  for key in optlist:
+    if len(answers[key]) > 0:
+      rid = len(answers)
+      row = gtk.HBox()
+      row.show()
+      label = gtk.Label(options[key][1])
+      label.show()
+      label.set_width_chars(25)
+      row.pack_start(label,True,True,1)
+      button = gtk.Button(options[key][0])
+      button.show()
+      button.set_size_request(150,-1)
+      button.connect("clicked",askBoxProcessor,askbox,int(key))
+      row.pack_start(button,True,True,1)
+      box.pack_start(row,True,True,1)
+  width, height = askbox.get_size()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  answers['86'] = ""
+  answer = askbox.run()
+  askbox.destroy()
+  if answer < 0: answer = 86
+  value = str(answer)
+  if len(value) < 2: # Expect 2
+    return
+  if not preRead(True,'l',[fileid,'relat',relid],3): # This should have been here already.
+    return
+  if value == "86": return # Cancel
+  places[fileid]['relat'][relid]['rtype'] = options[value][2]
+  places[fileid]['relat'][relid]['relation'] = options[value][0]
+  places[fileid]['relat'][relid]['cat'] = cat
+  relation.set_text(places[fileid]['relat'][relid]['relation'])
+  # TODO: some day, maybe edit and save the other record with reciprocal relational information.
 
 def setLoc(caller,fileid,key):
   global places

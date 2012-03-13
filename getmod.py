@@ -2,7 +2,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from choices import getRelsP
+from choices import (getRelsP, getRelsL)
 from common import askBoxProcessor
 from debug import printPretty
 from globdata import worldList
@@ -15,11 +15,20 @@ def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need
     d.update(relsNN)
     if pgender != 'N' or rgender != 'N':
       d.update(relspr)
-#  elif cat == "place":
+  elif cat == "place":
+    rels = getRelsP('N','L')
+    d.update(rels)
 #  elif cat == "city":
 #  elif cat == "state":
 #  elif cat == "item":
 #  elif cat == "animal":
+  return d
+
+def getPlaceConnections(cat):
+  d = {}
+  if cat == "person":
+    rels = getRelsL('p')
+    d.update(rels)
   return d
 
 def recordSelectBox(parent,fileid,title = "",fromtypes = ['l','o','p']):

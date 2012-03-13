@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import backends
-from globdata import (config,stories,relsP)
+from globdata import (config,stories,relsP,relsL)
 import os
 
 def allGenders(order = 0):
@@ -15,6 +15,37 @@ def allGenders(order = 0):
     return gendercodes
   else:
     return genders
+
+def getRelsL(cat):
+  global relsL
+  if not len(relsL):
+    print "Loading place relations for the first time."
+#    relsL = loadRelsL() # backends.loadRelsL()
+#    r = ConfigOb(os.path.abspath("placeeconnections.ini"))
+# TODO: INI file import
+    # Some day, pull these values from a backend
+    relsL['relsLL'] = { # [relation,autoreverse,rtype,required pairgenders,is reciprocal,reverse's key]
+'171':['Branch Office','Main Office','place','LL'],
+'172':['Main Office','Branch Office','place','LL'],
+'173':['Sister Business','Sister Business','place','LL'],
+'174':['Property','Management Agency','place','LL'],
+    }
+    relsL['relsLP'] = { # [relation,autoreverse,rtype,required pairgenders,is reciprocal,reverse's key]
+'159':['Owner','Home','fam','LP'],
+'160':['Owner','Business','empl','LP'],
+'161':['Manager','Workplace','empl','LP'],
+'162':['Employee','Workplace','empl','LP'],
+'163':['Regular','Hangout','pat','LP'],
+'164':['Patron','Hangout','pat','LP'],
+'165':['Heir','Home','fam','LP'],
+'166':['Resident','Home','fam','LP'],
+'167':['Heir','Business','fam','LP'],
+'168':['Inmate','Captivity','other','LP'],
+'169':['Resident','Residence','pat','LP'],
+'170':['Member','Institution','pat','LP'],
+    }
+  listtype = "relsL" + cat.upper()
+  return relsL[listtype]
 
 def getRelsP(pgender = 'N',rgender = 'N'):
   global relsP
@@ -83,6 +114,20 @@ def getRelsP(pgender = 'N',rgender = 'N'):
 '144':['Father-in-law','Son-in-law','fam',"MM"],
 '145':['Stepbrother','Stepbrother','fam',"MM"],
 '146':['Stepfather','Stepson','fam',"MM"],
+    }
+    relsP['relsNL'] = { # [relation,autoreverse,rtype,required pairgenders,is reciprocal,reverse's key]
+'147':['Home','Owner','NL'],
+'148':['Business','Owner','NL'],
+'149':['Workplace','Manager','NL'],
+'150':['Workplace','Employee','NL'],
+'151':['Hangout','Regular','NL'],
+'152':['Hangout','Patron','NL'],
+'153':['Home','Heir','NL'],
+'154':['Home','Resident','NL'],
+'155':['Business','Heir','NL'],
+'156':['Captivity','Inmate','NL'],
+'157':['Residence','Resident','NL'],
+'158':['Institution','Member','NL'],
     }
   listtype = "rels" + pgender.upper() + rgender.upper()
   return relsP[listtype]
