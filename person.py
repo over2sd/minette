@@ -11,6 +11,7 @@ from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
 displayStage1,displayStage2,addLoadSubmenuItem)
+from debug import printPretty
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
 from preread import preReadp

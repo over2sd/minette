@@ -10,8 +10,8 @@ import datetime
 import time
 
 from choices import myStories
-from debug import printPretty
-from globdata import (cities,config,people,places,stories,printStack)
+from debug import (printPretty,debugPath)
+from globdata import (cities,config,people,places,stories,printStack,mainWin)
 from status import status
 import story
 
@@ -19,12 +19,14 @@ def say(text):
   print text # TODO: Make this a GTK dialog box.
 
 def bsay(caller,text):
+  if caller == "?": caller = mainWin
   say(text)
 
 def askBoxProcessor(e,prompt,answer):
   prompt.response(answer)
 
 def askBox(parent,text,label,subtext = None):
+  if parent == "?": parent = mainWin
   askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
   askbox.set_markup(text)
   row = gtk.HBox()
@@ -50,7 +52,7 @@ def dateChoose(caller,target,data,path):
   cal = gtk.Calendar()
   cal.show()
   (y,m,d) = parseDate(target.get_text())
-  cal.select_month(m,y)
+  cal.select_month(m-1,y)
   cal.select_day(d)
   month = gtk.Entry(3)
   month.set_text(str(m))
@@ -150,6 +152,7 @@ def preRead(force,cat,path,depth = 0,retries = 0):
   path/depth ending in a list, tuple, or something other than a dict, which this function produces. Call
   force on one path higher.
   """
+  limit = 6 # Lower limit for printing debug messages in this function
   root = None
   if cat == 'p':
     global people
@@ -191,38 +194,45 @@ def preRead(force,cat,path,depth = 0,retries = 0):
                 if retries >= depth: force = False
                 return preRead(force,cat,path,depth,retries + 1)
               else: # Not found, and not forcing it to be found
+                if config['debug'] > limit: debugPath(root,path)
                 return False
             elif force:
               root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = {}
               if retries >= depth: force = False
               return preRead(force,cat,path,depth,retries + 1)
             else: # Not found, and not forcing it to be found
+              if config['debug'] > limit: debugPath(root,path)
               return False
           elif force:
             root[path[0]][path[1]][path[2]][path[3]][path[4]] = {}
             if retries >= depth: force = False
             return preRead(force,cat,path,depth,retries + 1)
           else: # Not found, and not forcing it to be found
+            if config['debug'] > limit: debugPath(root,path)
             return False
         elif force:
           root[path[0]][path[1]][path[2]][path[3]] = {}
           if retries >= depth: force = False
           return preRead(force,cat,path,depth,retries + 1)
         else: # Not found, and not forcing it to be found
+          if config['debug'] > limit: debugPath(root,path)
           return False
       elif force:
         root[path[0]][path[1]][path[2]] = {}
         if retries >= depth: force = False
         return preRead(force,cat,path,depth,retries + 1)
       else: # Not found, and not forcing it to be found
+        if config['debug'] > limit: debugPath(root,path)
         return False
     elif force:
       root[path[0]][path[1]] = {}
       if retries >= depth: force = False
       return preRead(force,cat,path,depth,retries + 1)
     else: # Not found, and not forcing it to be found
+      if config['debug'] > limit: debugPath(root,path)
       return False
   else: # First level (fileid) can't be generated.
+    if config['debug'] > limit: debugPath(root,path)
     return False
 
 def reloadThis(caller,closer,opener,fileid,mark,target):
@@ -236,7 +246,7 @@ def reorderTabs(tabs):
 
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
-  t = (y,m,d,0,0,0,0,0,0)
+  t = (y,m+1,d,0,0,0,0,0,0)
   style = config.get('datestyle',"%Y/%m/%db")
   if True: style = re.sub(r'%y',r'%Y',style)
   target.set_text(time.strftime(style,t))
@@ -400,6 +410,8 @@ def checkForChange(self,event,data,path,optionaltarget = None):
       markChanged(optionaltarget,data.get("cat"),path)
 
 def markChanged(self,cat,path):
+  if path == str(path):
+    path = [path] # prevents string from being processed as a long list
   self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
   end = len(path)
   value = ["",False]
@@ -418,6 +430,7 @@ def markChanged(self,cat,path):
     root = cities
 
   if root:
+    if config['debug'] > 6: printPretty(root)
     goforit = preRead(True,cat,path[:-1],end)
     if goforit:
       if end == 3:
@@ -457,6 +470,7 @@ def markChanged(self,cat,path):
       if config['debug'] > 2: print "Value set: " + getInf(root.get(path[0]),path[1:])
     else:
       printPretty("markChanged: Invalid path (%s)" % path)
+      debugPath(root,path)
       return
 
 def expandTitles(value):
@@ -645,7 +659,7 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
     image.set_from_file("img/date.png")
     datebut.set_image(image)
     datebut.unset_flags(gtk.CAN_FOCUS)
-    datebut.connect("clicked",dateChoose,d,data,[side,key,'events',i,'date'])
+    datebut.connect("clicked",dateChoose,d,data,[fileid,side,key,'events',i,'date'])
     rowmile.pack_start(datebut,0,0,2)
     e = gtk.Entry()
     e.show()

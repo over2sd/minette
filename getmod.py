@@ -5,7 +5,7 @@ import gtk
 from choices import (getRelsP, getRelsL)
 from common import askBoxProcessor
 from debug import printPretty
-from globdata import worldList
+from globdata import (worldList,mainWin)
 
 def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need relation's gender than person's
   d = {}
@@ -32,6 +32,7 @@ def getPlaceConnections(cat):
   return d
 
 def recordSelectBox(parent,fileid,title = "",fromtypes = ['l','o','p']):
+  if parent == "?": parent = mainWin
   global worldList
   if len(title) == 0: title = "Select Record"
   askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",86))

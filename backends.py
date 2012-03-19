@@ -221,6 +221,13 @@ def loadPlace(fileid):
   else:
     return backxml.loadPlace(fileid)
 
+def loadState(fileid):
+  global config
+  if config['informat'] == "sql":
+    return backsql.loadState(fileid)
+  else:
+    return backxml.loadState(fileid)
+
 def populateWorld():
   if config['informat'] == "sql":
     backsql.populateWorld()

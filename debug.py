@@ -4,6 +4,30 @@
 import traceback
 import os
 
+def debugPath(root,path):
+  printStack()
+  vp = "root"
+  vl = 0
+  NORM = '\033[0;37;40m' # normal gray
+  VALID = '\033[32;40m' # green
+  INVALID = '\033[31;40m' # red
+  if path == str(path):
+    path = [path] # prevents string from being processed as a long list
+  if root and root.keys():
+    for i in range(len(path)):
+#      print "%s %s" % (path[i],root.keys())
+      x = root.get(path[i],None)
+      if x is not None:
+        vl += 1
+        vp += " > %s" % VALID + path[i] + NORM
+      else:
+#        printPretty(root)
+        vp += " X %s" % INVALID + path[i] + NORM
+      root = root.get(path[i],{})
+    print "%d levels: %s" % (vl,vp)
+  else:
+    say("Root not found!")
+
 def printStack(length = 3,callonly = False):
   stack = traceback.extract_stack()
   start = -2 - length
@@ -37,6 +61,14 @@ def printPretty(string,quiet = True):
   depth = 0
   un = 2
   b = ""
+  if string == "{}":
+    string = "(empty dictionary)"
+  elif string == "":
+    string = "(empty string)"
+  elif string == "[]":
+    string = "(empty list)"
+  elif string == "()":
+    string = "(empty tuple)"
   for c in string:
     if c == '{':
       depth += un

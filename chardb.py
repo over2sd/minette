@@ -10,7 +10,7 @@ from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killLis
 writeListFile,getPlaceListGTK)
 from city import addCityMenu
 from common import addHelpMenu
-from globdata import config
+from globdata import (config,mainWin)
 from person import addPersonMenu
 from place import addPlaceMenu
 from status import status
@@ -22,6 +22,7 @@ class Base:
   def __init__(self,configfile):
     global status
     global config
+    global mainWin
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
@@ -30,6 +31,7 @@ class Base:
     if not config.get("nowindowstore"):
       self.window.set_geometry_hints(None,config['size'][0],config['size'][1])
       self.window.move(config['pos'][0],config['pos'][1])
+    mainWin = self.window
     self.box1 = gtk.VBox()
     self.window.add(self.box1)
     self.box1.show()

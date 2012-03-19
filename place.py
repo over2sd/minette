@@ -10,7 +10,8 @@ from backends import (loadPlace, savePlace, config, writeListFile, idExists,worl
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
-displayStage2)
+displayStage2,dateChoose)
+from debug import printPretty
 from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
 from status import status
@@ -108,7 +109,7 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll):
     rels = {}
     nameperson = ""
     if not preRead(False,'l',[fileid,"relat",relid],3):
-      if not preRead(False,'l',fileid,1):
+      if not preRead(False,'l',relid,1):
         pl = loadPlace(relid)
         inf = pl[0]
         try:
@@ -134,6 +135,7 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll):
       else:
         nameperson = name[1] + " " + name[2]
       places[fileid]['relat'][relid] = {}
+      places[fileid]['relat'][relid]['file'] = [relid,True]
       places[fileid]['relat'][relid]['related'] = [nameperson,True]
       places[fileid]['relat'][relid]['relation'] = ["",False] # Add a dialog here
       places[fileid]['relat'][relid]['cat'] = [cat,True]
@@ -538,6 +540,14 @@ def listRel(self,r,fileid,relid,scroll,target = None):
         data = places.get(fileid)
         activateRelEntry(d,scroll,data,fileid,relid,"date",i)
         rowmile.pack_start(d,1,1,2)
+        datebut = gtk.Button()
+        datebut.show()
+        image = gtk.Image()
+        image.set_from_file("img/date.png")
+        datebut.set_image(image)
+        datebut.unset_flags(gtk.CAN_FOCUS)
+        datebut.connect("clicked",dateChoose,d,data,[fileid,'relat',relid,'events',i,'date'])
+        rowmile.pack_start(datebut,0,0,2)
         e = gtk.Entry()
         e.show()
         e.set_width_chars(18)
@@ -657,10 +667,10 @@ def selectConnectionL(caller,relation,fileid,relid,nameR,cat):
   if not preRead(True,'l',[fileid,'relat',relid],3): # This should have been here already.
     return
   if value == "86": return # Cancel
-  places[fileid]['relat'][relid]['rtype'] = options[value][2]
-  places[fileid]['relat'][relid]['relation'] = options[value][0]
-  places[fileid]['relat'][relid]['cat'] = cat
-  relation.set_text(places[fileid]['relat'][relid]['relation'])
+  places[fileid]['relat'][relid]['rtype'] = [options[value][2],True]
+  places[fileid]['relat'][relid]['relation'] = [options[value][0],True]
+  places[fileid]['relat'][relid]['cat'] = [cat,True]
+  relation.set_text(places[fileid]['relat'][relid]['relation'][0])
   # TODO: some day, maybe edit and save the other record with reciprocal relational information.
 
 def setLoc(caller,fileid,key):
@@ -687,7 +697,7 @@ def setLocCombo(widget,fileid):
 
 def showPlace(caller,fileid):
   if places.get(fileid):
-    print places[fileid]
+    printPretty(places[fileid])
 
 def tabdestroyed(caller,fileid):
   """Deletes the place's fileid key from places dict so the place can be reloaded."""

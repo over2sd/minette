@@ -11,5 +11,6 @@ worldList = {}
 stories = {}
 relsP = {}
 relsL = {}
+mainWin = None
 
 from debug import printStack

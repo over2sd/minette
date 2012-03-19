@@ -19,21 +19,21 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <h1>Specifications</h1>
 <div class="nam">Description:</div><div class="con"> <xsl:value-of select="place/desc"/></div>
 <div class="nam">Address:</div><div class="con"> <xsl:value-of select="place/address"/></div>
-<div class="nam">Location:</div><div class="con"> <a href="{place/locfile}"><xsl:value-of select="place/loc"/></a>, <a href="{place/statefile}"><xsl:value-of select="place/state"/></a></div>
+<div class="nam">Location:</div><div class="con"> <a href="{place/locfile}.xml"><xsl:value-of select="place/loc"/></a>, <a href="{place/statefile}.xml"><xsl:value-of select="place/state"/></a></div>
 <div class="nam">Notes:</div><div class="con"> <xsl:for-each select="place/note"><div><xsl:value-of select="content" /> (<xsl:value-of select="date" />)</div></xsl:for-each></div>
 <h1>Characters</h1>
 <h2>Legitimate Connection</h2>
 <xsl:for-each select="place/relat[rtype='fam']">
 <xsl:sort select="realm"/>
 <div class="relat"><xsl:value-of select="relation"/>
-</div><div class="con"> <a href="{file}" class="{cat}"><xsl:value-of select="related"/></a> 
+</div><div class="con"> <a href="{file}.xml" class="{cat}"><xsl:value-of select="related"/></a> 
 <xsl:for-each select="events/mstone"><span class="event"><xsl:value-of select="event"/>: <xsl:value-of select="date"/></span></xsl:for-each></div>
 <xsl:for-each select="realm"><div class="realm"><xsl:value-of select="realm"/></div></xsl:for-each>
 </xsl:for-each>
 <xsl:for-each select="place/relat[rtype='empl']">
 <xsl:sort select="realm"/>
 <div class="relat"><xsl:value-of select="relation"/>
-</div><div class="con"> <a href="{file}" class="{cat}"><xsl:value-of select="related"/></a> 
+</div><div class="con"> <a href="{file}.xml" class="{cat}"><xsl:value-of select="related"/></a> 
 <xsl:for-each select="events/mstone"><span class="event"><xsl:value-of select="event"/>: <xsl:value-of select="date"/></span></xsl:for-each></div>
 <xsl:for-each select="realm"><div class="realm"><xsl:value-of select="realm"/></div></xsl:for-each>
 </xsl:for-each>
@@ -41,7 +41,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:for-each select="place/relat[rtype='other']">
 <xsl:sort select="realm"/>
 <div class="relat nam"><xsl:value-of select="relation"/>
-</div><div class="con"> <a href="{file}" class="{cat}"><xsl:value-of select="related"/></a> 
+</div><div class="con"> <a href="{file}.xml" class="{cat}"><xsl:value-of select="related"/></a> 
 <xsl:for-each select="events/mstone"><span class="event"><xsl:value-of select="event"/>: <xsl:value-of select="date"/></span></xsl:for-each></div>
 <xsl:for-each select="realm"><div class="realm"><xsl:value-of select="/place/relat/realm"/></div></xsl:for-each>
 </xsl:for-each>

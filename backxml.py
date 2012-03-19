@@ -390,7 +390,7 @@ def loadPlace(fileid):
         try:
           node = root[i].find("file").text.strip()
         except AttributeError:
-          bsay("?","XML formatting error in %s! Probably an empty relat tag." % fileid)
+          common.bsay("?","XML formatting error in %s! Probably an empty relat tag." % fileid)
         node = common.validateFileid(node)
         drel[node] = {}
         for j in root[i]:
@@ -439,6 +439,74 @@ def loadPlace(fileid):
         if config['debug'] > 2: print str(i) + " ",
   if len(statef) > 0 and len(cityf) > 0: pushLoc(statef,state,cityf,city,fileid,placename)
   return (dinf,drel)
+
+def loadState(fileid):
+  """Given an id (filename) matching an XML file in the appropriate
+  directory, loads the tree from the file and pushes its data into
+  a dictionary.
+  """
+  dinf = {}
+  root = etree.Element("state")
+  text = None
+  statename = ""
+  statefile = ""
+
+####### Current progress
+
+
+  # TODO: put this in a global variable, and make a function to populate it from the DTD.
+  tags = ["name","state","statefile","start","scue","end","ecue","place"]
+  for tag in tags:
+    dinf[tag] = ["",False]
+  if not dinf.get("places"): dinf['places'] = {}
+  if not idExists(fileid):
+    status.push(0,"new city created... '" + fileid + "'")
+    return dinf
+  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  status.push(0,"loading city from XML... '" + fn + "'")
+  try:
+    with codecs.open(fn,'rU','utf-8') as f:
+      tree = etree.parse(f)
+      f.close()
+      root = tree.getroot()
+  except IOError as e:
+    print "c: Could not open configuration file: %s" % e
+
+  ir = 0
+  for i in range(len(root)):
+    if root[i].tag is not None:
+      if root[i].tag == "place":
+        if len(root[i]) > 0:
+          node = ""
+          node = root[i].find("file")
+          if node.text:
+            node = node.text.strip()
+            node = common.validateFileid(node)
+            dinf['places'][node] = {}
+            for j in root[i]:
+              if j.tag and j.text and j.tag != "file":
+                dinf['places'][node][j.tag] = [j.text.strip(),False]
+            if config['debug'] > 3: print dinf['places'][node]
+          else:
+            if config['debug'] > 0:
+              print "Invalid place tag:"
+              for c in root[i]:
+                print c.tag + ': ' + c.text,
+        else: # no relat length
+          if config['debug'] > 0: print "Empty place tag."
+      elif root[i].text is not None:
+        if root[i].tag == "statefile":
+          statefile = root[i].text.strip()
+          statefile = common.validateFileid(statefile)
+          if statefile is None: statefile = ""
+        elif root[i].tag == "state":
+          statename = root[i].text.strip()
+        elif root[i].tag == "name":
+          cityname = root[i].text.strip()
+        dinf[root[i].tag] = [root[i].text.strip(), False]
+        if config['debug'] > 2: print str(i) + " ",
+  if len(statefile) > 0: pushLoc(statefile,statename,fileid,cityname)
+  return dinf
 
 def populateWorld():
   """Looks in the worlddir and makes a list of fileids the program can
@@ -630,7 +698,7 @@ def saveCity(fileid,data):
       f.close()
   except IOError as e:
     message = "The file %s could not be saved: %s" % (fn,e)
-    bsay("?",message)
+    common.bsay("?",message)
     status.push(0,message)
     return False
   cities[fileid]['changed'] = False
@@ -723,7 +791,7 @@ def savePerson(fileid,data):
       f.close()
   except IOError as e:
     message = "The file %s could not be saved: %s" % (fn,e)
-    bsay("?",message)
+    common.bsay("?",message)
     status.push(0,message)
     return False
   people[fileid]['changed'] = False
@@ -809,7 +877,7 @@ def savePlace(fileid,data):
       f.close()
   except IOError as e:
     message = "The file %s could not be saved: %s" % (fn,e)
-    bsay("?",message)
+    common.bsay("?",message)
     status.push(0,message)
     return False
   places[fileid]['changed'] = False
