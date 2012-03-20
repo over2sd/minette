@@ -1,4 +1,4 @@
-<!ELEMENT city ( name, state, statefile, start?, scue?, end?, ecue?, place*,update ) >
+<!ELEMENT city ( name, state, statefile, start?, scue?, end?, ecue?, events?, place*,update ) >
 <!ELEMENT state ( #PCDATA )>
 <!ELEMENT statefile ( #PCDATA )>
 <!ELEMENT start ( #PCDATA )>
@@ -10,3 +10,8 @@
 <!ELEMENT file ( #PCDATA )>
 <!ELEMENT note ( #PCDATA )>
 <!ELEMENT update ( #PCDATA )>
+<!ELEMENT events ( mstone+ )>
+<!ELEMENT mstone ( date, event )>
+<!ELEMENT date ( #CDATA )>
+<!ELEMENT event ( #CDATA )>
+

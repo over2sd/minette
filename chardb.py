@@ -13,6 +13,7 @@ from common import addHelpMenu
 from globdata import (config,mainWin)
 from person import addPersonMenu
 from place import addPlaceMenu
+from state import addStateMenu
 from status import status
 from story import storyEditor
 from getmod import recordSelectBox
@@ -112,6 +113,7 @@ This tutorial will only display as long as you do not use a configuration file. 
     addPersonMenu(self)
     addPlaceMenu(self)
     addCityMenu(self)
+    addStateMenu(self)
     addHelpMenu(self)
 
   def delete_event(self,widget,event,data=None):

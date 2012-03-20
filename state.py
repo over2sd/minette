@@ -1,0 +1,390 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+import pygtk
+pygtk.require('2.0')
+import gtk
+from math import floor
+
+
+from backends import (loadState,idExists,saveState,pushLoc,getCityList)
+from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
+validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
+say,bsay,kill,markChanged, getFileid)
+from debug import printPretty
+from getmod import recordSelectBox
+from globdata import (states,cities,worldList,config)
+from city import (displayCity,saveThisC)
+from status import status
+
+def addStateMenu(self):
+  itemS = gtk.MenuItem("_State",True)
+  itemS.show()
+  self.mb.append(itemS)
+  s = gtk.Menu()
+  s.show()
+  itemS.set_submenu(s)
+  itemSN = gtk.MenuItem("_New",True)
+  s.append(itemSN)
+  itemSN.show()
+  itemSN.connect("activate",getFileid,self.tabs,mkState,"state")
+  itemSL = gtk.MenuItem("_Load",True)
+  s.append(itemSL)
+  itemSL.show()
+  sl = gtk.Menu()
+  sl.show()
+  itemSL.set_submenu(sl)
+  states = sorted(worldList['s'])
+  num = len(states)
+  every = num
+  cols = 1
+  if num > 20:
+    cols = int(floor(num/20)) + 1
+    every = int(num / cols) - 1
+  pos = 0
+  countitem = gtk.MenuItem("Total Entries: " + str(num))
+  sl.append(countitem)
+  countitem.show()
+  addStateSubmenu(self.tabs,sl,states[pos:pos + every])
+  if num > every:
+    pos += every
+    lsm = addLoadSubmenuItem(sl, num - pos)
+    for i in range(cols):
+      addStateSubmenu(self.tabs,lsm,states[pos:pos + every])
+      pos += every
+      if num > pos + 1:
+        lsm = addLoadSubmenuItem(lsm, num - pos)
+      elif num == pos:
+        addStateSubmenu(self.tabs,lsm,states[-1:])
+
+def addStateSubmenu(tabs,sl,states):
+  digits = "123456789ABCDEFGHIJKL"
+  for i in states:
+    n = -1
+    if states.index(i) < len(digits): n = states.index(i)
+    item = i
+    if n != -1: item = "_%s %s" % (digits[n],i)
+    menu_items = gtk.MenuItem(item,True)
+    sl.append(menu_items)
+    menu_items.connect("activate",displayState,i,tabs)
+    menu_items.show()
+
+"""
+def buildStateRow(scroll,data,fileid):
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("State:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  label.set_width_chars(20)
+  label.set_alignment(1,0.5)
+  choices = getStateList()
+  path = ["info","state"]
+  g = getInf(data,path)
+#  loc = gtk.ComboBoxText()
+  loc = gtk.combo_box_new_text()
+  loc.show()
+  selected = -1
+  keys = []
+  i = 0
+  for key in sorted(choices.keys()):
+    loc.append_text("%s" % choices[key])
+    keys.append(key)
+    if g == key or g == choices[key]:
+      selected = i
+    i += 1
+  loc.set_active(selected)
+  loc.connect("changed",setStateCombo,fileid)
+  loc.connect("move-active",setStateCombo,fileid)
+  loc.connect("focus",scrollOnTab,scroll)
+  loc.connect("focus-in-event",scrollOnTab,scroll)
+  row.pack_start(loc,True,True,2)
+  if len(g) and selected == -1:
+    value = gtk.Label(" %s " % g)
+    value.show()
+    row.pack_start(value,True,True,2)
+  return row
+"""
+
+def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
+  pass
+  """
+  global status
+  global cities
+  city = recordSelectBox(None,statef,title,'c')
+  if city and city[1] == "city":
+    cityname = ""
+    citlist = getCityList(0)
+    cityf = validateFileid(citlist.get(statef,["",""])[1])
+    cityname = citlist.get(statef,["",""])[0]
+    statename = citlist.get(statef,["","",""])[2]
+    try:
+      placename = places[place[0]]['info']['name'][0]
+      places[place[0]]['info']['state'] = [statename,True]
+      places[place[0]]['info']['statefile'] = [statef,True]
+      places[place[0]]['info']['loc'] = [cityname,True]
+      places[place[0]]['info']['locfile'] = [cityf,True]
+      places[place[0]]['changed'] = True
+      saveThisL(parent,place[0])
+#      reloadPlaceTab(place[0]) # TODO: Write a function like this
+    except KeyError:
+#      placename = getPlaceNameFromID(place[0])
+      placename = askBox("?","  Please type the place name that goes with %s" % place[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % place[0])
+      # Maybe some day, I'll make this grab the placename from the file, and automatically load its record for updating
+    if placename == "":
+      status.push(0,"Registering place in %s cancelled" % cityf)
+      return False
+    packPlace(target,scroll,data,cityf,place[0],placename,tabs,True)
+    status.push(0,"Registered %s in %s" % (place[1],cityf))
+    return True
+  else:
+    status.push(0,"Registering place in %s cancelled" % cityf)
+    return False
+  """
+
+def displayState(callingWidget,fileid, tabrow):
+  global states
+  warnme = False
+  if states.get(fileid,None):
+    tab = states[fileid].get("tab")
+    if tab is not None:
+      warnme = True
+      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+        status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+        tabrow.set_current_page(tab)
+        for i in range(len(tabrow)):
+          if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):
+            tabrow.set_current_page(i)
+        return # No need to load again. If revert needed, use a different function
+  else:
+    states[fileid] = {}
+    states[fileid]['info'] = loadState(fileid)
+    states[fileid]['changed'] = False
+    states[fileid]['cat'] = 's'
+  displayStage1(tabrow,fileid,'s',saveThisS,showState,preClose,displayState) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
+  tabrow.vbox.connect("destroy",tabdestroyed,fileid)
+  tabrow.labeli = gtk.Label("Information")
+  tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
+  tabrow.labelm = gtk.Label("Milestones")
+  tabrow.vbox.ftabs.milepage = displayStage2(tabrow.vbox.ftabs,tabrow.labelm)
+  if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
+  initSinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow)
+  initSmile(tabrow.vbox.ftabs.milepage, fileid,tabrow)
+  tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
+  states[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
+
+def initSinfo(self, fileid,tabs):
+  data = {}
+  scroll = self.get_parent()
+  try:
+    data = states.get(fileid)
+  except KeyError as e:
+    print "initCinfo: An error occurred accessing %s: %s" % (fileid,e)
+    return
+  scroll = self.get_parent()
+  label = gtk.Label("State:")
+  label.set_alignment(0,0)
+  label.show()
+  self.pack_start(label,0,0,1)
+  self.s1 = gtk.HSeparator()
+  self.pack_start(self.s1,False,False,2)
+  self.s1.show()
+  name = buildarow(scroll,"Name:",data,fileid,'name')
+  self.pack_start(name,0,0,2)
+  row = gtk.HBox()
+  row.show()
+  path = ["info","start"]
+  label = gtk.Label("Start Date:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  start = gtk.Entry(25)
+  start.show()
+  start.set_text(getInf(data,path))
+  activateInfoEntry(start,scroll,data,fileid,"start")
+  row.pack_start(start,True,True,2)
+  path2 = [fileid,"info"]
+  path2.append(path[-1])
+  placeCalendarButton(data,row,start,path2)
+  label = gtk.Label("Cue:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  scue = gtk.Entry(25)
+  scue.show()
+  path[1] = "scue"
+  scue.set_text(getInf(data,path))
+  activateInfoEntry(scue,scroll,data,fileid,"scue")
+  row.pack_start(scue,True,True,2)
+  self.pack_start(row,False,False,2)
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("End Date:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  end = gtk.Entry(25)
+  end.show()
+  path[1] = "end"
+  end.set_text(getInf(data,path))
+  activateInfoEntry(end,scroll,data,fileid,"end")
+  row.pack_start(end,True,True,2)
+  path2 = [fileid,"info"]
+  path2.append(path[-1])
+  placeCalendarButton(data,row,end,path2)
+  label = gtk.Label("Cue:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  ecue = gtk.Entry(25)
+  ecue.show()
+  path[1] = "ecue"
+  ecue.set_text(getInf(data,path))
+  activateInfoEntry(ecue,scroll,data,fileid,"ecue")
+  row.pack_start(ecue,True,True,2)
+  self.pack_start(row,False,False,2)
+  self.notebox = gtk.VBox()
+  self.notebox.show()
+  self.pack_start(self.notebox,True,False,2)
+  label = gtk.Label("Cities")
+  label.set_alignment(0,0)
+  label.show()
+  self.notebox.pack_start(label,0,0,1)
+  s1 = gtk.HSeparator()
+  self.notebox.pack_start(s1,False,False,2)
+  s1.show()
+  box = gtk.HBox()
+  box.show()
+  addbut = gtk.Button("Register City")
+  image = gtk.Image()
+  image.set_from_file("img/add.png")
+  image.show()
+  addbut.set_image(image)
+  addbut.show()
+  path = ["info","cities"]
+"""
+  state = validateFileid(getInf(data,["info","statefile"],""))
+  cityname = getInf(data,["info","name"],"")
+  cityplaces = getInf(data,path,{})
+  for l in cityplaces.keys():
+    fi = l
+    name = getInf(cityplaces,[l,"name"],"")
+    pushLoc(state,"",fileid,cityname,fi,name)
+  lbook = getPlacesIn(fileid)
+  addbut.connect("clicked",choosePlace,self.notebox,tabs,scroll,data,fileid,"Register in %s..." % cityname)
+  box.pack_end(addbut,False,False,1)
+  self.notebox.pack_start(box,False,False,1)
+  for l in sorted(lbook.keys()):
+    if l != "_name":
+      newplace = False
+      if l not in cityplaces.keys():
+        newplace = True
+        pushPlace(fileid,l,lbook[l])
+      packPlace(self.notebox,scroll,data,fileid,l,lbook[l],tabs,newplace)
+"""
+
+def initSmile(self,fileid,tabs):
+  pass
+
+def mkState(callingWidget,fileid,tabs):
+  global states
+  if idExists(fileid,'s'):
+    say("Existing fileid! Loading instead...")
+  else:
+    states[fileid] = {}
+    states[fileid]['info'] = loadState(fileid)
+    states[fileid]['changed'] = False
+    states[fileid]['cat'] = 's'
+    saveThisS(callingWidget,fileid)
+  displayState(callingWidget,fileid,tabs)
+
+def packCity(box,scroll,data,statef,cityf,value,tabs,newcity):
+  row = gtk.HBox()
+  row.show()
+  note = ""
+  x = getInf(data,["info","cities"],{})
+  if x.get(placef) is not None: note = getInf(x,[cityf,"note"],"")
+  cbut = gtk.Button(value)
+  centry = gtk.Entry()
+  cbut.show()
+  centry.show()
+  cbut.set_size_request(100,12)
+  cbut.connect("clicked",displayCity,cityf,tabs)
+  row.pack_start(cbut,1,1,2)
+  label = gtk.Label("Note:")
+  label.show()
+  row.pack_start(label,0,0,2)
+  row.pack_start(centry,1,1,2)
+  centry.set_text(note)
+  activateInfoEntry(centry,scroll,data,statef,"cities",2,[cityf,"note"])
+  if newcity: markChanged(centry,'s',[statef,"info","cities",cityf,"note"])
+  killbut = gtk.Button("Unregister")
+  killbut.show()
+  image = gtk.Image()
+  image.show()
+  image.set_from_file("img/subtract.png")
+  killbut.set_image(image)
+  killbut.connect("clicked",unlinkCity,row,statef,cityf)
+  row.pack_start(killbut,0,0,1)
+  box.pack_start(row,0,0,1)
+
+def preClose(caller,fileid,target = None):
+  result = -8
+  if states.get(fileid):
+    if states[fileid].get("changed"):
+      result = 0
+      caller.set_sensitive(False)
+      asker = gtk.MessageDialog(None,gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_INFO,gtk.BUTTONS_YES_NO,None)
+      asker.set_markup("Are you sure you want to close %s?\nYou will lose all unsaved changes." % fileid)
+      asker.connect("destroy",lambda x: caller.set_sensitive(True))
+      (x,y,w,h) = caller.get_allocation()
+      asker.move(x - 50,y - 50)
+      result = asker.run()
+      asker.destroy()
+  if result == -8: # Yes
+    print "Destroying tab %s" % fileid
+    kill(caller,target)
+    return True
+  else: # No
+    print "Cancel"
+    return False
+
+def pushCity(state,fi,name):
+  global states
+  if not states.get(state) or not states[state].get("info"):
+    return False
+  if not states[state]["info"].get("cities"):
+    states[state]["info"]["cities"] = {}
+  if not states[state]["info"]["cities"].get(fi):
+    states[state]["info"]["cities"][fi] = {}
+  states[state]["info"]["cities"][fi]["name"] = [name,True]
+  return True
+
+def saveThisS(caller,fileid):
+  global status
+  if states.get(fileid):
+    if saveState(fileid,states[fileid]):
+      status.push(0,"%s saved successfully." % fileid)
+    else:
+      status.push(0,"Error encountered saving %s." % fileid)
+  else:
+    bsay(caller,"saveThisS: Could not find state %s." % fileid)
+
+def showState(caller,fileid):
+  if states.get(fileid):
+    printPretty(states[fileid])
+
+def tabdestroyed(caller,fileid):
+  """Deletes the place's fileid key from places dict so the place can be reloaded."""
+  global states
+  try:
+    del states[fileid]
+  except KeyError:
+    printPretty(states)
+    raise
+
+def unlinkCity(caller,row,statef,cityf):
+  global states
+  caller.set_sensitive(False)
+  path = [statef,"info","cities",cityf]
+  if states.get(path[0]) is not None and states[path[0]].get(path[1]) is not None and states[path[0]][path[1]].get(path[2]) is not None and states[path[0]][path[1]][path[2]].get(path[3]) is not None:
+    del states[path[0]][path[1]][path[2]][path[3]]
+    states[path[0]]["changed"] = True
+  # TODO: Also unlink from place record, if it's loaded
+  kill(caller,row)

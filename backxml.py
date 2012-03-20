@@ -450,20 +450,18 @@ def loadState(fileid):
   text = None
   statename = ""
   statefile = ""
-
-####### Current progress
-
-
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","state","statefile","start","scue","end","ecue","place"]
+  tags = ["name","start","scue","end","ecue"]
   for tag in tags:
     dinf[tag] = ["",False]
-  if not dinf.get("places"): dinf['places'] = {}
+  dinf['cities'] = {}
+  dinf['events'] = {}
   if not idExists(fileid):
-    status.push(0,"new city created... '" + fileid + "'")
+    status.push(0,"new state created... '" + fileid + "'")
     return dinf
+  statefile = fileid
   fn = os.path.join(config['worlddir'],fileid + ".xml")
-  status.push(0,"loading city from XML... '" + fn + "'")
+  status.push(0,"loading state from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -475,37 +473,30 @@ def loadState(fileid):
   ir = 0
   for i in range(len(root)):
     if root[i].tag is not None:
-      if root[i].tag == "place":
+      if root[i].tag == "city":
         if len(root[i]) > 0:
           node = ""
           node = root[i].find("file")
           if node.text:
             node = node.text.strip()
             node = common.validateFileid(node)
-            dinf['places'][node] = {}
+            dinf['cities'][node] = {}
             for j in root[i]:
               if j.tag and j.text and j.tag != "file":
-                dinf['places'][node][j.tag] = [j.text.strip(),False]
-            if config['debug'] > 3: print dinf['places'][node]
+                dinf['cities'][node][j.tag] = [j.text.strip(),False]
+            if config['debug'] > 3: printPretty(dinf['cities'][node])
           else:
             if config['debug'] > 0:
-              print "Invalid place tag:"
+              print "Invalid city tag:"
               for c in root[i]:
                 print c.tag + ': ' + c.text,
         else: # no relat length
-          if config['debug'] > 0: print "Empty place tag."
+          if config['debug'] > 0: print "Empty city tag."
       elif root[i].text is not None:
-        if root[i].tag == "statefile":
-          statefile = root[i].text.strip()
-          statefile = common.validateFileid(statefile)
-          if statefile is None: statefile = ""
-        elif root[i].tag == "state":
-          statename = root[i].text.strip()
-        elif root[i].tag == "name":
-          cityname = root[i].text.strip()
         dinf[root[i].tag] = [root[i].text.strip(), False]
         if config['debug'] > 2: print str(i) + " ",
-  if len(statefile) > 0: pushLoc(statefile,statename,fileid,cityname)
+  statename = dinf.get("name","")
+  if len(statename) > 1: pushLoc(statefile,statename)
   return dinf
 
 def populateWorld():

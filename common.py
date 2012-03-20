@@ -145,6 +145,15 @@ def displayStage2(target,labelWidget):
   page.set_border_width(5)
   return page
 
+def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\"."):
+  four = "New %s cancelled." % cat
+  fileid = askBox("?",one,two,three)
+  fileid = validateFileid(fileid)
+  if fileid and len(fileid) > 0:
+    makeThis(caller,fileid,tabs)
+  else:
+    say(four)
+
 def preRead(force,cat,path,depth = 0,retries = 0):
   """Using the global dict for the given category, and given a list of keys 'path' and an integer 'depth',
   checks a path in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function

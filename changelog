@@ -1,3 +1,6 @@
+2012-03-20:
+- Started work on state display functions
+
 2012-03-19:
 - Fixed some problems with milestone handling
 - Fixed dateChoose error in month processing

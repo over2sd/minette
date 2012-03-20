@@ -290,6 +290,18 @@ def savePlace(fileid,data):
     writeListFile()
   return success
 
+def saveState(fileid,data):
+  global config
+  success = False
+  if config['outformat'] == "sql":
+    success = backsql.saveState(fileid,data)
+  else:
+    success = backxml.saveState(fileid,data)
+  if success and fileid not in worldList['s']:
+    worldList['s'].append(fileid)
+    writeListFile()
+  return success
+
 def updateLocs(cityname,locfile,statefile):
   if config['informat'] == "sql":
     backsql.updateLocs(cityname,locfile,statefile)
