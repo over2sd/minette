@@ -7,7 +7,7 @@ import gtk
 from math import floor
 
 
-from backends import (loadState,idExists,saveState,pushLoc,getCityList)
+from backends import (loadState,idExists,saveState,pushLoc,getCitiesIn,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
 say,bsay,kill,markChanged, getFileid)
@@ -107,8 +107,6 @@ def buildStateRow(scroll,data,fileid):
 """
 
 def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
-  pass
-  """
   global status
   global cities
   city = recordSelectBox(None,statef,title,'c')
@@ -119,28 +117,27 @@ def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
     cityname = citlist.get(statef,["",""])[0]
     statename = citlist.get(statef,["","",""])[2]
     try:
-      placename = places[place[0]]['info']['name'][0]
-      places[place[0]]['info']['state'] = [statename,True]
-      places[place[0]]['info']['statefile'] = [statef,True]
-      places[place[0]]['info']['loc'] = [cityname,True]
-      places[place[0]]['info']['locfile'] = [cityf,True]
-      places[place[0]]['changed'] = True
-      saveThisL(parent,place[0])
+      cityname = cities[city[0]]['info']['name'][0]
+      cities[city[0]]['info']['state'] = [statename,True]
+      cities[city[0]]['info']['statefile'] = [statef,True]
+      cities[city[0]]['info']['loc'] = [cityname,True]
+      cities[city[0]]['info']['locfile'] = [cityf,True]
+      cities[city[0]]['changed'] = True
+      saveThisC(parent,city[0])
 #      reloadPlaceTab(place[0]) # TODO: Write a function like this
     except KeyError:
 #      placename = getPlaceNameFromID(place[0])
-      placename = askBox("?","  Please type the place name that goes with %s" % place[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % place[0])
+      cityname = askBox("?","  Please type the place name that goes with %s" % city[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % city[0])
       # Maybe some day, I'll make this grab the placename from the file, and automatically load its record for updating
-    if placename == "":
+    if cityname == "":
       status.push(0,"Registering place in %s cancelled" % cityf)
       return False
-    packPlace(target,scroll,data,cityf,place[0],placename,tabs,True)
-    status.push(0,"Registered %s in %s" % (place[1],cityf))
+    packCity(target,scroll,data,statef,city[0],cityname,tabs,True)
+    status.push(0,"Registered %s in %s" % (city[1],statef))
     return True
   else:
-    status.push(0,"Registering place in %s cancelled" % cityf)
+    status.push(0,"Registering place in %s cancelled" % statef)
     return False
-  """
 
 def displayState(callingWidget,fileid, tabrow):
   global states
@@ -258,26 +255,27 @@ def initSinfo(self, fileid,tabs):
   addbut.set_image(image)
   addbut.show()
   path = ["info","cities"]
-"""
-  state = validateFileid(getInf(data,["info","statefile"],""))
-  cityname = getInf(data,["info","name"],"")
-  cityplaces = getInf(data,path,{})
-  for l in cityplaces.keys():
-    fi = l
-    name = getInf(cityplaces,[l,"name"],"")
-    pushLoc(state,"",fileid,cityname,fi,name)
-  lbook = getPlacesIn(fileid)
-  addbut.connect("clicked",choosePlace,self.notebox,tabs,scroll,data,fileid,"Register in %s..." % cityname)
+  statename = getInf(data,["info","name"],"")
+  statecities = getInf(data,path,{})
+  for c in statecities.keys():
+    fi = c
+    cityname = getInf(statecities,[fi,"name"],"")
+    pushLoc(fileid,statename,fi,cityname)
+  cbook = getCitiesIn(fileid)
+  addbut.connect("clicked",chooseCity,self.notebox,tabs,scroll,data,fileid,"Register in %s..." % statename)
   box.pack_end(addbut,False,False,1)
   self.notebox.pack_start(box,False,False,1)
-  for l in sorted(lbook.keys()):
-    if l != "_name":
-      newplace = False
-      if l not in cityplaces.keys():
-        newplace = True
-        pushPlace(fileid,l,lbook[l])
-      packPlace(self.notebox,scroll,data,fileid,l,lbook[l],tabs,newplace)
-"""
+  for c in sorted(cbook.keys()):
+    if c != "_name":
+      newcity = False
+      cityname = cbook[c].get('_name',cbook.get(c,None))
+      if c not in statecities.keys():
+        newcity = True
+        pushCity(fileid,c,cityname)
+      if cityname is not None:
+        packCity(self.notebox,scroll,data,fileid,c,cityname,tabs,newcity)
+      else:
+        common.say("Error getting cityname.")
 
 def initSmile(self,fileid,tabs):
   pass
@@ -299,7 +297,7 @@ def packCity(box,scroll,data,statef,cityf,value,tabs,newcity):
   row.show()
   note = ""
   x = getInf(data,["info","cities"],{})
-  if x.get(placef) is not None: note = getInf(x,[cityf,"note"],"")
+  if x.get(cityf) is not None: note = getInf(x,[cityf,"note"],"")
   cbut = gtk.Button(value)
   centry = gtk.Entry()
   cbut.show()

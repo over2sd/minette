@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/home/skreyola/wri/fic/cur/chardb/py/xsl/city.xsl"?>
+<!DOCTYPE person SYSTEM "city.dtd">
+<city>
+	<name>Springfield</name>
+	<update>12/03/21b</update>
+</city>

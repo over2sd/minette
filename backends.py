@@ -166,6 +166,12 @@ def validateConfig(config):
   return config
 
 ### Wrappers
+def getCitiesIn(state):
+  if config['informat'] == "sql":
+    return backsql.getCitiesIn(state)
+  else:
+    return backxml.getCitiesIn(state)
+
 def getCityList(order = 0):
   if config['informat'] == "sql":
     return backsql.getCityList(order)

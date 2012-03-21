@@ -41,7 +41,7 @@ def printStack(length = 3,callonly = False):
     else:
       print "* At line %d in %s:%s():\n\t%s" % (ln,f,func,cmd)
 
-def printPretty(string,quiet = True):
+def printPretty(string,quiet = True,xml = False):
   """This function prints Python variable/string in colored format in bash/ANSI
   terminal. It makes some broad assumptions that won't always work, particularly,
   that you won't pass it a string containing special Python characters. If you do,
@@ -85,8 +85,15 @@ def printPretty(string,quiet = True):
     elif c == ',' and b in ['}',']']:
       output += "%s\n%s" % (c,pad(depth))
     elif c == ',':
-      output += "%s" % (COMMA + c + NORM)
-    elif c in ['<','>']:
+      output += "%s" % COMMA + c + NORM
+    elif c == '<':
+      if not xml: output += "%s" % ANGLES + c + NORM
+      else: pass
+    elif b == '<' and xml:
+      x = ""
+      if c != '/': x = "\n%s" % pad(depth)
+      output += "%s" % x + ANGLES + '<' + NORM + c
+    elif c == '>':
       output += "%s" % ANGLES + c + NORM
     elif c == ':':
       output += "%s" % COLON + c + NORM

@@ -19,6 +19,20 @@ lockeys = {}
 states = {}
 statekeys = {}
 
+def getCitiesIn(state):
+  if state.find(".xml") > -1: state = state.split('.')[0]
+  if state:
+    data = placeList.get(state)
+    if data is not None:
+      keys = data.keys()
+      if keys is not None:
+        return data
+      else:
+        common.bsay("?","State %s is empty in placeList" % state)
+    else:
+      common.bsay("?","State %s not found in placeList" % state)
+  return {}
+
 def getCityList(order):
   global locs
   global lockeys
@@ -659,8 +673,8 @@ def saveCity(fileid,data):
             value = info['places'][node].get("note")
             if value is not None and len(value[0]) > 0: etree.SubElement(connected,"note").text = value[0]
             city.append(connected)
-            for t in range(len(connected)):
-              print "%s: %s" % (connected[t].tag,connected[t].text)
+#            for t in range(len(connected)):
+#              print "%s: %s" % (connected[t].tag,connected[t].text)
           else:
             print "A required tag is missing from place %s." % node
       else:
@@ -672,7 +686,7 @@ def saveCity(fileid,data):
       if value is None: value = ['',False]
       etree.SubElement(city,tag).text = value[0]
   out = ""
-  print etree.tostring(city)
+  if config['debug'] > 6: printPretty(etree.tostring(city),True,True)
   try:
     out = etree.tostring(city,pretty_print=True)
   except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
