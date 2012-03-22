@@ -10,7 +10,7 @@ from backends import (loadPlace, savePlace, config, writeListFile, idExists,worl
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
-displayStage2,dateChoose)
+displayStage2,dateChoose,getFileid)
 from debug import printPretty
 from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
@@ -48,7 +48,7 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   activateNoteEntry(content, scroll, data, fileid,i,date)
 
 def addPlaceMenu(self):
-  itemL = gtk.MenuItem("P_lace",True)
+  itemL = gtk.MenuItem("_Location",True)
   itemL.show()
   self.mb.append(itemL)
   l = gtk.Menu()
@@ -57,7 +57,7 @@ def addPlaceMenu(self):
   itemLN = gtk.MenuItem("_New",True)
   l.append(itemLN)
   itemLN.show()
-  itemLN.connect("activate",getFileid,self.tabs)
+  itemLN.connect("activate",getFileid,self.tabs,mkPlace,"place")
   itemLL = gtk.MenuItem("_Load",True)
   l.append(itemLL)
   itemLL.show()
@@ -228,14 +228,6 @@ def displayPlace(callingWidget,fileid, tabrow):
   initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   places[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
-
-def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New place cancelled"):
-  fileid = askBox(None,one,two,three)
-  fileid = validateFileid(fileid)
-  if fileid and len(fileid) > 0:
-    mkPlace(caller,fileid,tabs)
-  else:
-    say(four)
 
 def initLinfo(self, fileid):
   data = {}

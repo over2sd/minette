@@ -10,7 +10,7 @@ from backends import (loadPerson, savePerson, config, writeListFile, idExists,wo
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
-displayStage1,displayStage2,addLoadSubmenuItem)
+displayStage1,displayStage2,addLoadSubmenuItem,getFileid)
 from debug import printPretty
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
@@ -334,7 +334,7 @@ def addPersonMenu(self):
   itemPN = gtk.MenuItem("_New",True)
   p.append(itemPN)
   itemPN.show()
-  itemPN.connect("activate",getFileid,self.tabs)
+  itemPN.connect("activate",getFileid,self.tabs,mkPerson,"person")
   itemPL = gtk.MenuItem("_Load",True)
   p.append(itemPL)
   itemPL.show()
@@ -375,14 +375,6 @@ def addPersonSubmenu(tabs,pl,persons):
     pl.append(menu_items)
     menu_items.connect("activate",displayPerson,i,tabs)
     menu_items.show()
-
-def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New person cancelled"):
-  fileid = askBox(None,one,two,three)
-  fileid = validateFileid(fileid)
-  if fileid and len(fileid) > 0:
-    mkPerson(caller,fileid,tabs)
-  else:
-    say(four)
 
 def mkPerson(callingWidget,fileid,tabs):
   global people

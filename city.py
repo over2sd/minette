@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged)
+say,bsay,kill,markChanged,getFileid)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (cities,places,worldList,config)
@@ -27,7 +27,7 @@ def addCityMenu(self):
   itemCN = gtk.MenuItem("_New",True)
   c.append(itemCN)
   itemCN.show()
-  itemCN.connect("activate",getFileid,self.tabs)
+  itemCN.connect("activate",getFileid,self.tabs,mkCity,"city")
   itemCL = gtk.MenuItem("_Load",True)
   c.append(itemCL)
   itemCL.show()
@@ -125,7 +125,7 @@ def choosePlace(parent,target,tabs,scroll,data,cityf,title = ""):
 #      reloadPlaceTab(place[0]) # TODO: Write a function like this
     except KeyError:
 #      placename = getPlaceNameFromID(place[0])
-      placename = askBox(None,"  Please type the place name that goes with %s" % place[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % place[0])
+      placename = askBox(None,"  Please type the location name that goes with %s" % place[0],"Name",subtext="  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % place[0])
       # Maybe some day, I'll make this grab the placename from the file, and automatically load its record for updating
     if placename == "":
       status.push(0,"Registering place in %s cancelled" % cityf)
@@ -164,14 +164,6 @@ def displayCity(callingWidget,fileid, tabrow):
   initCinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   cities[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
-
-def getFileid(caller,tabs,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\".",four = "New city cancelled"):
-  fileid = askBox(None,one,two,three)
-  fileid = validateFileid(fileid)
-  if fileid and len(fileid) > 0:
-    mkCity(caller,fileid,tabs)
-  else:
-    say(four)
 
 def initCinfo(self, fileid,tabs):
   data = {}

@@ -25,7 +25,13 @@ def bsay(caller,text):
 def askBoxProcessor(e,prompt,answer):
   prompt.response(answer)
 
-def askBox(parent,text,label,subtext = None):
+def askBox(parent,text,label,**kwargs):
+  subtext = None
+  nospace = False
+  for key in kwargs:
+    if config['debug'] > 0: print "%s:%s" % (key,kwargs[key])
+    if key == "nospace": nospace = kwargs[key]
+    if key == "subtext": subtext = kwargs[key]
   if parent == "?": parent = mainWin
   askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
   askbox.set_markup(text)
@@ -43,6 +49,7 @@ def askBox(parent,text,label,subtext = None):
   askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
   askbox.run()
   answer = entry.get_text()
+  if nospace: answer = answer.replace(' ','-') # Spaces not allowed.
   askbox.destroy()
   return answer
 
@@ -145,9 +152,9 @@ def displayStage2(target,labelWidget):
   page.set_border_width(5)
   return page
 
-def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include an extension, such as \".xml\"."):
+def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This short identifier will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces or an extension, such as \".xml\"."):
   four = "New %s cancelled." % cat
-  fileid = askBox("?",one,two,three)
+  fileid = askBox("?",one,two,subtext=three,nospace=True)
   fileid = validateFileid(fileid)
   if fileid and len(fileid) > 0:
     makeThis(caller,fileid,tabs)

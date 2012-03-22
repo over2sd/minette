@@ -5,11 +5,11 @@ Suggestions welcome for features, corrections, functions, or anything else that 
 
 Stage 1: Load and edit person records from XML is essentially done. (12/02/25)
 Stage 2: Save person records to XML...is done.(12/02/21)
-Stage 3: Load, edit, and place records (XML)
+Stage 3: Load, edit, and save place records (XML)
 ...info side is essentially done. (12/03/05)
-...is in progress.
 Stage 4: Load and edit city records (XML) is mostly done (12/03/08)
 Stage 5: Load and edit state records (XML)
+...is in progress.
 Stage 6: Load and edit organization records (XML)
 
 Stage ?: Load and edit item records (XML)

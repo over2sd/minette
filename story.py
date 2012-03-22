@@ -33,7 +33,7 @@ def storyEditor(caller,parent):
   bar.pack_start(button,True,True,2)
   button = gtk.Button("Close Editor")
   button.show()
-  button.connect("clicked",kill,ed)
+  button.connect("clicked",common.kill,ed)
   bar.pack_start(button,False,False,2)
   ed.vbox.pack_start(bar,False,False,1)
   for key in sorted(stories.keys()):
@@ -71,7 +71,7 @@ backend files. Once set, it cannot be\n\
 changed within this program.  It may\n\
 contain word characters (A-Z,0-9,_,-)\n\
 only."
-  code = askBox(ed,text,label,subtext)
+  code = askBox(ed,text,label,subtext=subtext,nospace=True)
   code = validateFileid(code)
   if code and len(code) > 0:
     label = gtk.Label(code)

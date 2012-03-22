@@ -127,7 +127,7 @@ def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
 #      reloadPlaceTab(place[0]) # TODO: Write a function like this
     except KeyError:
 #      placename = getPlaceNameFromID(place[0])
-      cityname = askBox("?","  Please type the place name that goes with %s" % city[0],"Name","  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % city[0])
+      cityname = askBox("?","  Please type the city name that goes with %s" % city[0],"Name",subtext="  I tried to load this from memory, but you\ndon't have %s open. Without it open, I can't\nsynchronize its city and state values.\n  This requirement prevents unintentional\nchanges to your place records." % city[0])
       # Maybe some day, I'll make this grab the placename from the file, and automatically load its record for updating
     if cityname == "":
       status.push(0,"Registering place in %s cancelled" % cityf)
