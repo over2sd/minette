@@ -28,7 +28,7 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   if i == 0:
     i = str(len(data['info'].get("notes")))
     path.append(i)
-    if not preReadl(True,path,4):
+    if not preRead(True,'l',path,4):
       return
     else:
       places[path[0]][path[1]][path[2]][path[3]]['content'] = ["",False]
@@ -48,7 +48,7 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   activateNoteEntry(content, scroll, data, fileid,i,date)
 
 def addPlaceMenu(self):
-  itemL = gtk.MenuItem("_Location",True)
+  itemL = gtk.MenuItem("_Landmark",True)
   itemL.show()
   self.mb.append(itemL)
   l = gtk.Menu()

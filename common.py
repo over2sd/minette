@@ -29,7 +29,7 @@ def askBox(parent,text,label,**kwargs):
   subtext = None
   nospace = False
   for key in kwargs:
-    if config['debug'] > 0: print "%s:%s" % (key,kwargs[key])
+    if config['debug'] > 3: print "%s:%s" % (key,kwargs[key])
     if key == "nospace": nospace = kwargs[key]
     if key == "subtext": subtext = kwargs[key]
   if parent == "?": parent = mainWin
@@ -152,9 +152,34 @@ def displayStage2(target,labelWidget):
   page.set_border_width(5)
   return page
 
+def firstRunTab(base,tabrow):
+  tabrow.fr = gtk.VBox()
+  tabrow.fr.show()
+  tabrow.append_page(tabrow.fr,gtk.Label("First Run Tutorial"))
+# ..............................................................................................
+  tut1 = "\n\t\
+This tutorial will only display as long as you do not use a configuration file. Load with a\
+\nconfiguration file as the first argument, or create 'default.cfg' in the program's directory\
+\nto stop seeing this welcome tab.\
+\n\tTo begin, Use the Person menu to load an existing record or make a new record.\
+\n\tTo set a Landmark's location, you must create at least one City and one State record."
+# ..............................................................................................
+  tabrow.tut = gtk.Label(tut1)
+  tabrow.tut.show()
+  tabrow.fr.add(tabrow.tut)
+  tabrow.close = gtk.Button("Close Tutorial")
+  tabrow.close.show()
+  tabrow.close.connect("clicked",kill,tabrow.fr)
+  tabrow.toggle = gtk.CheckButton("Don't show again")
+  tabrow.toggle.show()
+  tabrow.toggle.connect("clicked",setTutorialSeen)
+  tabrow.fr.add(tabrow.toggle)
+  tabrow.fr.add(tabrow.close)
+
 def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This short identifier will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces or an extension, such as \".xml\"."):
   four = "New %s cancelled." % cat
   fileid = askBox("?",one,two,subtext=three,nospace=True)
+  print fileid
   fileid = validateFileid(fileid)
   if fileid and len(fileid) > 0:
     makeThis(caller,fileid,tabs)
@@ -258,6 +283,7 @@ def reloadThis(caller,closer,opener,fileid,mark,target):
 
 def reorderTabs(tabs):
   """Functions looks at a notebook and reorders the tab numbers after one is closed"""
+  # TODO: Write this... or figure out whether it's still needed.
   pass
 
 def setDate(cal,target):
@@ -266,6 +292,11 @@ def setDate(cal,target):
   style = config.get('datestyle',"%Y/%m/%db")
   if True: style = re.sub(r'%y',r'%Y',style)
   target.set_text(time.strftime(style,t))
+
+def setTutorialSeen(caller,event = None):
+  global config
+  config['seenfirstrun'] = caller.get_active()
+  print "%s %s" % (caller,caller.get_active())
 
 def parseDate(date):
   now = datetime.datetime.now()

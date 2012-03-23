@@ -8,7 +8,7 @@ import re
 import xml.etree.ElementTree as etree
 
 import common
-from debug import printPretty
+from debug import (printPretty,lineno)
 from globdata import (config,worldList,cities,people,places,printStack)
 from status import status
 import xmlout
@@ -40,6 +40,7 @@ def getCityList(order):
 #  else:
 #    print len(worldList['c'])
   if len(locs):
+#    printPretty([lineno(),locs],length=3,quiet=False)
     return locs
   elif order == 0:
     for city in worldList['c']:
@@ -50,6 +51,7 @@ def getCityList(order):
         if cityloc[0] is not None and cityloc[1] is not None and cityloc[2] is not None:
           (cityname,state,statename) = cityloc
           if state is not None and city is not None: pushLoc(state,statename,city,cityname)
+#    printPretty([lineno(),locs],length=3,quiet=False)
     return locs
   elif order == 1:
     if not len(locs): getCityList(0)
@@ -59,6 +61,7 @@ def getCityList(order):
         if len(city) > 0: cityloc = getCityLoc(loc)
         if cityloc[0] is not None and cityloc[2] is not None:
           lockeys["%s, %s" % (cityloc[0],cityloc[2])] = loc
+#    printPretty([lineno(),locs],length=3,quiet=False)
     return lockeys
 
 def getCityLoc(fileid):
@@ -112,10 +115,12 @@ def getStateList(order):
   if len(states):
     return states
   elif order == 0:
+    printPretty([__name__,lineno(),worldList])
     for state in worldList['s']:
       statename = None
       if len(state) > 0: statename = getStateName(state)
       if statename:
+        print "%s %s" % (lineno(),statename)
         states[state] = statename
         pushLoc(state,statename)
     return states

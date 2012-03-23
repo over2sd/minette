@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/home/skreyola/wri/fic/cur/chardb/py/xsl/place.xsl"?>
+<!DOCTYPE place SYSTEM "place.dtd">
+<place>
+	<commonname>Anyville: Colored Animal Cafe</commonname>
+	<name>The Colored Animal Cafe</name>
+	<start>2012/03/23b</start>
+	<scue>Built</scue>
+	<stories>eg02</stories>
+	<mention>EG: 1.1</mention>
+	<desc>A nice little cafe with tables on the sidewalk. The sign shows a colored animal.</desc>
+	<address>123 Fourth Ave.</address>
+	<update>12/03/23b</update>
+</place>

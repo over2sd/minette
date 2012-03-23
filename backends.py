@@ -121,10 +121,50 @@ def loadConfig(fn = None,recursion = 0):
   config = validateConfig(config)
   return config
 
+def saveConfig():
+#  for 
+  pass
+
+def setDefaults():
+  global defaults
+  defaults = {}
+  defaults['pos'] = "(0,0)"
+  defaults['size'] = "(620,440)"
+  defaults['debug'] = "0"
+  defaults['familyfirst'] = False # Does the family name come first?
+  defaults['usemiddle'] = True # Does the name include a middle or maiden name?
+  defaults['startnewperson'] = False # Start by opening a new person file?
+  defaults['specialrelsonly'] = False # use only world-defined relations?
+  defaults['showstories'] = "idlist" # Show titles, or just reference codes?
+  defaults['informat'] = "xml"
+  defaults['outformat'] = "xml"
+  defaults['openduplicatetabs'] = False
+  defaults['worlddir'] = "worlds/example/"
+  defaults['datestyle'] = "%y/%m/%db"
+  defaults['century'] = 2000
+  defaults['centbreak'] = 69
+
+  defaults['set'] = True
+
 def validateConfig(config):
   """Checks some config values for validity. Returns adjusted dictionary."""
-  pos = config.get("pos","(0,0)") # default position
-  siz = config.get("size","(620,440)") # default size
+  try:
+    if not defaults.get("set",False):
+      setDefaults()
+  except NameError:
+    setDefaults()
+  configs = ["pos","size","debug", # Default window position and size, debug level
+    "informat", "outformat", # input/output formats
+    "openduplicatetabs", # Should we open duplicate tabs?
+    "worlddir", # Where should I look for XML files and configs?
+    "datestyle", "century", "centbreak"] # Style of date output, Assumed century for 2-digit years, earliest year of previous century
+  for key in configs:
+    config[key] = config.get(key,defaults[key])
+  if not os.path.exists(os.path.abspath(config['worlddir'])): # must be a valid directory
+    bsay("?","Fatal error. World directory %s does not exist! Exiting." % config['worlddir'])
+    exit(-1)
+  pos = config.get("pos",defaults['pos']) # default position
+  siz = config.get("size",defaults['size']) # default size
   pattern = re.compile(r'\(\s?(\d+)\s?,\s?(\d+)\s?\)')
   match = pattern.search(pos)
   if match:
@@ -136,23 +176,10 @@ def validateConfig(config):
     config['size'] = (int(match.group(1)),int(match.group(2)))
   else:
     config['size'] = (620,440)
-  config['debug'] = config.get("debug","0")
-  config['informat'] = config.get("informat","xml") # How are people stored initially?
-  config['outformat'] = config.get("outformat","xml") # how will we save data?
-  config['openduplicatetabs'] = config.get('openduplicatetabs',False) # Should we open duplicate tabs?
-  config['worlddir'] = config.get("worlddir","worlds/example/") # Where should I look for XML files and configs?
-  if not os.path.exists(os.path.abspath(config['worlddir'])): # must be a valid directory
-    print "Fatal error. World directory %s does not exist! Exiting." % config['worlddir']
-    exit(-1)
-  config['datestyle'] = config.get("datestyle","%y/%m/%db") # Style of date output
-  config['century'] = config.get("century",2000) # Assumed century for 2-digit years
-  config['centbreak'] = config.get("centbreak",69) # earliest year of previous century
 # Person options
-  config['familyfirst'] = config.get("familyfirst",False) # Does the family name come first?
-  config['usemiddle'] = config.get("usemiddle",True) # Does the name include a middle or maiden name?
-  config['startnew'] = config.get("startnew",False) # Start by opening a new person file?
-  config['specialrelsonly'] = config.get("specialrelsonly",False) # use only world-defined relations?
-  config['showstories'] = config.get("showstories","idlist") # Show titles, or just reference codes?
+  configs = ["familyfirst","usemiddle","specialrelsonly","showstories","startnewperson"]
+  for key in configs:
+    config[key] = config.get(key,defaults[key])
 # XML file options
   config['uselistfile'] = config.get("uselistfile",True) # Whether to...
   """ save/load a list file instead of walking through each XML file

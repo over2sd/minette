@@ -9,7 +9,7 @@ from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
 writeListFile,getPlaceListGTK)
 from city import addCityMenu
-from common import addHelpMenu
+from common import (addHelpMenu,firstRunTab)
 from globdata import (config,mainWin)
 from person import addPersonMenu
 from place import addPlaceMenu
@@ -38,7 +38,7 @@ class Base:
     self.box1.show()
     self.tabs = gtk.Notebook()
     self.tabs.set_scrollable(True)
-    if not path.exists(path.abspath(fn)): Base.firstRunTab(self,self.tabs)
+    if not config.get("seenfirstrun"): firstRunTab(self,self.tabs)
     self.accgroup = gtk.AccelGroup() # for use on menus
     self.window.add_accel_group(self.accgroup)
     Base.makeMenus(self)
@@ -59,24 +59,8 @@ class Base:
 
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
-    if config['startnew']: getFileid(self,self.tabs)
+    if config['startnewperson']: getFileid(self,self.tabs)
     gtk.main()
-
-  def firstRunTab(base,tabrow):
-    tabrow.fr = gtk.VBox()
-    tabrow.fr.show()
-    tabrow.append_page(tabrow.fr,gtk.Label("First Run Tutorial"))
-# ..............................................................................................
-    tut1 = "\n\t\
-This tutorial will only display as long as you do not use a configuration file. Load with a\
-\nconfiguration file as the first argument, or create 'default.cfg' in the program's directory\
-\nto stop seeing this welcome tab.\
-\n\tTo begin, Use the Person menu to load an existing record or make a new record."
-# ..............................................................................................
-    tabrow.tut = gtk.Label(tut1)
-    tabrow.tut.show()
-    tabrow.fr.add(tabrow.tut)
-
 
   def makeMenus(self):
     self.mb = gtk.MenuBar()

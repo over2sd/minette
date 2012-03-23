@@ -3,6 +3,9 @@
 
 import traceback
 import os
+import inspect
+
+from globdata import config
 
 def debugPath(root,path):
   printStack()
@@ -28,6 +31,10 @@ def debugPath(root,path):
   else:
     say("Root not found!")
 
+def lineno():
+    """Returns the current line number in our program."""
+    return inspect.currentframe().f_back.f_lineno
+
 def printStack(length = 3,callonly = False):
   stack = traceback.extract_stack()
   start = -2 - length
@@ -41,13 +48,21 @@ def printStack(length = 3,callonly = False):
     else:
       print "* At line %d in %s:%s():\n\t%s" % (ln,f,func,cmd)
 
-def printPretty(string,quiet = True,xml = False):
+def printPretty(string,**kwargs):
   """This function prints Python variable/string in colored format in bash/ANSI
   terminal. It makes some broad assumptions that won't always work, particularly,
   that you won't pass it a string containing special Python characters. If you do,
   it will simply put that character in its special color, and you may become confused.
   """
-  printStack(1,quiet) # Say what we're printing
+  quiet = True
+  xml = False
+  length = 1
+  for key in kwargs:
+    if config['debug'] > 3: print "%s:%s" % (key,kwargs[key])
+    if key == "quiet": quiet = kwargs[key]
+    if key == "xml": xml = kwargs[key]
+    if key == "length": length = kwargs[key]
+  printStack(length,quiet) # Say what we're printing
   string = str(string) # Treat this as a string, even if it's not, which it usually won't be
   NORM = '\033[0;37;40m' # normal gray
   BRACE = '\033[32;40m' # green
