@@ -9,6 +9,7 @@ import re
 import datetime
 import time
 
+import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
 from globdata import (cities,config,people,places,stories,printStack,mainWin)
@@ -296,7 +297,9 @@ def setDate(cal,target):
 def setTutorialSeen(caller,event = None):
   global config
   config['seenfirstrun'] = caller.get_active()
-  print "%s %s" % (caller,caller.get_active())
+  if config['debug'] > 6: print "%s %s" % (caller,caller.get_active())
+  printPretty(config)
+  backends.saveConfig(config.get("file","default.cfg"))
 
 def parseDate(date):
   now = datetime.datetime.now()

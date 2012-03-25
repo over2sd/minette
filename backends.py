@@ -121,14 +121,28 @@ def loadConfig(fn = None,recursion = 0):
   config = validateConfig(config)
   return config
 
-def saveConfig():
-#  for 
-  pass
+def saveConfig(fn):
+  try:
+    if not defaults.get("set",False):
+      setDefaults()
+  except NameError:
+    setDefaults()
+  lines = []
+  for key in config.keys():
+    if key is not "file" and key is not "set" and config[key] != defaults.get(key):
+      lines.append("%s = %s\n" % (key,config[key]))
+  if config['debug'] > 0: print lines
+  try:
+    f = open(os.path.abspath(fn), 'w')
+    f.writelines(lines)
+    f.close()
+  except IOError as e:
+    print " Could not write configuration file: %s" % e
 
 def setDefaults():
   global defaults
   defaults = {}
-  defaults['pos'] = "(0,0)"
+  defaults['pos'] = "(20,40)" # Default window position and size, debug level
   defaults['size'] = "(620,440)"
   defaults['debug'] = "0"
   defaults['familyfirst'] = False # Does the family name come first?
@@ -136,13 +150,22 @@ def setDefaults():
   defaults['startnewperson'] = False # Start by opening a new person file?
   defaults['specialrelsonly'] = False # use only world-defined relations?
   defaults['showstories'] = "idlist" # Show titles, or just reference codes?
-  defaults['informat'] = "xml"
+  defaults['informat'] = "xml" # input/output formats
   defaults['outformat'] = "xml"
-  defaults['openduplicatetabs'] = False
-  defaults['worlddir'] = "worlds/example/"
-  defaults['datestyle'] = "%y/%m/%db"
+  defaults['openduplicatetabs'] = False # Should we open duplicate tabs?
+  defaults['worlddir'] = "worlds/example/" # Where should I look for XML files and configs?
+  defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
   defaults['century'] = 2000
   defaults['centbreak'] = 69
+  defaults['uselistfile'] = True # Whether to...
+  """ save/load a list file instead of walking through each XML file
+  to determine its class (saves load time/disk writes, but requires
+  keeping the list file up to date).
+  """
+  defaults['printemptyXMLtags'] = False # output includes <emptyelements />?
+  defaults['dtddir'] = "dtd/" # Where are doctype defs kept?
+  defaults['dtdurl'] = os.path.abspath(defaults['dtddir']) # What reference goes in the XML files?
+  defaults['xslurl'] = os.path.abspath("xsl/") # What reference goes in the XML files?
 
   defaults['set'] = True
 
@@ -153,11 +176,7 @@ def validateConfig(config):
       setDefaults()
   except NameError:
     setDefaults()
-  configs = ["pos","size","debug", # Default window position and size, debug level
-    "informat", "outformat", # input/output formats
-    "openduplicatetabs", # Should we open duplicate tabs?
-    "worlddir", # Where should I look for XML files and configs?
-    "datestyle", "century", "centbreak"] # Style of date output, Assumed century for 2-digit years, earliest year of previous century
+  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "worlddir", "datestyle", "century", "centbreak"]
   for key in configs:
     config[key] = config.get(key,defaults[key])
   if not os.path.exists(os.path.abspath(config['worlddir'])): # must be a valid directory
@@ -181,15 +200,12 @@ def validateConfig(config):
   for key in configs:
     config[key] = config.get(key,defaults[key])
 # XML file options
-  config['uselistfile'] = config.get("uselistfile",True) # Whether to...
-  """ save/load a list file instead of walking through each XML file
-  to determine its class (saves load time/disk writes, but requires
-  keeping the list file up to date).
-  """
-  config['printemptyXMLtags'] = config.get("printemptyXMLtags",False) # output includes <emptyelements />?
-  config['dtddir'] = config.get("dtddir","dtd/") # Where are doctype defs kept?
-  config['dtdurl'] = config.get("dtdurl",os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
-  config['xslurl'] = config.get("xslurl",os.path.abspath("xsl/")) # What reference goes in the XML files?
+  configs = ["uselistfile","printemptyXMLtags","dtddir","dtdurl","xslurl"]
+  for key in configs:
+    if key == "dtdurl":
+      config['dtdurl'] = config.get(key,os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
+    else:
+      config[key] = config.get(key,defaults[key])
   return config
 
 ### Wrappers

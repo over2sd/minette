@@ -115,7 +115,7 @@ def getStateList(order):
   if len(states):
     return states
   elif order == 0:
-    printPretty([__name__,lineno(),worldList])
+    if config['debug'] > 3: printPretty([__name__,lineno(),worldList])
     for state in worldList['s']:
       statename = None
       if len(state) > 0: statename = getStateName(state)
