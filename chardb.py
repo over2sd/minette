@@ -7,7 +7,7 @@ import gtk
 
 from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
-writeListFile,getPlaceListGTK)
+writeListFile,getPlaceListGTK,listThingsGTK)
 from city import addCityMenu
 from common import (addHelpMenu,firstRunTab)
 from globdata import (config,mainWin)
@@ -78,6 +78,10 @@ class Base:
       itemWS.show()
       w.append(itemWS)
       itemWS.connect("activate",getPlaceListGTK)
+      itemWL = gtk.MenuItem("_List records",True)
+      itemWL.show()
+      w.append(itemWL)
+      itemWL.connect("activate",listThingsGTK)
     itemWT = gtk.MenuItem("S_tory Editor",True)
     itemWT.show()
     w.append(itemWT)

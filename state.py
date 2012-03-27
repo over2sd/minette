@@ -171,6 +171,7 @@ def displayState(callingWidget,fileid, tabrow):
   states[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
 def initSinfo(self, fileid,tabs):
+  global states
   data = {}
   scroll = self.get_parent()
   try:
@@ -178,6 +179,7 @@ def initSinfo(self, fileid,tabs):
   except KeyError as e:
     print "initCinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
+  printPretty(data)
   scroll = self.get_parent()
   label = gtk.Label("State:")
   label.set_alignment(0,0)

@@ -243,11 +243,16 @@ def getStateList(order = 0):
     return backxml.getStateList(order)
 
 def idExists(fileid,rectyp):
-  global config
   if config['informat'] == "sql":
     backsql.idExists(fileid,rectyp)
   else:
     backxml.idExists(fileid)
+
+def listThingsGTK(caller,pretty = 1):
+  if config['informat'] == "sql":
+    backsql.listThings(pretty)
+  else:
+    backxml.listThings(pretty)
 
 def loadCity(fileid):
   global config

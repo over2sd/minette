@@ -71,8 +71,8 @@ backend files. Once set, it cannot be\n\
 changed within this program.  It may\n\
 contain word characters (A-Z,0-9,_,-)\n\
 only."
-  code = askBox(ed,text,label,subtext=subtext,nospace=True)
-  code = validateFileid(code)
+  code = common.askBox(ed,text,label,subtext=subtext,nospace=True)
+  code = common.validateFileid(code)
   if code and len(code) > 0:
     label = gtk.Label(code)
     label.show()
@@ -104,6 +104,12 @@ def refreshEd(parent,ed):
   ed.move(x - w,y - h)
 
 picklist = []
+
+def setStory(widget,event,key):
+  global stories
+  if stories.get(key) != widget.get_text():
+    stories[key] = widget.get_text()
+    widget.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCFFCC")) # change background for edited
 
 def storyPicker(parent,name,value):
   global picklist

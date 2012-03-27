@@ -10,7 +10,7 @@ from backends import (loadPerson, savePerson, config, writeListFile, idExists,wo
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
-displayStage1,displayStage2,addLoadSubmenuItem,getFileid)
+displayStage1,displayStage2,addLoadSubmenuItem,getFileid,addLocButton)
 from debug import printPretty
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import people
@@ -182,6 +182,8 @@ def initPinfo(self, fileid):
   self.ethnic = buildarow(scroll,"Ethnic background:",people.get(fileid),fileid,'ethnic')
   self.add(self.ethnic)
   self.origin = buildarow(scroll,"Origin:",people.get(fileid),fileid,'origin')
+  addLocButton(self.origin,entry=self.origin.e)
+  self.origin.e.grab_focus()
   self.add(self.origin)
   self.backs = buildarow(scroll,"Background:",people.get(fileid),fileid,'backstory') # make a textbox someday?
   self.add(self.backs)

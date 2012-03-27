@@ -1,4 +1,4 @@
-<!ELEMENT state ( name, start?, scue?, end?, ecue?, events?, city* ) >
+<!ELEMENT state ( name, start?, scue?, end?, ecue?, events?, city*, update ) >
 <!ELEMENT start ( #PCDATA )>
 <!ELEMENT scue ( #PCDATA )>
 <!ELEMENT end ( #PCDATA )>
@@ -11,3 +11,4 @@
 <!ELEMENT date ( #CDATA )>
 <!ELEMENT event ( #CDATA )>
 <!ELEMENT note ( #CDATA )>
+<!ELEMENT update ( #CDATA )>

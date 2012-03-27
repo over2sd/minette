@@ -12,7 +12,7 @@ import time
 import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
-from globdata import (cities,config,people,places,stories,printStack,mainWin)
+from globdata import (cities,config,people,places,stories,mainWin)
 from status import status
 import story
 
@@ -22,6 +22,12 @@ def say(text):
 def bsay(caller,text):
   if caller == "?": caller = mainWin
   say(text)
+
+def addLocButton(row,**kwargs):
+  button = gtk.Button("Choose City")
+  button.show()
+  row.pack_start(button,False,False,2)
+  button.connect("clicked",chooseCity,0,kwargs) # 0 = "city, state"
 
 def askBoxProcessor(e,prompt,answer):
   prompt.response(answer)
@@ -53,6 +59,82 @@ def askBox(parent,text,label,**kwargs):
   if nospace: answer = answer.replace(' ','-') # Spaces not allowed.
   askbox.destroy()
   return answer
+
+def askCityBox(parent):
+  if parent == "?": parent = mainWin
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("Location:")
+  label.set_width_chars(20)
+  label.set_alignment(1,0.5)
+  choices = backends.getCityList()
+  loc = gtk.combo_box_new_text()
+  keys = []
+  i = 0
+  for key in sorted(choices.keys()):
+    if choices.get(key) and choices[key][0] and choices[key][2]:
+      loc.append_text("%s, %s" % (choices[key][0],choices[key][2]))
+      keys.append(key)
+      i += 1
+  askBox = None
+  if len(keys) > 0:
+    askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
+  else:
+    askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK)
+  if len(keys) > 0:
+    askbox.set_markup("Choose a city:")
+    label.show()
+    row.pack_start(label,False,False,2)
+    loc.show()
+    row.pack_start(loc,True,True,2)
+  else:
+    askbox.format_secondary_markup("Please create at least one city and state before using this dialog.")
+  askbox.vbox.pack_end(row,True,True,0)
+  width, height = askbox.get_size()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  askbox.run()
+  key = None
+  if len(keys) > 0:
+    key = loc.get_active_text()
+  askbox.destroy()
+  loc.destroy()
+  loc = [False,None,None,None,None]
+  lockeys = {}
+  if key is not None and len(key) > 0:
+    lockeys = backends.getCityList(1)
+    key = lockeys.get(key,'N')
+    lockeys = backends.getCityList()
+    if config['debug'] > 0: print "new key: %s" % key
+    print "%s (%s), %s (%s)" % (lockeys[key][0],key,lockeys[key][2],lockeys[key][1])
+    loc[1] = key
+    loc[2] = lockeys[key][0]
+    loc[3] = lockeys[key][1]
+    loc[4] = lockeys[key][2]
+    loc[0] = True
+  printPretty(loc)
+  return loc
+
+def chooseCity(caller,format,kwargs):
+  entry = None
+  citykey = None
+  statekey = None
+  cityfilekey = None
+  statefilekey = None
+  data = None
+  for key in kwargs:
+    if key == "entry": entry = kwargs[key]
+    elif key == "city": citykey = kwargs[key]
+    elif key == "state": statekey = kwargs[key]
+    elif key == "cityfile": cityfilekey = kwargs[key]
+    elif key == "statefile": statefilekey = kwargs[key]
+    elif key == "data": data = kwargs[key]
+  loc = [False,None,None,None,None]
+  askCityBox("?")
+  if format == 0 and loc[0] is True:
+    entry.set_text("%s, %s" % (loc[1],loc[3]))
+  elif format == 1 and data is not None and citykey is not None and cityfilekey is not None and statekey is not None and statefilekey is not None:
+    pass
 
 def dateChoose(caller,target,data,path):
   askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
@@ -538,12 +620,6 @@ def expandTitles(value):
       titles += "\'%s\'\n" % item
   titles = titles[:-1] # trim that last newline
   return titles
-
-def setStory(widget,event,key):
-  global stories
-  if stories.get(key) != widget.get_text():
-    stories[key] = widget.get_text()
-    widget.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCFFCC")) # change background for edited
 
 def setStories(caller,data,fileid,x,parent):
   name = getInf(data,["info","commonname"])

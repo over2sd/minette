@@ -1,3 +1,8 @@
+2012-03-27:
+- Expanded flexibility of place location box to work with person origin, merged these into a button function
+- Added state save function
+- Found a bug: state display is not properly updating global data
+
 2012-03-24:
 - Added configuration saving function
 

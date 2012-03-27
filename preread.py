@@ -1,7 +1,8 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-from globdata import (cities,people,places,printStack)
+from debug import printStack
+from globdata import (cities,people,places)
 from common import preRead
 
 def preReadc(force,path,depth = 0,retries = 0):
