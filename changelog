@@ -1,3 +1,7 @@
+2012-03-28:
+- Fixed bug of states not updating global data
+- Fixed some other minor bugs. Hope I didn't introduce any new ones
+
 2012-03-27:
 - Expanded flexibility of place location box to work with person origin, merged these into a button function
 - Added state save function

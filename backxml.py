@@ -9,15 +9,13 @@ import xml.etree.ElementTree as etree
 
 import common
 from debug import (printPretty,lineno)
-from globdata import (config,worldList,cities,people,places,states)
+from globdata import (config,worldList,cities,people,places,states,placeList)
 from status import status
 import xmlout
 
-placeList = {}
 locs = {}
 lockeys = {}
-states = {}
-statekeys = {}
+statekeys = [{},{}]
 
 def getCitiesIn(state):
   if state.find(".xml") > -1: state = state.split('.')[0]
@@ -39,18 +37,16 @@ def getCityList(order):
   if not len(worldList): populateWorld()
 #  else:
 #    print len(worldList['c'])
-  if len(locs):
-#    printPretty([lineno(),locs],length=3,quiet=False)
-    return locs
-  elif order == 0:
-    for city in worldList['c']:
-      cityloc = [None,None,None]
-      if len(city) > 0: cityloc = getCityLoc(city)
-      if cityloc:
-        locs[city] = cityloc
-        if cityloc[0] is not None and cityloc[1] is not None and cityloc[2] is not None:
-          (cityname,state,statename) = cityloc
-          if state is not None and city is not None: pushLoc(state,statename,city,cityname)
+  if order == 0:
+    if not len(locs):
+      for city in worldList['c']:
+        cityloc = [None,None,None]
+        if len(city) > 0: cityloc = getCityLoc(city)
+        if cityloc:
+          locs[city] = cityloc
+          if cityloc[0] is not None and cityloc[1] is not None and cityloc[2] is not None:
+            (cityname,state,statename) = cityloc
+            if state is not None and city is not None: pushLoc(state,statename,city,cityname)
 #    printPretty([lineno(),locs],length=3,quiet=False)
     return locs
   elif order == 1:
@@ -58,7 +54,7 @@ def getCityList(order):
     if not len(lockeys):
       for loc in locs:
         cityloc = [None,None,None]
-        if len(city) > 0: cityloc = getCityLoc(loc)
+        if len(loc) > 0: cityloc = getCityLoc(loc)
         if cityloc[0] is not None and cityloc[2] is not None:
           lockeys["%s, %s" % (cityloc[0],cityloc[2])] = loc
 #    printPretty([lineno(),locs],length=3,quiet=False)
@@ -66,7 +62,7 @@ def getCityList(order):
 
 def getCityLoc(fileid):
   root = etree.Element("place")
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['worlddir'],"%s.xml" % fileid)
   status.push(0,"reading city location from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -112,27 +108,26 @@ def getStateList(order):
   if not len(worldList): populateWorld()
 #  else:
 #    print len(worldList['c'])
-  if len(states):
-    return states
-  elif order == 0:
-    if config['debug'] > 3: printPretty([__name__,lineno(),worldList])
-    for state in worldList['s']:
-      statename = None
-      if len(state) > 0: statename = getStateName(state)
-      if statename:
-        if config['debug'] > 3: print "%s %s" % (lineno(),statename)
-        states[state] = statename
-        pushLoc(state,statename)
-    return states
-  elif order == 1:
-    if not len(states): getStateList(0)
-    if not len(statekeys):
-      for state in states:
+  if order == 0:
+    if not len(statekeys[0]):
+      if config['debug'] > 3: printPretty([__name__,lineno(),worldList])
+      for state in worldList['s']:
         statename = None
         if len(state) > 0: statename = getStateName(state)
         if statename:
-          statekeys["%s" % statename] = state
-    return statekeys
+          if config['debug'] > 3: print "%s %s" % (lineno(),statename)
+          statekeys[0][state] = statename
+          pushLoc(state,statename)
+    return statekeys[0]
+  elif order == 1:
+    if not len(statekeys[0]): getStateList(0)
+    if not len(statekeys[1]):
+      for state in statekeys[0]:
+        statename = None
+        if len(state) > 0: statename = getStateName(state)
+        if statename:
+          statekeys[1]["%s" % statename] = state
+    return statekeys[1]
 
 def getStateName(fileid):
   root = etree.Element("state")
@@ -165,6 +160,7 @@ def listThings(pretty):
     print places
     print cities
     print states
+  getPlaceList(pretty)
   return True
 
 def loadCity(fileid):
@@ -650,12 +646,12 @@ def pushLoc(statefile,statename = "",cityfile = "",cityname = "",placefile = "",
   if len(statefile) > 0:
     if statefile.find(".xml") > -1: statefile = statefile.split('.')[0]
     if not placeList.get(statefile): placeList[statefile] = {}
-    if len(statename) > 0:
-      if not placeList[statefile].get("_name"): placeList[statefile]['_name'] = statename
+    if statename is not None and len(statename) > 0:
+      placeList[statefile]['_name'] = statename
     if len(cityfile) > 0:
       if cityfile.find(".xml") > -1: cityfile = cityfile.split('.')[0]
       if not placeList[statefile].get(cityfile): placeList[statefile][cityfile] = {}
-      if not placeList[statefile][cityfile].get("_name") and len(cityname) > 0:
+      if cityname is not None and len(cityname) > 0:
         placeList[statefile][cityfile]['_name'] = cityname
       if len(placefile) > 0:
         if placefile.find(".xml") > -1: placefile = placefile.split('.')[0]
@@ -1010,7 +1006,7 @@ def updateLocs(cityname,locfile,statefile):
   statename = getStateName(statefile)
   if statename:
     cityloc = [None,None,None]
-    if len(city) > 0: cityloc = getCityLoc(loc)
+    if len(cityname) > 0: cityloc = getCityLoc(cityname)
     if cityloc[0] and cityloc[2]:
       del lockeys["%s, %s" % (cityloc[0],cityloc[2])]
     lockeys["%s, %s" % (cityname,statename)] = locfile

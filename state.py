@@ -95,7 +95,6 @@ def buildStateRow(scroll,data,fileid):
     i += 1
   loc.set_active(selected)
   loc.connect("changed",setStateCombo,fileid)
-  loc.connect("move-active",setStateCombo,fileid)
   loc.connect("focus",scrollOnTab,scroll)
   loc.connect("focus-in-event",scrollOnTab,scroll)
   row.pack_start(loc,True,True,2)
@@ -179,7 +178,6 @@ def initSinfo(self, fileid,tabs):
   except KeyError as e:
     print "initCinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
-  printPretty(data)
   scroll = self.get_parent()
   label = gtk.Label("State:")
   label.set_alignment(0,0)
@@ -291,6 +289,7 @@ def mkState(callingWidget,fileid,tabs):
     states[fileid]['info'] = loadState(fileid)
     states[fileid]['changed'] = False
     states[fileid]['cat'] = 's'
+    pushLoc(fileid)
     saveThisS(callingWidget,fileid)
   displayState(callingWidget,fileid,tabs)
 
@@ -359,6 +358,7 @@ def pushCity(state,fi,name):
 def saveThisS(caller,fileid):
   global status
   if states.get(fileid):
+    pushLoc(fileid,states[fileid].get('name'))
     if saveState(fileid,states[fileid]):
       status.push(0,"%s saved successfully." % fileid)
     else:

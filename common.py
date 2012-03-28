@@ -12,7 +12,7 @@ import time
 import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
-from globdata import (cities,config,people,places,stories,mainWin)
+from globdata import (cities,config,people,places,states,stories,mainWin)
 from status import status
 import story
 
@@ -65,10 +65,11 @@ def askCityBox(parent):
   row = gtk.HBox()
   row.show()
   label = gtk.Label("Location:")
-  label.set_width_chars(20)
+  label.set_width_chars(7)
   label.set_alignment(1,0.5)
   choices = backends.getCityList()
   loc = gtk.combo_box_new_text()
+  loc.set_size_request(200,32)
   keys = []
   i = 0
   for key in sorted(choices.keys()):
@@ -80,7 +81,7 @@ def askCityBox(parent):
   if len(keys) > 0:
     askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
   else:
-    askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK)
+    askbox = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
   if len(keys) > 0:
     askbox.set_markup("Choose a city:")
     label.show()
@@ -112,7 +113,7 @@ def askCityBox(parent):
     loc[3] = lockeys[key][1]
     loc[4] = lockeys[key][2]
     loc[0] = True
-  printPretty(loc)
+  if config['debug'] > 0: printPretty(loc)
   return loc
 
 def chooseCity(caller,format,kwargs):
@@ -262,7 +263,6 @@ This tutorial will only display as long as you do not use a configuration file. 
 def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This short identifier will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces or an extension, such as \".xml\"."):
   four = "New %s cancelled." % cat
   fileid = askBox("?",one,two,subtext=three,nospace=True)
-  print fileid
   fileid = validateFileid(fileid)
   if fileid and len(fileid) > 0:
     makeThis(caller,fileid,tabs)
@@ -287,9 +287,19 @@ def preRead(force,cat,path,depth = 0,retries = 0):
   elif cat == 'c':
     global cities
     root = cities
-
+  elif cat == 's':
+    global states
+    root = states
+  elif cat == 'o':
+    global orgs
+    root = orgs
+  elif cat == 'i':
+    global items
+    root = items
+  else:
+    print "ERR: Invalid category %s passed to markChanged." % cat
   if not root:
-    print "preRead: Invalid category?"
+    print "preRead: Invalid category %s?" % cat
     return False
   if depth > len(path): depth = len(path)
   if depth > 7: depth = 7
@@ -379,8 +389,9 @@ def setDate(cal,target):
 def setTutorialSeen(caller,event = None):
   global config
   config['seenfirstrun'] = caller.get_active()
-  if config['debug'] > 6: print "%s %s" % (caller,caller.get_active())
-  printPretty(config)
+  if config['debug'] > 6:
+    print "%s %s" % (caller,caller.get_active())
+    printPretty(config)
   backends.saveConfig(config.get("file","default.cfg"))
 
 def parseDate(date):
@@ -560,7 +571,17 @@ def markChanged(self,cat,path):
   elif cat == 'c':
     global cities
     root = cities
-
+  elif cat == 's':
+    global states
+    root = states
+  elif cat == 'o':
+    global orgs
+    root = orgs
+  elif cat == 'i':
+    global items
+    root = items
+  else:
+    print "ERR: Invalid category %s passed to markChanged." % cat
   if root:
     if config['debug'] > 6: printPretty(root)
     goforit = preRead(True,cat,path[:-1],end)

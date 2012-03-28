@@ -175,7 +175,7 @@ def buildLocRow(scroll,data,fileid):
       i += 1
   loc.set_active(selected)
   loc.connect("changed",setLocCombo,fileid)
-  loc.connect("move-active",setLocCombo,fileid)
+#  loc.connect("move-active",setLocCombo,fileid)
   loc.connect("focus",scrollOnTab,scroll)
   loc.connect("focus-in-event",scrollOnTab,scroll)
   row.pack_start(loc,True,True,2)
@@ -674,7 +674,7 @@ def setLoc(caller,fileid,key):
     lockeys = getCityList()
     if config['debug'] > 3: print "new key: %s" % key
     print "%s (%s), %s (%s)" % (lockeys[key][0],key,lockeys[key][2],lockeys[key][1])
-    if preReadl(False,[fileid,"info"],2):
+    if preRead(False,'l',[fileid,"info"],2):
       places[fileid]['info']['locfile'] = [key,True]
       places[fileid]['info']['loc'] = [lockeys[key][0],True]
       places[fileid]['info']['statefile'] = [lockeys[key][1],True]

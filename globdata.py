@@ -7,6 +7,7 @@ states = {}
 items = {}
 animals = {}
 config = {}
+placeList = {}
 worldList = {}
 stories = {}
 relsP = {}

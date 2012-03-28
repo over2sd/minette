@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged,getFileid)
+say,bsay,kill,markChanged,getFileid,preRead)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (cities,places,worldList,config)
@@ -94,7 +94,6 @@ def buildStateRow(scroll,data,fileid):
     i += 1
   loc.set_active(selected)
   loc.connect("changed",setStateCombo,fileid)
-  loc.connect("move-active",setStateCombo,fileid)
   loc.connect("focus",scrollOnTab,scroll)
   loc.connect("focus-in-event",scrollOnTab,scroll)
   row.pack_start(loc,True,True,2)
@@ -361,16 +360,16 @@ def setState(caller,fileid,key):
   if len(key) > 1:
     statekeys = getStateList(1)
     key = statekeys.get(key,'N')
-    statekeys = getStateList()
+    statekeys = getStateList(0)
     if config['debug'] > 3: print "new key: %s" % key
     print "%s (%s)" % (statekeys[key],key)
-    if preReadc(False,[fileid,"info"],2):
+    if preRead(False,'c',[fileid,"info"],2):
       cities[fileid]['info']['statefile'] = [key,True]
-      cities[fileid]['info']['state'] = [lockeys[key],True]
+      cities[fileid]['info']['state'] = [statekeys[key],True]
       cities[fileid]['changed'] = True
-      if config['debug'] > 0: print "New State: %s" % key
+#      if config['debug'] > 0: print "New State: %s" % key
       cityname = cities[fileid]['info'].get("name",None)
-      if cityname: updateLocs(cityname,fileid,key)
+      if cityname: updateLocs(cityname[0],fileid,key)
   else:
     bsay(None,"setState: Could not set state for %s." % fileid)
 
