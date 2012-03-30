@@ -827,7 +827,7 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
       extraargs[2] = "event"
       activateInfoEntry(e,scroll,data,fileid,key,len(extraargs),extraargs)
     rowmile.pack_start(e,1,1,2)
-    target.add(rowmile)
+    target.pack_start(rowmile,0,0,1)
 
 def activateRelEntry(self,scroll,data,fileid,relid,key,event = None):
   path = [fileid,"relat",relid]

@@ -1,3 +1,6 @@
+2012-03-30:
+- Added milestone display to Milestones tab in state display function
+
 2012-03-29:
 - Switched place/landmark location processing from combobox to label and button linked to the button function from 0327
 - Started on state milestone display

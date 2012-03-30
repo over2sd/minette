@@ -277,8 +277,6 @@ def initSinfo(self, fileid,tabs):
         common.say("Error getting cityname.")
 
 def initSmile(self,fileid,tabs):
-  return
-"""
   global states
   data = {}
   scroll = self.get_parent()
@@ -287,28 +285,30 @@ def initSmile(self,fileid,tabs):
   except KeyError as e:
     print "initSmile: An error occurred accessing %s: %s" % (fileid,e)
     return
-  row2 = gtk.HBox()
-  row2.show()
-  self.pack_start(row2,True,True,2)
+  row = gtk.HBox()
+  row.show()
+  self.pack_start(row,False,False,2)
   mileadd = gtk.Button("New Milestone")
   mileadd.show()
   mileadd.set_alignment(0.75,0.05)
-#  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
-  row2.pack_start(mileadd,0,0,5)
+  row.pack_start(mileadd,0,0,5)
   dhead = gtk.Label("Date")
   dhead.show()
   dhead.set_width_chars(8)
-  row2.pack_start(dhead,1,1,2)
+  row.pack_start(dhead,1,1,2)
   ehead = gtk.Label("Event")
   ehead.show()
   ehead.set_width_chars(18)
-  row2.pack_start(ehead,1,1,2)
-  row2.show_all()
-  row3 = gtk.VBox()
-  row3.show()
-  self.pack_start(row3,0,0,2)
+  row.pack_start(ehead,1,1,2)
+  row.show_all()
+  row2 = gtk.VBox()
+  row2.show()
+  self.pack_start(row2,1,1,2)
   boxwidth = self.size_request()[0]
-  mileadd.connect("clicked",addMilestone,scroll,row3,state.get(fileid),fileid,"m",x,boxwidth)
+  if not states[fileid]['info'].get("m"): states[fileid]['info']['m'] = {}
+  r = states[fileid]['info'].get('m')
+  if not states[fileid]['info']['m'].get("events"): states[fileid]['info']['m']['events'] = {}
+  mileadd.connect("clicked",addMilestone,scroll,row2,states.get(fileid),fileid,"info","m",boxwidth)
   if r.get("events"):
     for i in r['events']:
 #      showMile(row3,r,i,fileid,relid)
@@ -338,7 +338,7 @@ def initSmile(self,fileid,tabs):
         rowmile.pack_start(e,1,1,2)
         row3.add(rowmile)
   pass
-"""
+# """
 
 def mkState(callingWidget,fileid,tabs):
   global states
