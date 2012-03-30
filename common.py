@@ -23,11 +23,11 @@ def bsay(caller,text):
   if caller == "?": caller = mainWin
   say(text)
 
-def addLocButton(row,**kwargs):
+def addLocButton(row,format,**kwargs):
   button = gtk.Button("Choose City")
   button.show()
   row.pack_start(button,False,False,2)
-  button.connect("clicked",chooseCity,0,kwargs) # 0 = "city, state"
+  button.connect("clicked",chooseCity,format,kwargs) # 0 = "city, state"
 
 def askBoxProcessor(e,prompt,answer):
   prompt.response(answer)
@@ -131,11 +131,17 @@ def chooseCity(caller,format,kwargs):
     elif key == "statefile": statefilekey = kwargs[key]
     elif key == "data": data = kwargs[key]
   loc = [False,None,None,None,None]
-  askCityBox("?")
+  loc = askCityBox("?")
+  entry.set_text("%s, %s" % (loc[2],loc[4]))
   if format == 0 and loc[0] is True:
-    entry.set_text("%s, %s" % (loc[1],loc[3]))
-  elif format == 1 and data is not None and citykey is not None and cityfilekey is not None and statekey is not None and statefilekey is not None:
     pass
+  elif format == 1 and data is not None and citykey is not None and cityfilekey is not None and statekey is not None and statefilekey is not None:
+    if data.get("info") is not None:
+      data['info'][citykey] = [loc[2],True]
+      data['info'][cityfilekey] = [loc[1],True]
+      data['info'][statekey] = [loc[4],True]
+      data['info'][statefilekey] = [loc[3],True]
+      data['changed'] = True
 
 def dateChoose(caller,target,data,path):
   askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)

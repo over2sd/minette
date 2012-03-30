@@ -10,7 +10,7 @@ from backends import (loadPlace, savePlace, config, writeListFile, idExists,worl
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
-displayStage2,dateChoose,getFileid)
+displayStage2,dateChoose,getFileid,addLocButton)
 from debug import printPretty
 from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
@@ -149,7 +149,7 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll):
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
 
-def buildLocRow(scroll,data,fileid):
+def buildLocRow(data,fileid):
   row = gtk.HBox()
   row.show()
   label = gtk.Label("Location:")
@@ -158,33 +158,13 @@ def buildLocRow(scroll,data,fileid):
   label.set_width_chars(20)
   label.set_alignment(1,0.5)
   choices = getCityList()
-  path = ["info","loc"]
-  g = getInf(data,path)
-#  loc = gtk.ComboBoxText()
-  loc = gtk.combo_box_new_text()
+  loc = gtk.Label()
   loc.show()
-  selected = -1
-  keys = []
-  i = 0
-  for key in sorted(choices.keys()):
-    if choices.get(key) and choices[key][0] and choices[key][2]:
-      loc.append_text("%s, %s" % (choices[key][0],choices[key][2]))
-      keys.append(key)
-      if g == key or g == choices[key][0]:
-        selected = i
-      i += 1
-  loc.set_active(selected)
-  loc.connect("changed",setLocCombo,fileid)
-#  loc.connect("move-active",setLocCombo,fileid)
-  loc.connect("focus",scrollOnTab,scroll)
-  loc.connect("focus-in-event",scrollOnTab,scroll)
   row.pack_start(loc,True,True,2)
-  if len(g) and selected == -1:
-    path = ["info","state"]
-    h = getInf(data,path)
-    value = gtk.Label(" (%s, %s) " % (g,h))
-    value.show()
-    row.pack_start(value,True,True,2)
+  g = getInf(data,["info","loc"])
+  h = getInf(data,["info","state"])
+  loc.set_text("%s, %s" % (g,h))
+  addLocButton(row,1,entry=loc,cat='l',city="loc",cityfile="locfile",state="state",statefile="statefile",data=data)
   return row
 
 def connectToPlace(parent,target,tabs,scroll,fileid,title = ""):
@@ -325,7 +305,7 @@ def initLinfo(self, fileid):
   self.pack_start(self.desc,False,False,2)
   self.address = buildarow(scroll,"Address:",data,fileid,'address')
   self.pack_start(self.address,False,False,2)
-  self.location = buildLocRow(scroll,data,fileid)
+  self.location = buildLocRow(data,fileid)
   self.pack_start(self.location,False,False,2)
   label = gtk.Label("Notes")
   label.set_alignment(0,0)

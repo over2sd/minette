@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadState,idExists,saveState,pushLoc,getCitiesIn,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged, getFileid)
+say,bsay,kill,markChanged, getFileid,addMilestone)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (states,cities,worldList,config)
@@ -176,9 +176,8 @@ def initSinfo(self, fileid,tabs):
   try:
     data = states.get(fileid)
   except KeyError as e:
-    print "initCinfo: An error occurred accessing %s: %s" % (fileid,e)
+    print "initSinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
-  scroll = self.get_parent()
   label = gtk.Label("State:")
   label.set_alignment(0,0)
   label.show()
@@ -278,7 +277,68 @@ def initSinfo(self, fileid,tabs):
         common.say("Error getting cityname.")
 
 def initSmile(self,fileid,tabs):
+  return
+"""
+  global states
+  data = {}
+  scroll = self.get_parent()
+  try:
+    data = states.get(fileid)
+  except KeyError as e:
+    print "initSmile: An error occurred accessing %s: %s" % (fileid,e)
+    return
+  row2 = gtk.HBox()
+  row2.show()
+  self.pack_start(row2,True,True,2)
+  mileadd = gtk.Button("New Milestone")
+  mileadd.show()
+  mileadd.set_alignment(0.75,0.05)
+#  mileadd.set_size_request(int(self.size_request()[0] * 0.30),24)
+  row2.pack_start(mileadd,0,0,5)
+  dhead = gtk.Label("Date")
+  dhead.show()
+  dhead.set_width_chars(8)
+  row2.pack_start(dhead,1,1,2)
+  ehead = gtk.Label("Event")
+  ehead.show()
+  ehead.set_width_chars(18)
+  row2.pack_start(ehead,1,1,2)
+  row2.show_all()
+  row3 = gtk.VBox()
+  row3.show()
+  self.pack_start(row3,0,0,2)
+  boxwidth = self.size_request()[0]
+  mileadd.connect("clicked",addMilestone,scroll,row3,state.get(fileid),fileid,"m",x,boxwidth)
+  if r.get("events"):
+    for i in r['events']:
+#      showMile(row3,r,i,fileid,relid)
+
+#def showMile(row3,r,i,fileid,relid):
+      events = r['events'][i]
+#  print str(events)
+      if events.get("date") and events.get("event"):
+        rowmile = gtk.HBox()
+        rowmile.show()
+        blank = gtk.Label()
+        blank.show()
+        blank.set_width_chars(12)
+        rowmile.pack_start(blank,0,0,2)
+        d = gtk.Entry()
+        d.show()
+        d.set_width_chars(12)
+        d.set_text(events['date'][0])
+        data = people.get(fileid)
+        activateRelEntry(d,scroll,data,fileid,relid,"date",i)
+        rowmile.pack_start(d,1,1,2)
+        e = gtk.Entry()
+        e.show()
+        e.set_width_chars(18)
+        e.set_text(events['event'][0])
+        activateRelEntry(e,scroll,data,fileid,relid,"event",i)
+        rowmile.pack_start(e,1,1,2)
+        row3.add(rowmile)
   pass
+"""
 
 def mkState(callingWidget,fileid,tabs):
   global states

@@ -182,7 +182,7 @@ def initPinfo(self, fileid):
   self.ethnic = buildarow(scroll,"Ethnic background:",people.get(fileid),fileid,'ethnic')
   self.add(self.ethnic)
   self.origin = buildarow(scroll,"Origin:",people.get(fileid),fileid,'origin')
-  addLocButton(self.origin,entry=self.origin.e)
+  addLocButton(self.origin,0,entry=self.origin.e)
   self.add(self.origin)
   self.backs = buildarow(scroll,"Background:",people.get(fileid),fileid,'backstory') # make a textbox someday?
   self.add(self.backs)

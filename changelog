@@ -1,3 +1,7 @@
+2012-03-29:
+- Switched place/landmark location processing from combobox to label and button linked to the button function from 0327
+- Started on state milestone display
+
 2012-03-28:
 - Fixed bug of states not updating global data
 - Fixed some other minor bugs. Hope I didn't introduce any new ones
