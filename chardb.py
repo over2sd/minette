@@ -9,8 +9,9 @@ from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
 writeListFile,getPlaceListGTK,listThingsGTK)
 from city import addCityMenu
-from common import (addHelpMenu,firstRunTab)
-from globdata import (config,mainWin)
+from common import (addHelpMenu,firstRunTab,clearMenus)
+from globdata import (config,mainWin,mainSelf,menuBar)
+from options import optionSetter
 from person import addPersonMenu
 from place import addPlaceMenu
 from state import addStateMenu
@@ -24,6 +25,7 @@ class Base:
     global status
     global config
     global mainWin
+    global mainSelf
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
@@ -41,6 +43,7 @@ class Base:
     if not config.get("seenfirstrun"): firstRunTab(self,self.tabs)
     self.accgroup = gtk.AccelGroup() # for use on menus
     self.window.add_accel_group(self.accgroup)
+    mainSelf = self
     Base.makeMenus(self)
     self.box1.add(self.mb)
     self.box1.add(self.tabs)
@@ -56,47 +59,57 @@ class Base:
 #    self.button1.set_border_width(2)
     self.mb.show()
 
-
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
     if config['startnewperson']: getFileid(self,self.tabs)
     gtk.main()
 
   def makeMenus(self):
+    global menuBar
     self.mb = gtk.MenuBar()
     self.mb.show()
-# File
-    itemW = gtk.MenuItem("_World",True)
-    itemW.show()
-    self.mb.append(itemW)
-    w = gtk.Menu()
-    w.set_accel_group(self.accgroup)
-    w.show()
-    itemW.set_submenu(w)
+    menuBar = self.mb
+    print menuBar
+# Realm
+    itemR = gtk.MenuItem("_Realm",True)
+    itemR.show()
+    self.mb.append(itemR)
+    r = gtk.Menu()
+    r.set_accel_group(self.accgroup)
+    r.show()
+    itemR.set_submenu(r)
     if config['debug'] > 0:
-      itemWS = gtk.MenuItem("_Show placeList",True)
-      itemWS.show()
-      w.append(itemWS)
-      itemWS.connect("activate",getPlaceListGTK)
-      itemWL = gtk.MenuItem("_List records",True)
-      itemWL.show()
-      w.append(itemWL)
-      itemWL.connect("activate",listThingsGTK)
-    itemWT = gtk.MenuItem("S_tory Editor",True)
-    itemWT.show()
-    w.append(itemWT)
-    itemWT.connect("activate",storyEditor,self.window)
+      itemRS = gtk.MenuItem("_Show placeList",True)
+      itemRS.show()
+      r.append(itemRS)
+      itemRS.connect("activate",getPlaceListGTK)
+      itemRL = gtk.MenuItem("_List records",True)
+      itemRL.show()
+      r.append(itemRL)
+      itemRL.connect("activate",listThingsGTK)
+      itemRM = gtk.MenuItem("Clear _Menus",True)
+      itemRM.show()
+      r.append(itemRM)
+      itemRM.connect("activate",clearMenus)
+    itemRO = gtk.MenuItem("_Options",True)
+    itemRO.show()
+    r.append(itemRO)
+    itemRO.connect("activate",optionSetter,self.window)
+    itemRT = gtk.MenuItem("S_tory Editor",True)
+    itemRT.show()
+    r.append(itemRT)
+    itemRT.connect("activate",storyEditor,self.window)
     if config['uselistfile']:
-      itemWC = gtk.MenuItem("_Clear list file",True)
-      w.append(itemWC)
-      itemWC.show()
-      itemWC.connect("activate",killListFile)
-    itemWQ = gtk.MenuItem("_Quit",True)
-    itemWQ.show()
+      itemRC = gtk.MenuItem("_Clear list file",True)
+      r.append(itemRC)
+      itemRC.show()
+      itemRC.connect("activate",killListFile)
+    itemRQ = gtk.MenuItem("_Quit",True)
+    itemRQ.show()
     k,m = gtk.accelerator_parse("<Control>Q")
-    itemWQ.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
-    w.append(itemWQ)
-    itemWQ.connect("activate", storeWindowExit,self.window)
+    itemRQ.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
+    r.append(itemRQ)
+    itemRQ.connect("activate", storeWindowExit,self.window)
 # Person
     addPersonMenu(self)
     addPlaceMenu(self)

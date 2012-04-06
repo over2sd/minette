@@ -75,7 +75,7 @@ def writeListFile():
   cities = worldList['c']
   states = worldList['s']
   orgs = worldList['o']
-  fn = os.path.join(config['worlddir'],"myworld.cfg")
+  fn = os.path.join(config['realmdir'],"myrealm.cfg")
   try:
     with codecs.open(fn,'wU','utf-8') as conf:
       puts = []
@@ -92,13 +92,13 @@ def writeListFile():
     exit(1)
 
 def killListFile(caller = None):
-  os.remove(os.path.join(os.path.abspath(config['worlddir']),"myworld.cfg"))
+  os.remove(os.path.join(os.path.abspath(config['realmdir']),"myrealm.cfg"))
   say("WorldList destroyed!")
   global status
   status.push(0,"WorldList destroyed!")
 
 def loadConfig(fn = None,recursion = 0):
-  """Returns a dict containing the config options in the CCOW config file."""
+  """Returns a dict containing the config options in the Minette config file."""
   lines = []
   global config
   config['debug'] = 1
@@ -110,9 +110,9 @@ def loadConfig(fn = None,recursion = 0):
       line = line.strip()
       if line:
         values = [x.strip() for x in line.split('=')]
-        if values[0] != "loadworld":
+        if values[0] != "loadrealm":
           if not config.get(values[0]): config[values[0]] = values[1] # existing options will not be clobbered
-        elif recursion < 2 and os.path.exists(values[1]): # loadworld must be first option, or its options may be ignored.
+        elif recursion < 2 and os.path.exists(values[1]): # loadrealm must be first option, or its options may be ignored.
           recursion += 1
           loadConfig(values[1],recursion)
     except Exception as e:
@@ -148,12 +148,13 @@ def setDefaults():
   defaults['familyfirst'] = False # Does the family name come first?
   defaults['usemiddle'] = True # Does the name include a middle or maiden name?
   defaults['startnewperson'] = False # Start by opening a new person file?
-  defaults['specialrelsonly'] = False # use only world-defined relations?
+  defaults['specialrelsonly'] = False # use only realm-defined relations?
   defaults['showstories'] = "idlist" # Show titles, or just reference codes?
   defaults['informat'] = "xml" # input/output formats
   defaults['outformat'] = "xml"
   defaults['openduplicatetabs'] = False # Should we open duplicate tabs?
-  defaults['worlddir'] = "worlds/example/" # Where should I look for XML files and configs?
+  defaults['realmdir'] = "realms/example/" # Where should I look for XML files and configs?
+  defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
   defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
   defaults['century'] = 2000
   defaults['centbreak'] = 69
@@ -176,11 +177,11 @@ def validateConfig(config):
       setDefaults()
   except NameError:
     setDefaults()
-  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "worlddir", "datestyle", "century", "centbreak"]
+  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "realmdir", "datestyle", "century", "centbreak"]
   for key in configs:
     config[key] = config.get(key,defaults[key])
-  if not os.path.exists(os.path.abspath(config['worlddir'])): # must be a valid directory
-    bsay("?","Fatal error. World directory %s does not exist! Exiting." % config['worlddir'])
+  if not os.path.exists(os.path.abspath(config['realmdir'])): # must be a valid directory
+    bsay("?","Fatal error. Realm directory %s does not exist! Exiting." % config['realmdir'])
     exit(-1)
   pos = config.get("pos",defaults['pos']) # default position
   siz = config.get("size",defaults['size']) # default size

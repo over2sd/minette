@@ -12,7 +12,7 @@ import time
 import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
-from globdata import (cities,config,people,places,states,stories,mainWin)
+from globdata import (cities,config,people,places,states,stories,mainWin,menuBar,mainSelf)
 from status import status
 import story
 
@@ -142,6 +142,15 @@ def chooseCity(caller,format,kwargs):
       data['info'][statekey] = [loc[4],True]
       data['info'][statefilekey] = [loc[3],True]
       data['changed'] = True
+
+def clearMenus(caller = None):
+  global mainSelf
+  m = mainSelf
+  if m:
+    printPretty(m.get_children())
+  else:
+    printPretty(m)
+  print "Menus destroyed!"
 
 def dateChoose(caller,target,data,path):
   askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
@@ -275,6 +284,25 @@ def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing i
   else:
     say(four)
 
+def loadRealm(fn):
+  clearMenus()
+  # clear worldList
+  # loadConfig
+  # populateWorld
+  # reAddLoadMenus
+  pass
+
+def loadRealmCst(parent):
+  fn = ""
+  # file select dialog
+  loadRealm(fn)
+  pass
+
+def loadRealmStd(fileid): # From a menu list
+  fn = validateFileid(fileid)
+  fn = "realms/%s.rlm" % fn
+  loadRealm(fn)
+
 def preRead(force,cat,path,depth = 0,retries = 0):
   """Using the global dict for the given category, and given a list of keys 'path' and an integer 'depth',
   checks a path in the target dict for reading, to a depth of 'depth'. If 'force' is True, the function
@@ -374,6 +402,9 @@ def preRead(force,cat,path,depth = 0,retries = 0):
   else: # First level (fileid) can't be generated.
     if config['debug'] > limit: debugPath(root,path)
     return False
+
+def reAddLoadMenu(parent,cat):
+  menuList[cat]['f'](parent,menuList[cat].get("m"))
 
 def reloadThis(caller,closer,opener,fileid,mark,target):
   status.push(0,"Attempting to reload %s..." % fileid)

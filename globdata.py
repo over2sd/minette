@@ -12,4 +12,7 @@ worldList = {}
 stories = {}
 relsP = {}
 relsL = {}
+menuBar = None
+realms = {}
 mainWin = None
+mainSelf = None
