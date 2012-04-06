@@ -25,7 +25,7 @@ class Base:
     global status
     global config
     global mainWin
-    global mainSelf
+    global menuBar
     self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
@@ -45,7 +45,7 @@ class Base:
     self.window.add_accel_group(self.accgroup)
     mainSelf = self
     Base.makeMenus(self)
-    self.box1.add(self.mb)
+    self.box1.add(menuBar)
     self.box1.add(self.tabs)
     self.tabs.show()
 #    self.menu1.connect("clicked", self.hello, None)
@@ -55,9 +55,9 @@ class Base:
     self.box1.add(status)
     self.box1.set_child_packing(status,0,0,0,gtk.PACK_START)
     self.box1.set_child_packing(self.tabs,1,1,0,gtk.PACK_START)
-    self.box1.set_child_packing(self.mb,0,0,0,gtk.PACK_START)
+    self.box1.set_child_packing(menuBar,0,0,0,gtk.PACK_START)
 #    self.button1.set_border_width(2)
-    self.mb.show()
+    menuBar.show()
 
   def main(self):
     status.push(0,"Load a record from the menus to begin.")
@@ -66,14 +66,10 @@ class Base:
 
   def makeMenus(self):
     global menuBar
-    self.mb = gtk.MenuBar()
-    self.mb.show()
-    menuBar = self.mb
-    print menuBar
 # Realm
     itemR = gtk.MenuItem("_Realm",True)
     itemR.show()
-    self.mb.append(itemR)
+    menuBar.append(itemR)
     r = gtk.Menu()
     r.set_accel_group(self.accgroup)
     r.show()
@@ -111,11 +107,11 @@ class Base:
     r.append(itemRQ)
     itemRQ.connect("activate", storeWindowExit,self.window)
 # Person
-    addPersonMenu(self)
-    addPlaceMenu(self)
-    addCityMenu(self)
-    addStateMenu(self)
-    addHelpMenu(self)
+    addPersonMenu(self,menuBar)
+    addPlaceMenu(self,menuBar)
+    addCityMenu(self,menuBar)
+    addStateMenu(self,menuBar)
+    addHelpMenu(self,menuBar)
 
   def delete_event(self,widget,event,data=None):
     if config['debug'] > 3: print self.window.get_size()

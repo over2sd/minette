@@ -47,10 +47,10 @@ def addNote(caller,scroll,target,fileid,dval = None,cval = None,i = 0):
   target.pack_start(row,False,False,2)
   activateNoteEntry(content, scroll, data, fileid,i,date)
 
-def addPlaceMenu(self):
+def addPlaceMenu(self,target):
   itemL = gtk.MenuItem("_Landmark",True)
   itemL.show()
-  self.mb.append(itemL)
+  target.append(itemL)
   l = gtk.Menu()
   l.show()
   itemL.set_submenu(l)

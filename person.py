@@ -325,10 +325,10 @@ def displayPerson(callingWidget,fileid, tabrow):
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   people[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
-def addPersonMenu(self):
+def addPersonMenu(self,target):
   itemP = gtk.MenuItem("_Person",True)
   itemP.show()
-  self.mb.append(itemP)
+  target.append(itemP)
   p = gtk.Menu()
   p.show()
   itemP.set_submenu(p)

@@ -144,13 +144,14 @@ def chooseCity(caller,format,kwargs):
       data['changed'] = True
 
 def clearMenus(caller = None):
-  global mainSelf
-  m = mainSelf
-  if m:
-    printPretty(m.get_children())
-  else:
-    printPretty(m)
-  print "Menus destroyed!"
+  global menuBar
+  if menuBar:
+    for i in menuBar.get_children():
+      text =  i.get_label()
+      if text not in ["_Realm","_Help"]:
+        i.destroy()
+        if config['debug'] > 0: print "%s destroyed." % text
+    print "Menus destroyed!"
 
 def dateChoose(caller,target,data,path):
   askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
@@ -951,10 +952,10 @@ def addLoadSubmenuItem(lm, num):
   itemMore.set_submenu(molo)
   return molo
 
-def addHelpMenu(self):
+def addHelpMenu(self,target):
   itemH = gtk.MenuItem("_Help",True)
   itemH.show()
-  self.mb.append(itemH)
+  target.append(itemH)
   h = gtk.Menu()
   h.show()
   itemH.set_submenu(h)

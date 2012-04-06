@@ -17,10 +17,10 @@ from globdata import (states,cities,worldList,config)
 from city import (displayCity,saveThisC)
 from status import status
 
-def addStateMenu(self):
+def addStateMenu(self,target):
   itemS = gtk.MenuItem("_State",True)
   itemS.show()
-  self.mb.append(itemS)
+  target.append(itemS)
   s = gtk.Menu()
   s.show()
   itemS.set_submenu(s)

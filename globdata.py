@@ -1,4 +1,10 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
 # Global Data Structures
+
+import pygtk
+pygtk.require('2.0')
+import gtk
 
 people = {}
 places = {}
@@ -12,7 +18,8 @@ worldList = {}
 stories = {}
 relsP = {}
 relsL = {}
-menuBar = None
+menuBar = gtk.MenuBar()
+menuBar.show()
 realms = {}
 mainWin = None
 mainSelf = None

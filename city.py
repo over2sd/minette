@@ -17,10 +17,10 @@ from globdata import (cities,places,worldList,config)
 from place import (displayPlace,saveThisL)
 from status import status
 
-def addCityMenu(self):
+def addCityMenu(self,target):
   itemC = gtk.MenuItem("_City",True)
   itemC.show()
-  self.mb.append(itemC)
+  target.append(itemC)
   c = gtk.Menu()
   c.show()
   itemC.set_submenu(c)
