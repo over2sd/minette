@@ -12,7 +12,7 @@ import time
 import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
-from globdata import (cities,config,people,places,states,stories,mainWin,menuBar,mainSelf)
+from globdata import (cities,config,people,places,states,stories,mainWin,menuBar,rlmkeys)
 from status import status
 import story
 
@@ -415,6 +415,9 @@ def reloadThis(caller,closer,opener,fileid,mark,target):
 def reorderTabs(tabs):
   """Functions looks at a notebook and reorders the tab numbers after one is closed"""
   # TODO: Write this... or figure out whether it's still needed.
+  pass
+
+def saveRealm(fn):
   pass
 
 def setDate(cal,target):
@@ -967,3 +970,9 @@ def addHelpMenu(self,target):
 def showHelp(caller,parent):
   bsay(parent,"Icons provided by http://www.fatcow.com/free-icons")
 
+def updateTitle():
+  global mainWin
+  t = mainWin.get_title()
+  r = config.get("realmname",None)
+  if t != "Minette - %s" % r and r is not None:
+    mainWin.set_title("Minette - %s" % config.get("realmname"))

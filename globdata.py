@@ -21,5 +21,8 @@ relsL = {}
 menuBar = gtk.MenuBar()
 menuBar.show()
 realms = {}
-mainWin = None
-mainSelf = None
+mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+rlmkeys = ["realmfile","specialrelsonly","uselistfile","centbreak","century","datestyle",
+  "xslurl","dtdurl","dtddir","printemptyXMLtags","informat","outformat","realmname",
+  "realmdir","usemiddle","familyfirst",]
+cfgkeys = ["pos","size","seenfirstrun","debug","startnewperson","openduplicatetabs",""]

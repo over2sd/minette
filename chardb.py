@@ -9,8 +9,8 @@ from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
 writeListFile,getPlaceListGTK,listThingsGTK)
 from city import addCityMenu
-from common import (addHelpMenu,firstRunTab,clearMenus)
-from globdata import (config,mainWin,mainSelf,menuBar)
+from common import (addHelpMenu,firstRunTab,clearMenus,updateTitle)
+from globdata import (config,mainWin,menuBar)
 from options import optionSetter
 from person import addPersonMenu
 from place import addPlaceMenu
@@ -26,7 +26,8 @@ class Base:
     global config
     global mainWin
     global menuBar
-    self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    self.window = mainWin
+    updateTitle()
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
     self.window.set_border_width(3)
@@ -43,7 +44,6 @@ class Base:
     if not config.get("seenfirstrun"): firstRunTab(self,self.tabs)
     self.accgroup = gtk.AccelGroup() # for use on menus
     self.window.add_accel_group(self.accgroup)
-    mainSelf = self
     Base.makeMenus(self)
     self.box1.add(menuBar)
     self.box1.add(self.tabs)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
   loadConfig(fn)
   populateWorld()
-  fn = path.join(config['worlddir'],"myworld.cfg")
+  fn = path.join(config['realmdir'],"myrealm.cfg")
   if config['uselistfile'] and not path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."
     writeListFile()

@@ -6,7 +6,7 @@ import re
 import os
 from status import status
 from common import (say,bsay,skrTimeStamp)
-from globdata import (config,worldList)
+from globdata import (config,worldList,cfgkeys)
 # from configobj import ConfigObj
 
 def storeWindowExit(caller,window):
@@ -129,7 +129,7 @@ def saveConfig(fn):
     setDefaults()
   lines = []
   for key in config.keys():
-    if key is not "file" and key is not "set" and config[key] != defaults.get(key):
+    if key in cfgkeys and config[key] != defaults.get(key):
       lines.append("%s = %s\n" % (key,config[key]))
   if config['debug'] > 0: print lines
   try:
@@ -177,7 +177,7 @@ def validateConfig(config):
       setDefaults()
   except NameError:
     setDefaults()
-  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "realmdir", "datestyle", "century", "centbreak"]
+  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "realmdir", "datestyle", "century", "centbreak","realmname"]
   for key in configs:
     config[key] = config.get(key,defaults[key])
   if not os.path.exists(os.path.abspath(config['realmdir'])): # must be a valid directory

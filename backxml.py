@@ -62,7 +62,7 @@ def getCityList(order):
 
 def getCityLoc(fileid):
   root = etree.Element("place")
-  fn = os.path.join(config['worlddir'],"%s.xml" % fileid)
+  fn = os.path.join(config['realmdir'],"%s.xml" % fileid)
   status.push(0,"reading city location from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -131,7 +131,7 @@ def getStateList(order):
 
 def getStateName(fileid):
   root = etree.Element("state")
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['realmdir'],fileid + ".xml")
   status.push(0,"reading city location from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -146,8 +146,8 @@ def getStateName(fileid):
 
 def idExists(fileid):
   global config
-  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml") + "...",
-  return os.path.exists(os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml"))
+  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml") + "...",
+  return os.path.exists(os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml"))
 
 def listThings(pretty):
   if pretty:
@@ -155,11 +155,13 @@ def listThings(pretty):
     printPretty(places)
     printPretty(cities)
     printPretty(states)
+    printPretty(config)
   else:
     print people
     print places
     print cities
     print states
+    print config
   getPlaceList(pretty)
   return True
 
@@ -182,7 +184,7 @@ def loadCity(fileid):
   if not idExists(fileid):
     status.push(0,"new city created... '" + fileid + "'")
     return dinf
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['realmdir'],fileid + ".xml")
   status.push(0,"loading city from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -258,7 +260,7 @@ def loadPerson(fileid):
   if not idExists(fileid):
     status.push(0,"new person created... '" + fileid + "'")
     return (dinf,drel)
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['realmdir'],fileid + ".xml")
   status.push(0,"loading person from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -401,7 +403,7 @@ def loadPlace(fileid):
   if not idExists(fileid):
     status.push(0,"new place created... '" + fileid + "'")
     return (dinf,drel)
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['realmdir'],fileid + ".xml")
   status.push(0,"loading place from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -489,7 +491,7 @@ def loadState(fileid):
     status.push(0,"new state created... '" + fileid + "'")
     return dinf
   statefile = fileid
-  fn = os.path.join(config['worlddir'],fileid + ".xml")
+  fn = os.path.join(config['realmdir'],fileid + ".xml")
   status.push(0,"loading state from XML... '" + fn + "'")
   try:
     with codecs.open(fn,'rU','utf-8') as f:
@@ -529,12 +531,12 @@ def loadState(fileid):
   return dinf
 
 def populateWorld():
-  """Looks in the worlddir and makes a list of fileids the program can
+  """Looks in the realmdir and makes a list of fileids the program can
   load. Makes worldList a tuple of lists.
   """
   global config
   global worldList
-  fn = os.path.join(config['worlddir'],"myworld.cfg")
+  fn = os.path.join(config['realmdir'],"myrealm.cfg")
   persons = []
   places = []
   cities = []
@@ -585,12 +587,12 @@ def populateWorld():
             print "Unknown type " + values[0] + " found"
       except Exception as e:
         print "There was an error in the configuration file: %s" % e
-  elif not os.path.exists(config['worlddir']):
-    print "Fatal error. World directory %s does not exist! Exiting." % config['worlddir']
+  elif not os.path.exists(config['realmdir']):
+    print "Fatal error. World directory %s does not exist! Exiting." % config['realmdir']
     exit(-1)
   else:
     print "Generating worldList from directory..."
-    olist = os.listdir(config['worlddir'])
+    olist = os.listdir(config['realmdir'])
     nlist = []
     ilist = []
     for i in range(len(olist)):
@@ -598,7 +600,7 @@ def populateWorld():
         ilist.append(os.path.splitext(olist[i])[0])
         nlist.append(olist[i])
     for i in range(len(nlist)):
-      fn = os.path.join(config['worlddir'],nlist[i])
+      fn = os.path.join(config['realmdir'],nlist[i])
       line = getline(fn,2)
       match = line.find("SYSTEM")
       if match == -1:
@@ -701,29 +703,6 @@ def saveCity(fileid,data):
       if value is None: value = ['',False]
       etree.SubElement(city,tag).text = value[0]
   saveXMLtree(city,"city",fileid)
-  """
-  out = ""
-  if config['debug'] > 6: printPretty(etree.tostring(city),True,True)
-  try:
-    out = etree.tostring(city,pretty_print=True)
-  except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
-    out = xmlout.prettyXML(city)
-  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
-  start += os.path.join(config['xslurl'],"city.xsl")
-  start += "\"?>\n<!DOCTYPE person SYSTEM \"city.dtd\">\n"
-  finaloutput = start + out
-  if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
-  try:
-    with codecs.open(fn,'wU','UTF-8') as f:
-      f.write(finaloutput)
-      f.close()
-  except IOError as e:
-    message = "The file %s could not be saved: %s" % (fn,e)
-    common.bsay("?",message)
-    status.push(0,message)
-    return False
-  """
   cities[fileid]['changed'] = False
   return True
 
@@ -798,28 +777,6 @@ def savePerson(fileid,data):
       if value is None: value = ['',False]
       etree.SubElement(person,tag).text = value[0]
   saveXMLtree(person,"person",fileid)
-  """
-  out = ""
-  try:
-    out = etree.tostring(person,pretty_print = True)
-  except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
-    out = xmlout.prettyXML(person)
-  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
-  start += os.path.join(config['xslurl'],"person.xsl")
-  start += "\"?>\n<!DOCTYPE person SYSTEM \"person.dtd\">\n"
-  finaloutput = start + out
-  if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
-  try:
-    with codecs.open(fn,'wU','UTF-8') as f:
-      f.write(finaloutput)
-      f.close()
-  except IOError as e:
-    message = "The file %s could not be saved: %s" % (fn,e)
-    common.bsay("?",message)
-    status.push(0,message)
-    return False
-  """
   people[fileid]['changed'] = False
   return True
 
@@ -887,28 +844,6 @@ def savePlace(fileid,data):
       if value is None: value = ['',False]
       etree.SubElement(place,tag).text = value[0]
   saveXMLtree(place,"place",fileid)
-  """
-  out = ""
-  try:
-    out = etree.tostring(place,pretty_print = True)
-  except TypeError: # for me, previous line results in "unexpected keyword argument 'pretty_print'"
-    out = xmlout.prettyXML(place)
-  start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
-  start += os.path.join(config['xslurl'],"place.xsl")
-  start += "\"?>\n<!DOCTYPE place SYSTEM \"place.dtd\">\n"
-  finaloutput = start + out
-  if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
-  try:
-    with codecs.open(fn,'wU','UTF-8') as f:
-      f.write(finaloutput)
-      f.close()
-  except IOError as e:
-    message = "The file %s could not be saved: %s" % (fn,e)
-    common.bsay("?",message)
-    status.push(0,message)
-    return False
-  """
   places[fileid]['changed'] = False
   return True
 
@@ -988,7 +923,7 @@ def saveXMLtree(tree,category,fileid):
   start += "\"?>\n<!DOCTYPE person SYSTEM \"%s.dtd\">\n" % category
   finaloutput = start + out
   if config['debug'] > 0: print finaloutput
-  fn = os.path.join(os.path.abspath(config['worlddir']),fileid + ".xml")
+  fn = os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml")
   try:
     with codecs.open(fn,'wU','UTF-8') as f:
       f.write(finaloutput)
