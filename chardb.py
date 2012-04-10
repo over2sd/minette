@@ -10,7 +10,7 @@ from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killLis
 writeListFile,getPlaceListGTK,listThingsGTK)
 from city import addCityMenu
 from common import (addHelpMenu,firstRunTab,clearMenus,updateTitle,newRealm,loadRealmCst,saveRealm)
-from globdata import (config,mainWin,menuBar)
+from globdata import (config,mainWin,menuBar,version)
 from options import optionSetter
 from person import addPersonMenu
 from place import addPlaceMenu
@@ -136,6 +136,7 @@ class Base:
     gtk.main_quit()
 
 if __name__ == "__main__":
+  print "Minette v0.90 loading..."
   fn = None
   if len(sys.argv) > 1:
     print "%s" % sys.argv

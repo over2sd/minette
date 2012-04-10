@@ -12,7 +12,7 @@ import time
 import backends
 from choices import myStories
 from debug import (printPretty,debugPath)
-from globdata import (cities,config,people,places,states,stories,mainWin,menuBar,rlmkeys)
+from globdata import (cities,config,items,orgs,people,places,states,stories,mainWin,menuBar,rlmkeys)
 from status import status
 import story
 
@@ -28,6 +28,47 @@ def addLocButton(row,format,**kwargs):
   button.show()
   row.pack_start(button,False,False,2)
   button.connect("clicked",chooseCity,format,kwargs) # 0 = "city, state"
+
+def ageText(d,e,row):
+  '''Given a determinant (starting date) terminant (cutoff date) and a target row containing an entry called e,
+  creates a label that will show the appropriate age at the realm's agedate and connect
+  the determinant to an update function that will update the label.'''
+  t = gtk.Label("0 on 0/0/0")
+  t.show()
+  row.pack_start(t,0,0,2)
+  updateAge(None,d,e,t)
+  d.connect("changed",updateAge,d,e,t)
+  e.connect("changed",updateAge,d,e,t)
+
+def updateAge(caller,s,e,t):
+  start = s.get_text()
+  deat = e.get_text()
+  now = config.get("agedate")
+  if now is None or start is None or start == "": return
+  (y,m,d) = parseDate(start)
+  start = datetime.date(y,m,d)
+  (y,m,d) = parseDate(now)
+  end = datetime.date(y,m,d)
+  death = None
+  if deat != None and deat != "":
+    (y,m,d) = parseDate(deat)
+    death = datetime.date(y,m,d)
+  born = False
+  died = False
+  if start < end: born = True
+  dead = 0
+  if death is not None and death < end:
+    died = True
+    dead = getAge(death,end)
+  age = getAge(start,end)
+  text = "%d at %s" % (age,end)
+  if died:
+    s = "s"
+    if dead == 1: s = ""
+    text = "%d at death, dead for %d year%s" % (age,dead,s)
+  if not born: text = "Not yet born"
+  if not config['hideage']: text = "(%s)" % text
+  t.set_text(" %s" % text)
 
 def askBoxProcessor(e,prompt,answer):
   prompt.response(answer)
@@ -157,7 +198,11 @@ def clearMenus(caller = None):
         if config['debug'] > 0: print "%s destroyed." % text
     print "Menus destroyed!"
 
-def dateChoose(caller,target,data,path):
+def dateChoose(caller,target,data,path,kwargs = {}):
+  nomark = False
+  for key in kwargs:
+    if config['debug'] > 0: print "%s:%s" % (key,kwargs[key])
+    if key == "nomark": nomark = kwargs[key]
   askbox = gtk.MessageDialog(None,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_QUESTION,gtk.BUTTONS_OK_CANCEL)
   askbox.set_markup("Choose a date")
   cal = gtk.Calendar()
@@ -166,7 +211,7 @@ def dateChoose(caller,target,data,path):
   cal.select_month(m,y)
   cal.select_day(d)
   month = gtk.Entry(3)
-  month.set_text(str(m))
+  month.set_text(str(m + 1))
   year = gtk.Entry(5)
   year.set_text(str(y))
   row = gtk.HBox()
@@ -189,7 +234,8 @@ def dateChoose(caller,target,data,path):
   if result == gtk.RESPONSE_OK:
     setDate(cal,target)
   askbox.destroy()
-  checkForChange(target,None,data,path)
+  if not nomark:
+    checkForChange(target,None,data,path)
 
 def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener):
   target.vbox = gtk.VBox()
@@ -279,6 +325,40 @@ This tutorial will only display as long as you do not use a configuration file. 
   tabrow.toggle.connect("clicked",setTutorialSeen)
   tabrow.fr.add(tabrow.toggle)
   tabrow.fr.add(tabrow.close)
+
+def getAge(s,e):
+  ey = e.year
+  em = e.month
+  ed = e.day
+  sy = s.year
+  sm = s.month
+  sd = s.day
+  age = 0
+  if ey > sy: age = ey - sy
+  if sm > em: age -= 1
+  if sm == em and sd > ed: age -= 1
+  return age
+
+def getCat(fileid):
+  cat = None
+  x = people.get(fileid,None)
+  if x is not None: cat = "person"
+  else:
+    x = places.get(fileid,None)
+    if x is not None: cat = "place"
+    else:
+      x = cities.get(fileid,None)
+      if x is not None: cat = "city"
+      else:
+        x = states.get(fileid,None)
+        if x is not None: cat = "state"
+        else:
+          x = orgs.get(fileid,None)
+          if x is not None: cat = "org"
+          else:
+            x = items.get(fileid,None)
+            if x is not None: cat = "item"
+  return [cat,True]
 
 def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing identifier.",two = "Fileid:",three = "This short identifier will be used to link records together and identify the record on menus. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces or an extension, such as \".xml\"."):
   four = "New %s cancelled." % cat
@@ -429,7 +509,7 @@ def saveRealm(fn):
 
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
-  t = (y,m+1,d,0,0,0,0,0,0)
+  t = (y,m,d,0,0,0,0,0,0)
   style = config.get('datestyle',"%Y/%m/%db")
   if True: style = re.sub(r'%y',r'%Y',style)
   target.set_text(time.strftime(style,t))
@@ -532,7 +612,7 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
     placeCalendarButton(data,row,row.e,path)
   return row
 
-def placeCalendarButton(data,row,target,path):
+def placeCalendarButton(data,row,target,path,**kwargs):
   """Puts a nice little calendar button in row. The calendar button updates
   target with the selected value."""
 #  printPretty("args: %s %s %s %s" % (data,row,target,path))
@@ -542,7 +622,7 @@ def placeCalendarButton(data,row,target,path):
   image.set_from_file("img/date.png")
   datebut.set_image(image)
   datebut.unset_flags(gtk.CAN_FOCUS)
-  datebut.connect("clicked",dateChoose,target,data,path)
+  datebut.connect("clicked",dateChoose,target,data,path,kwargs)
   row.pack_start(datebut,0,0,2)
 
 def getInf(data,path,default = ""):

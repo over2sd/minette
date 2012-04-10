@@ -3,5 +3,7 @@
 <!DOCTYPE person SYSTEM "city.dtd">
 <city>
 	<name>Springfield</name>
-	<update>12/03/21b</update>
+	<state>Confusion</state>
+	<statefile>s-co</statefile>
+	<update>12/04/10b</update>
 </city>

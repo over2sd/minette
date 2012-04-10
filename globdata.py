@@ -11,6 +11,7 @@ places = {}
 cities = {}
 states = {}
 items = {}
+orgs = {}
 animals = {}
 config = {}
 placeList = {}
@@ -22,8 +23,8 @@ menuBar = gtk.MenuBar()
 menuBar.show()
 realms = {}
 mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-rlmkeys = ["centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
-  "informat","outformat","printemptyXMLtags","realmdir","realmname","showstories",
-  "specialrelsonly","uselistfile","usemiddle","xslurl",]
+rlmkeys = ["agedate","centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
+  "hideage","informat","outformat","printemptyXMLtags","realmdir","realmname",
+  "showstories","specialrelsonly","uselistfile","usemiddle","xslurl"]
 cfgkeys = ["debug","pos","duplicatetabs","realmfile","seenfirstrun","size",
   "startnewperson","termcolors","saverealm","rlmincfg"]

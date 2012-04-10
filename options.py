@@ -6,7 +6,7 @@ pygtk.require('2.0')
 import gtk
 
 from debug import printPretty
-from common import (scrollOnTab,updateTitle)
+from common import (scrollOnTab,updateTitle,placeCalendarButton)
 from globdata import (mainWin,config)
 from status import status
 
@@ -192,6 +192,25 @@ def optionSetter(caller,parent = "?"):
   s1.connect("value-changed",setDates,s1,s2,test)
   sw.pack_start(row)
   sw.pack_start(test,True,True,2)
+
+  cb = gtk.CheckButton("Show only calculated date")
+  cb.set_active(config.get("hideage",True))
+  cb.connect("toggled",setOpt,None,options,"hideage",1)
+  cb.connect("focus-in-event",scrollOnTab,scroll)
+  cb.show()
+  sw.pack_start(cb)
+  row = gtk.HBox()
+  label = gtk.Label("Date for age calculations: ")
+  label.show()
+  e = gtk.Entry()
+  e.set_text(config.get("agedate","06/08/10b"))
+  e.connect("changed",setOpt,None,options,"agedate",2)
+  e.show()
+  row.show()
+  row.pack_start(label,0,0,2)
+  row.pack_start(e,1,1,2)
+  placeCalendarButton(None,row,e,None,nomark=True)
+  sw.pack_start(row,0,0,2)
   row = gtk.HBox()
   label = gtk.Label("Expert: Style for dates in this realm: ")
   e = gtk.Entry()

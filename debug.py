@@ -46,7 +46,12 @@ def printStack(length = 3,callonly = False):
     if callonly:
       print "* %s:" % cmd
     else:
-      print "* At line %d in %s:%s():\n\t%s" % (ln,f,func,cmd)
+      BOLD = ""
+      NORM = ""
+      if config['termcolors']:
+        BOLD = "\033[1;36;40m"
+        NORM = "\033[0;37;40m"
+      print "* At line %s%d%s in %s%s%s:%s():\n\t%s" % (BOLD,ln,NORM,BOLD,f,NORM,func,cmd)
 
 def printPretty(string,**kwargs):
   """This function prints Python variable/string in colored format in bash/ANSI

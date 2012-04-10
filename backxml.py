@@ -721,7 +721,9 @@ def savePerson(fileid,data):
     if tag == "relat":
       if len(rels):
         for r in rels:
-          if rels[r].get("related") and rels[r].get("relation") and rels[r].get("rtype") and rels[r].get("cat"):
+          if rels[r].get("cat") is None:
+            rels[r]['cat'] = common.getCat(r) # Try to figure it out
+          if rels[r].get("related") is not None and rels[r].get("relation") is not None and rels[r].get("rtype") is not None and rels[r].get("cat") is not None:
             connected = etree.Element("relat")
             for t in reltags:
               if rels[r].get(t):
@@ -747,7 +749,8 @@ def savePerson(fileid,data):
                 etree.SubElement(connected,t).text = value[0]
             person.append(connected)
           else:
-            print "A required tag is missing from relation %s." % r
+            print "A required tag is missing from relation %s." % r,
+            printPretty(rels[r])
       else:
         print "no relations found"
     elif tag == "currocc" or tag == "formocc":

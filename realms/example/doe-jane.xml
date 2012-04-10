@@ -38,6 +38,18 @@
 	<talent>sewing</talent>
 	<sgoal>To finish the Times crossword puzzle</sgoal>
 	<relat>
+		<related>Anyville: Colored Animal Cafe</related>
+		<relation>Hangout</relation>
+		<file>cafe01</file>
+		<events>
+			<mstone>
+				<date>2012/04/10b</date>
+				<event>Discovered cafe</event>
+			</mstone>
+		</events>
+		<cat>place</cat>
+	</relat>
+	<relat>
 		<related>John Doe</related>
 		<relation>Husband</relation>
 		<file>doe-john</file>
@@ -54,5 +66,5 @@
 		</events>
 		<cat>person</cat>
 	</relat>
-	<update>12/04/09b</update>
+	<update>12/04/10b</update>
 </person>

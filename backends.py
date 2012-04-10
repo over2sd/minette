@@ -215,6 +215,7 @@ def seek(fn):
 def setDefaults():
   global defaults
   defaults = {}
+  defaults['agedate'] = "06/08/10b" # Date for calculating ages
   defaults['centbreak'] = 69
   defaults['century'] = 2000
   defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
@@ -223,6 +224,7 @@ def setDefaults():
   defaults['dtdurl'] = os.path.abspath(defaults['dtddir']) # What reference goes in the XML files?
   defaults['duplicatetabs'] = False # Should we open duplicate tabs?
   defaults['familyfirst'] = False # Does the family name come first?
+  defaults['hideage'] = False # Show only the calculated age, hiding freetext entry?
   defaults['informat'] = "xml" # input/output formats
   defaults['outformat'] = "xml"
   defaults['pos'] = "(20,40)" # Default window position and size, debug level

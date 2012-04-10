@@ -10,11 +10,12 @@ from backends import (loadPerson, savePerson, config, writeListFile, idExists,wo
 from choices import allGenders
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
-displayStage1,displayStage2,addLoadSubmenuItem,getFileid,addLocButton)
-from debug import printPretty
+displayStage1,displayStage2,addLoadSubmenuItem,getFileid,addLocButton,placeCalendarButton,\
+preRead,ageText,getCat)
+from debug import (printPretty,lineno)
 from getmod import (getPersonConnections,recordSelectBox)
-from globdata import people
-from preread import preReadp
+from globdata import (people,places,cities,states,items,orgs)
+import place
 from status import status
 from story import storyPicker
 
@@ -132,6 +133,8 @@ def initPinfo(self, fileid):
   self.bodytyp = buildarow(scroll,"Body Type:",people.get(fileid),fileid,'bodytyp')
   self.add(self.bodytyp)
   self.age = buildarow(scroll,"Age:",people.get(fileid),fileid,'age')
+  ageText(self.bday.e,self.dday.e,self.age)
+  if config['hideage']: self.age.e.hide()
   self.add(self.age)
   self.skin = buildarow(scroll,"Skin:",people.get(fileid),fileid,'skin')
   self.add(self.skin)
@@ -235,6 +238,7 @@ def initPrels(self, fileid,tabs):
   self.set_child_packing(self.b1,0,0,2,gtk.PACK_START)
   uncatbox = gtk.VBox()
   uncatbox.show()
+  self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,scroll,fileid,"Connect to " + nameperson)
   if not len(rels):
     self.norels = gtk.Label("No relations found at load time. New relations added will be sorted in the next load.")
     self.norels.show()
@@ -250,7 +254,7 @@ def initPrels(self, fileid,tabs):
       if rels[key].get("rtype"):
         t = rels[key]['rtype'][0]
       else:
-        typed['uncat'].append(key)
+        t = "uncat"
       if not typed.get(t):
         typed[t] = []
       typed[t].append(key)
@@ -283,13 +287,12 @@ def initPrels(self, fileid,tabs):
     rule.show()
     uncatbox.pack_start(rule,0,0,1)
     if typed.get("uncat"):
-      if config['debug'] > 1: print 'uncat' + ": " + str(len(typed['uncat']))
+      if config['debug'] > 1: print "uncat: %s" % (str(len(typed['uncat'])))
       keys = typed['uncat']
       keys.sort()
       for key in keys:
         r = rels[key]
         listRel(uncatbox,r,fileid,key,scroll,tabs)
-  self.addbutton.connect("clicked",connectToPerson,uncatbox,tabs,scroll,fileid,"Connect to " + nameperson)
   self.add(uncatbox)
 
 def displayPerson(callingWidget,fileid, tabrow):
@@ -394,11 +397,27 @@ def mkPerson(callingWidget,fileid,tabs):
 def listRel(self,r,fileid,relid,scroll,target = None):
   if not r.get("related"): return
   name = r['related'][0]
-  if not r.get("cat"): return
+  if not r.get("cat"):
+    print "empty category! Attempting to find...",
+    x = getCat(relid)
+    if x is not None:
+      r['cat'] = x
+      print r
+    else:
+      print "Not found!\nTo repair, open %s manually, and then reload %s." % (relid,fileid)
+      return
+    print '\n',
   cat = r['cat'][0]
+  displayFunc = None
+  if cat == "person":  displayFunc = displayPerson
+  elif cat == "place": displayFunc = place.displayPlace
+  else:
+    print "Invalid category '%s' at listRel:%d!" % (cat,lineno())
+    return
   if not target: target = self.get_parent().get_parent().get_parent().get_parent() #Which is better?
   namebutton = gtk.Button(relid)
-  namebutton.connect("clicked",displayPerson,relid,target) # passing the target or figuring it from parentage?
+  namebutton.connect("clicked",displayFunc,relid,target) # passing the target or figuring it from parentage?
+  ### TODO: displayPerson? what about places/orgs?
   row1 = gtk.HBox()
   self.pack_start(row1,0,0,2)
   row1.pack_start(namebutton,1,1,2)
@@ -415,7 +434,11 @@ def listRel(self,r,fileid,relid,scroll,target = None):
   nameentry.set_text(name)
   activateRelEntry(nameentry,scroll,people.get(fileid),fileid,relid,"related")
   row1.pack_start(nameentry,1,1)
-  relation = gtk.Label(r['relation'][0])
+  txt = r.get("relation")
+  if txt is None:
+    r['relation'] = ["",False]
+    txt = ["",False]
+  relation = gtk.Label(txt[0])
   relation.show()
   relation.set_width_chars(8)
   row1.pack_start(relation,1,1)
@@ -476,6 +499,7 @@ def listRel(self,r,fileid,relid,scroll,target = None):
         data = people.get(fileid)
         activateRelEntry(d,scroll,data,fileid,relid,"date",i)
         rowmile.pack_start(d,1,1,2)
+        placeCalendarButton(data,rowmile,d,[fileid,"relat",relid,"events",i,"date"])
         e = gtk.Entry()
         e.show()
         e.set_width_chars(18)
@@ -497,12 +521,12 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll):
   global people
   cat = relid[1]
   relid = relid[0]
-  if preReadp(True,[fileid,"relat"],2):
+  if preRead(True,'p',[fileid,"relat"],2):
     name = []
     rels = {}
     nameperson = ""
-    if not preReadp(False,[fileid,"relat",relid],3):
-      if not preReadp(False,fileid,1):
+    if not preRead(False,'p',[fileid,"relat",relid],3):
+      if not preRead(False,'p',fileid,1):
         p = loadPerson(relid)
         inf = p[0]
         try:
@@ -615,18 +639,18 @@ def selectConnectionP(caller,relation,fileid,relid,nameR,cat,genderR = 'N',gende
   value = str(answer)
   if len(value) < 2: # Expect 2
     return
-  if not preReadp(True,[fileid,'relat',relid],3): # This should have been here already.
+  if not preRead(True,'p',[fileid,'relat',relid],3): # This should have been here already.
     return
   if value == "86": return # Cancel
-  people[fileid]['relat'][relid]['rtype'] = options[value][2]
-  people[fileid]['relat'][relid]['relation'] = options[value][0]
-  people[fileid]['relat'][relid]['cat'] = cat
-  relation.set_text(people[fileid]['relat'][relid]['relation'])
+  people[fileid]['relat'][relid]['rtype'] = [options[value][2],True]
+  people[fileid]['relat'][relid]['relation'] = [options[value][0],True]
+  people[fileid]['relat'][relid]['cat'] = [cat,True]
+  relation.set_text(people[fileid]['relat'][relid]['relation'][0])
   # TODO: some day, maybe edit and save the other person with reciprocal relational information.
 
 def showPerson(caller,fileid):
   if people.get(fileid):
-    print people[fileid]
+    printPretty(people[fileid])
 
 def saveThisP(caller,fileid):
   global status
@@ -656,7 +680,7 @@ def toggleOrder(caller,fileid):
   if config['familyfirst']:
     norm = rev
     rev = "gf"
-  if not preReadp(True,[fileid,"info"],2):
+  if not preRead(True,'p',[fileid,"info"],2):
     return
   if caller.get_active():
     print "Name is now reversed!"
@@ -724,7 +748,7 @@ def setGender(caller,fileid,key):
     genderkeys = allGenders(1)
     key = genderkeys.get(key,'N')
     if config['debug'] > 3: print "new key: %s" % key
-  if preReadp(False,[fileid,"info","gender"],2):
+  if preRead(False,'p',[fileid,"info","gender"],2):
     people[fileid]['info']['gender'] = [key,True]
     people[fileid]['changed'] = True
     if config['debug'] > 2: print "New Gender: %s" % key

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/home/skreyola/wri/fic/cur/chardb/py/xsl/place.xsl"?>
-<!DOCTYPE place SYSTEM "place.dtd">
+<!DOCTYPE person SYSTEM "place.dtd">
 <place>
 	<commonname>Anyville: Colored Animal Cafe</commonname>
 	<name>The Colored Animal Cafe</name>
@@ -10,5 +10,9 @@
 	<mention>EG: 1.1</mention>
 	<desc>A nice little cafe with tables on the sidewalk. The sign shows a colored animal.</desc>
 	<address>123 Fourth Ave.</address>
-	<update>12/03/23b</update>
+	<loc>Anyville</loc>
+	<locfile>anyville</locfile>
+	<state>Confusion</state>
+	<statefile>s-co</statefile>
+	<update>12/04/10b</update>
 </place>

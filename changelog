@@ -1,3 +1,10 @@
+2012-04-10:
+- Fixed minor error in dateChooser
+- printStack now bolds some key info
+- listRel now loads places correctly and shows calendar buttons for all milestones
+- Added date for age calculations option
+- Fixed uncategorized relations not showing in person
+
 2012-04-09:
 - Options dialog finished
 - Much formatting cleanup
