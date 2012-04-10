@@ -22,7 +22,8 @@ menuBar = gtk.MenuBar()
 menuBar.show()
 realms = {}
 mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-rlmkeys = ["realmfile","specialrelsonly","uselistfile","centbreak","century","datestyle",
-  "xslurl","dtdurl","dtddir","printemptyXMLtags","informat","outformat","realmname",
-  "realmdir","usemiddle","familyfirst",]
-cfgkeys = ["pos","size","seenfirstrun","debug","startnewperson","openduplicatetabs",""]
+rlmkeys = ["centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
+  "informat","outformat","printemptyXMLtags","realmdir","realmname","showstories",
+  "specialrelsonly","uselistfile","usemiddle","xslurl",]
+cfgkeys = ["debug","pos","duplicatetabs","realmfile","seenfirstrun","size",
+  "startnewperson","termcolors","saverealm","rlmincfg"]

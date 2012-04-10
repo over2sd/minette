@@ -42,7 +42,7 @@ def addCityMenu(self,target):
     cols = int(floor(num/20)) + 1
     every = int(num / cols) - 1
   pos = 0
-  countitem = gtk.MenuItem("Total Entries: " + str(num))
+  countitem = gtk.MenuItem("Total Entries: %d" % num)
   cl.append(countitem)
   countitem.show()
   addCitySubmenu(self.tabs,cl,cities[pos:pos + every])
@@ -143,8 +143,8 @@ def displayCity(callingWidget,fileid, tabrow):
     tab = cities[fileid].get("tab")
     if tab is not None:
       warnme = True
-      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
-        status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
+      if not config['duplicatetabs']:
+        status.push(0,"'%s' is Already open. Switching to existing tab instead of loading..." % fileid)
         tabrow.set_current_page(tab)
         for i in range(len(tabrow)):
           if fileid == tabrow.get_tab_label_text(tabrow.get_nth_page(i)):

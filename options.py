@@ -25,18 +25,19 @@ def optionSetter(caller,parent = "?"):
   title = "Setting Options"
   optbox = gtk.Dialog(title,parent,gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_APPLY,gtk.RESPONSE_APPLY,gtk.STOCK_OK,gtk.RESPONSE_OK))
   if not config.get("nowindowstore"):
-    optbox.set_geometry_hints(None,int(config['size'][0] * factor),int(config['size'][1] * (factor - 5)))
+    optbox.set_geometry_hints(None,int(config['size'][0] * factor),int(config['size'][1] * (factor - 0.05)))
 #  optbox.set_decorated(False)
   sw = gtk.VBox()
   sw.show()
+  sw.set_border_width(10)
   scroll = gtk.ScrolledWindow()
   scroll.show()
   scroll.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
   scroll.add_with_viewport(sw)
   optbox.vbox.add(scroll)
-  label = gtk.Label("Realm-specific Options ")
+  label = gtk.Label("Realm-specific Options for %s" % config['realmfile'])
   label.show()
-  sw.pack_start(label)
+  sw.pack_start(label,False,False,7)
   row = gtk.HBox()
   label = gtk.Label("Name of this realm/setting/world: ")
   e = gtk.Entry()
@@ -116,11 +117,11 @@ def optionSetter(caller,parent = "?"):
   sb.show()
   sqlbox.add(sb)
 ####### SQL box options
-  label = gtk.Label("SQL input/output is not yet implemented. Please use XML for the time being.")
+  label = gtk.Label("SQL input/output is not yet implemented.\nPlease use XML for the time being.")
   label.show()
   sb.pack_start(label)
 ####### XML box options
-  cb = gtk.CheckButton("XML files include empty tags")
+  cb = gtk.CheckButton("Include empty tags when saving XML files")
   cb.set_active(config.get("printemptyXMLtags",False))
   cb.connect("toggled",setOpt,None,options,"printemptyXMLtags",1)
   cb.connect("focus-in-event",scrollOnTab,scroll)
@@ -209,27 +210,73 @@ def optionSetter(caller,parent = "?"):
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
+  cb = gtk.CheckButton("Use only realm-defined relationships, not free text")
+  cb.set_active(config.get("uselistfile",True))
+  cb.connect("toggled",setOpt,None,options,"uselistfile",1)
+  cb.connect("focus-in-event",scrollOnTab,scroll)
+  cb.show()
+  sw.pack_start(cb)
+  cb = gtk.CheckButton("Use list files for this realm")
+  cb.set_active(config.get("uselistfile",True))
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("Story List Format:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  c = gtk.combo_box_new_text()
+  selected = -1
+  options["showstories"] = config.get("showstories","idlist")
+  i = 0
+  formats = ["idlist","titlelist"]
+  for f in formats:
+    if f == options.get("showstories"): selected = i
+    c.append_text(f)
+    i += 1
+  c.set_active(selected)
+  c.connect("changed",setOpt,None,options,"showstories",3)
+  c.connect("move-active",setOpt,options,"showstories",3)
+  c.connect("focus",scrollOnTab,scroll)
+  c.connect("focus-in-event",scrollOnTab,scroll)
+  c.show()
+  row.pack_start(c,False,False,2)
+  sw.pack_start(row)
 
-
+####### >>>>>>>
 
   label = gtk.Label("Program-wide Options")
   label.show()
-  sw.pack_start(label)
+  sw.pack_start(label,False,False,7)
 
-  cb = gtk.CheckButton("Start by opening a new person file")
+  cb = gtk.CheckButton("Don't store window size/position")
+  cb.set_active(config.get("nowindowstore",False))
+  cb.connect("toggled",setOpt,None,options,"nowindowstore",1)
+  cb.connect("focus-in-event",scrollOnTab,scroll)
+  cb.show()
+  sw.pack_start(cb)
+  cb = gtk.CheckButton("Accept realm-specific options in the config file")
+  cb.set_active(config.get("rlmincfg",False))
+  cb.connect("toggled",setOpt,None,options,"rlmincfg",1)
+  cb.connect("focus-in-event",scrollOnTab,scroll)
+  cb.show()
+  sw.pack_start(cb)
+  cb = gtk.CheckButton("Opening a new person file at startup")
   cb.set_active(config.get("startnewperson",False))
   cb.connect("toggled",setOpt,None,options,"startnewperson",1)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
-  cb = gtk.CheckButton("Minette will open duplicate tabs")
-  cb.set_active(config.get("openduplicatetabs",False))
-  cb.connect("toggled",setOpt,None,options,"openduplicatetabs",1)
+  cb = gtk.CheckButton("Allow opening duplicate tabs")
+  cb.set_active(config.get("duplicatetabs",False))
+  cb.connect("toggled",setOpt,None,options,"duplicatetabs",1)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
-
-
+  cb = gtk.CheckButton("Save the active realm file on exit")
+  cb.set_active(config.get("saverealm",False))
+  cb.connect("toggled",setOpt,None,options,"saverealm",1)
+  cb.connect("focus-in-event",scrollOnTab,scroll)
+  cb.show()
+  sw.pack_start(cb)
   resp = 0
   while resp not in [-6,-5]:
     resp = optbox.run()
@@ -242,28 +289,23 @@ def optionSetter(caller,parent = "?"):
       if options.get("realmname") is not None: updateTitle()
       options = {}
       optbox.set_title("Setting Options - %s" % config.get("realmname","Unnamed Realm"))
-  if resp == -6:
-    t = "Cancelled"
-    print t
-    status.push(0,t)
-    optbox.destroy()
-    return
-  elif resp == -5:
-    t = "Options accepted."
-    print t
-    status.push(0,t)
-    printPretty(options)
-    optbox.destroy()
-    copyOpts(options)
-    if options.get("realmname") is not None: updateTitle()
-    return
-  print "Oops"
-
-
-"""
-r  defaults['specialrelsonly'] = False # use only realm-defined relations?
-r/c  defaults['showstories'] = "idlist" # Show titles, or just reference codes?
-"""
+    if resp == -6:
+      t = "Cancelled"
+      print t
+      status.push(0,t)
+      optbox.destroy()
+      return
+    elif resp == -5:
+      t = "Options accepted."
+      print t
+      status.push(0,t)
+      printPretty(options)
+      optbox.destroy()
+      copyOpts(options)
+      if options.get("realmname") is not None: updateTitle()
+#  saveConfig()
+#  saveRealm()
+  return
 
 def setOpt(self,event,d = {},key = None,t = 1):
   if key == None: return

@@ -1,3 +1,11 @@
+2012-04-09:
+- Options dialog finished
+- Much formatting cleanup
+- Worked on loading of realm files
+- Added first-run tutorial to help menu
+- Fixed error in height of options dialog
+- Improved descriptions of options in dialog
+
 2012-04-07:
 - Continued work on options dialog
 

@@ -57,12 +57,14 @@ def printPretty(string,**kwargs):
   quiet = True
   xml = False
   length = 1
+  stack = True
   for key in kwargs:
     if config['debug'] > 3: print "%s:%s" % (key,kwargs[key])
     if key == "quiet": quiet = kwargs[key]
     if key == "xml": xml = kwargs[key]
     if key == "length": length = kwargs[key]
-  printStack(length,quiet) # Say what we're printing
+    if key == "stack": stack = kwargs[key]
+  if stack: printStack(length,quiet) # Say what we're printing
   string = str(string) # Treat this as a string, even if it's not, which it usually won't be
   NORM = '\033[0;37;40m' # normal gray
   BRACE = '\033[32;40m' # green
@@ -71,6 +73,14 @@ def printPretty(string,**kwargs):
   COLON = '\033[36;40m' # cyan
   EQ = '\033[1;34;40m' # bold blue
   COMMA = '\033[1;33;40m' # bold yellow
+  if not config['termcolors']:
+    NORM = ""
+    BRACE = ""
+    LIST = ""
+    ANGLES = ""
+    COLON = ""
+    EQ = ""
+    COMMA = ""
   print NORM,
   output = ""
   depth = 0
@@ -118,6 +128,15 @@ def printPretty(string,**kwargs):
       output += c
     b = str(c)
   print output
+
+def showConfig():
+  print "Config:\n-------"
+  for key in config.keys():
+    value = config[key]
+    if value == str(value):
+      value = "\'%s\'" % value
+    printPretty("'%s':\t%s" % (key,value),stack=False)
+  print "-------"
 
 def pad(depth):
   sp = ""

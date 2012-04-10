@@ -9,7 +9,7 @@ from os import path
 from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
 writeListFile,getPlaceListGTK,listThingsGTK)
 from city import addCityMenu
-from common import (addHelpMenu,firstRunTab,clearMenus,updateTitle)
+from common import (addHelpMenu,firstRunTab,clearMenus,updateTitle,newRealm,loadRealmCst,saveRealm)
 from globdata import (config,mainWin,menuBar)
 from options import optionSetter
 from person import addPersonMenu
@@ -74,15 +74,28 @@ class Base:
     r.set_accel_group(self.accgroup)
     r.show()
     itemR.set_submenu(r)
+
+    itemRN = gtk.MenuItem("_New",True)
+    itemRN.show()
+    r.append(itemRN)
+    itemRN.connect("activate",newRealm)
+    itemRL = gtk.MenuItem("_Load",True)
+    itemRL.show()
+    r.append(itemRL)
+    itemRL.connect("activate",loadRealmCst)
+    itemRS = gtk.MenuItem("_Save",True)
+    itemRS.show()
+    r.append(itemRS)
+    itemRS.connect("activate",saveRealm)
     if config['debug'] > 0:
-      itemRS = gtk.MenuItem("_Show placeList",True)
-      itemRS.show()
-      r.append(itemRS)
-      itemRS.connect("activate",getPlaceListGTK)
-      itemRL = gtk.MenuItem("_List records",True)
-      itemRL.show()
-      r.append(itemRL)
-      itemRL.connect("activate",listThingsGTK)
+      itemRP = gtk.MenuItem("Show _PlaceList",True)
+      itemRP.show()
+      r.append(itemRP)
+      itemRP.connect("activate",getPlaceListGTK)
+      itemRR = gtk.MenuItem("List _Records",True)
+      itemRR.show()
+      r.append(itemRR)
+      itemRR.connect("activate",listThingsGTK)
       itemRM = gtk.MenuItem("Clear _Menus",True)
       itemRM.show()
       r.append(itemRM)
@@ -107,6 +120,7 @@ class Base:
     r.append(itemRQ)
     itemRQ.connect("activate", storeWindowExit,self.window)
 # Person
+#    if config['realmloaded']:
     addPersonMenu(self,menuBar)
     addPlaceMenu(self,menuBar)
     addCityMenu(self,menuBar)

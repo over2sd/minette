@@ -116,6 +116,10 @@ def askCityBox(parent):
   if config['debug'] > 0: printPretty(loc)
   return loc
 
+def changeFail(s):
+  out = "Could not mark %s as changed." % s
+  return out
+
 def chooseCity(caller,format,kwargs):
   entry = None
   citykey = None
@@ -159,7 +163,7 @@ def dateChoose(caller,target,data,path):
   cal = gtk.Calendar()
   cal.show()
   (y,m,d) = parseDate(target.get_text())
-  cal.select_month(m-1,y)
+  cal.select_month(m,y)
   cal.select_day(d)
   month = gtk.Entry(3)
   month.set_text(str(m))
@@ -233,7 +237,7 @@ def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener):
   target.labelname = customlabel(cat,fileid,target.vbox)
   target.labelname.show_all()
   target.append_page(target.vbox,target.labelname)
-#  if warnme and config['openduplicatetabs']:
+#  if warnme and config['duplicatetabs']:
 #    target.vbox.ftabs.<function to change background color as warning>
 #    Here, add a widget at the top of the page saying it's a duplicate, and that care must be taken not to overwrite changes on existing tab.
 #    Here, attach ftabs to warning VBox
@@ -287,15 +291,15 @@ def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing i
 
 def loadRealm(fn):
   clearMenus()
-  # clear worldList
-  # loadConfig
-  # populateWorld
+  worldList = {} # clear worldList
+  backends.loadRealm(fn)
+  backends.populateWorld()
   # reAddLoadMenus
   pass
 
 def loadRealmCst(parent):
   fn = ""
-  # file select dialog
+  # file select dialog, or rather, a dialog that gives a button for each realm file in the realms directory
   loadRealm(fn)
   pass
 
@@ -303,6 +307,9 @@ def loadRealmStd(fileid): # From a menu list
   fn = validateFileid(fileid)
   fn = "realms/%s.rlm" % fn
   loadRealm(fn)
+
+def newRealm(parent):
+  pass
 
 def preRead(force,cat,path,depth = 0,retries = 0):
   """Using the global dict for the given category, and given a list of keys 'path' and an integer 'depth',
@@ -447,7 +454,7 @@ def parseDate(date):
     if y < 100:
       if y > config['centbreak']: y -= 100
       y = config['century'] + y
-    m = int(result.group(2))
+    m = int(result.group(2)) - 1
     d = int(result.group(3))
   return (y,m,d)
 
@@ -585,9 +592,9 @@ def activateNoteEntry(self, scroll, data, fileid, i,date):
   self.connect("focus-in-event",scrollOnTab,scroll)
 
 def checkForChange(self,event,data,path,optionaltarget = None):
-  if config['debug'] > 3: print "Checking " + str(path)
+  if config['debug'] > 3: print "Checking %s" % str(path)
   if getInf(data,path[1:]) != self.get_text():
-    if config['debug'] > 2 : print str(getInf(data,path[1:])) + " vs " + self.get_text()
+    if config['debug'] > 2 : print "%s vs %s" % (getInf(data,path[1:]),self.get_text())
     markChanged(self,data.get("cat"),path)
     if optionaltarget: # Automatically update a linked date field
       optionaltarget.set_text(skrTimeStamp(config['datestyle']))
@@ -631,37 +638,37 @@ def markChanged(self,cat,path):
         try:
           root[path[0]][path[1]][path[2]] = value
         except KeyError:
-          print "Could not mark " + path[2] + " as changed."
+          print changeFail(path[2])
           return
       elif end == 4:
         try:
           root[path[0]][path[1]][path[2]][path[3]] = value
         except KeyError:
-          print "Could not mark " + path[3] + " as changed."
+          print changeFail(path[3])
           return
       elif end == 5:
         try:
           root[path[0]][path[1]][path[2]][path[3]][path[4]] = value
         except KeyError:
-          print "Could not mark " + path[4] + " as changed."
+          print changeFail(path[4])
           return
       elif end == 6:
         try:
           root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]] = value
         except KeyError:
-          print "Could not mark " + path[5] + " as changed."
+          print changeFail(path[5])
           return
       elif end == 7:
         try:
           root[path[0]][path[1]][path[2]][path[3]][path[4]][path[5]][path[6]] = value
         except KeyError:
-          print "Could not mark " + path[6] + " as changed."
+          print changeFail(path[6])
           return
       else:
         say("Path too long: %s" % path)
         return
       root[path[0]]['changed'] = True
-      if config['debug'] > 2: print "Value set: " + getInf(root.get(path[0]),path[1:])
+      if config['debug'] > 2: print "Value set: %s" % getInf(root.get(path[0]),path[1:])
     else:
       printPretty("markChanged: Invalid path (%s)" % path)
       debugPath(root,path)
@@ -673,7 +680,7 @@ def expandTitles(value):
   if not len(str(value)): return titles
   picklist = csplit(str(value))
   if not len(stories):
-    stories = myStories(config.get("worlddir"))
+    stories = myStories(config.get("realmdir"))
   for item in picklist:
     if config['debug'] > 5: print "'%s' - '%s'" % (item,stories.get(item))
     if stories.get(item):
@@ -824,7 +831,7 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
       print "Record %s has no %s!" % (fileid,x)
       err = True
   else:
-    print "Could not find " + fileid + "!"
+    print "Could not find %s!" % fileid
     err = True
   if config['debug'] > 5: print str(target)
   if not err:
@@ -962,6 +969,10 @@ def addHelpMenu(self,target):
   h = gtk.Menu()
   h.show()
   itemH.set_submenu(h)
+  itemHF = gtk.MenuItem("Show _First-run Tutorial",True)
+  h.append(itemHF)
+  itemHF.show()
+  itemHF.connect("activate",firstRunTab,self.tabs)
   itemHA = gtk.MenuItem("_About",True)
   h.append(itemHA)
   itemHA.show()

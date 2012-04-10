@@ -132,12 +132,12 @@ def getRelsP(pgender = 'N',rgender = 'N'):
   listtype = "rels" + pgender.upper() + rgender.upper()
   return relsP[listtype]
 
-def myStories(worlddir):
+def myStories(realmdir):
   global stories
   if len(stories) > 0:
     return stories
   else:
-    fn = os.path.join(os.path.abspath(worlddir),"mystories.cfg")
+    fn = os.path.join(os.path.abspath(realmdir),"mystories.cfg")
     lines = backends.readfile(fn,False) # Try to read file, but quietly
     for line in lines:
       try:
@@ -149,14 +149,14 @@ def myStories(worlddir):
         print "There was an error in the configuration file: %s" % e
     return stories
 
-def saveStories(worlddir):
-  worlddir = os.path.abspath(worlddir)
-  if os.path.exists(worlddir):
+def saveStories(realmdir):
+  realmdir = os.path.abspath(realmdir)
+  if os.path.exists(realmdir):
     lines = []
     for key in stories:
       lines.append("%s = %s\n" % (key,stories[key]))
     if config['debug'] > 3: print lines
-    fn = os.path.join(worlddir,"mystories.cfg")
+    fn = os.path.join(realmdir,"mystories.cfg")
     backends.writefile(fn,lines,True)
   else:
     bsay(None,"The path %s does not exist.")

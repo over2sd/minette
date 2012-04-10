@@ -6,8 +6,28 @@ import re
 import os
 from status import status
 from common import (say,bsay,skrTimeStamp)
-from globdata import (config,worldList,cfgkeys)
+from debug import (printPretty,lineno)
+from globdata import (config,worldList,cfgkeys,rlmkeys)
 # from configobj import ConfigObj
+
+def criticalDefaults():
+  missing = {}
+  try:
+    if not defaults.get("set",False):
+      setDefaults()
+  except NameError:
+    setDefaults()
+  critical = []
+  for key in cfgkeys:
+    critical.append(key)
+  for key in rlmkeys:
+    critical.append(key)
+  for key in critical:
+    try:
+      x = config[key]
+    except KeyError:
+      missing[key] = defaults[key]
+  return missing
 
 def storeWindowExit(caller,window):
   storeWindow(caller,window)
@@ -43,9 +63,7 @@ def storeWindow(caller,window):
       line = line.strip()
       if line:
         values = [a.strip() for a in line.split('=')]
-        if values[0] == "pos":
-          found.append(i)
-        if values[0] == "size":
+        if values[0] in ["pos","size"]:
           found.append(i)
       i += 1
     if len(found):
@@ -99,9 +117,9 @@ def killListFile(caller = None):
 
 def loadConfig(fn = None,recursion = 0):
   """Returns a dict containing the config options in the Minette config file."""
+  maxrecursion = 3
   lines = []
   global config
-  config['debug'] = 1
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
   lines = readfile(fn)
@@ -110,16 +128,58 @@ def loadConfig(fn = None,recursion = 0):
       line = line.strip()
       if line:
         values = [x.strip() for x in line.split('=')]
-        if values[0] != "loadrealm":
+        if values[0] != "loadconfig":
           if not config.get(values[0]): config[values[0]] = values[1] # existing options will not be clobbered
-        elif recursion < 2 and os.path.exists(values[1]): # loadrealm must be first option, or its options may be ignored.
+        elif recursion < maxrecursion and os.path.exists(values[1]): # loadconfig must be first option, or its options may be ignored.
           recursion += 1
           loadConfig(values[1],recursion)
     except Exception as e:
       print "There was an error in the configuration file: %s" % e
   config['file'] = fn
   config = validateConfig(config)
+  if len(config.get("realmfile","")) > 0:
+    rf = "realms/%s.rlm" % config['realmfile']
+    realm = loadRealm(rf)
+    config.update(realm)
+  else:
+    config['realmloaded'] = False
+  config.update(criticalDefaults())
   return config
+
+def loadRealm(fn = None,recursion = 0):
+  """Returns a dict containing the config options in the Minette realm file."""
+  maxrecursion = 3
+  lines = []
+  realm = {}
+  realm['realmloaded'] = False
+  if fn is None or fn == "":
+    print "Could not load realm information. No filename provided!"
+    exit(-1)
+  fn = os.path.abspath(fn)
+  print "%s Seeking %s..." % (lineno(),fn),
+  r = seek(fn)
+  print r
+  if "Not" in r:
+    return realm
+  lines = readfile(fn)
+  for line in lines:
+    try:
+      line = line.strip()
+      if line:
+        values = [x.strip() for x in line.split('=')]
+        if values[0] != "likerealm":
+          if not realm.get(values[0]): realm[values[0]] = values[1] # existing options will not be clobbered
+        elif recursion < maxrecursion: # likerealm must be first option, or its options may be ignored.
+          rf = "realms/%s.rlm" % values[1]
+          recursion += 1
+          realm.update(loadRealm(rf,recursion))
+    except Exception as e:
+      print "There was an error in the realm file: %s" % e
+  fn = os.path.abspath(realm.get("realmdir",""))
+  print "%s Seeking %s... %s" % (lineno(),fn,seek(fn))
+  realm = validateRealm(realm)
+  realm['realmloaded'] = True
+  return realm
 
 def saveConfig(fn):
   try:
@@ -129,7 +189,7 @@ def saveConfig(fn):
     setDefaults()
   lines = []
   for key in config.keys():
-    if key in cfgkeys and config[key] != defaults.get(key):
+    if (key in cfgkeys or config['rlmincfg']) and config[key] != defaults.get(key):
       lines.append("%s = %s\n" % (key,config[key]))
   if config['debug'] > 0: print lines
   try:
@@ -139,33 +199,47 @@ def saveConfig(fn):
   except IOError as e:
     print " Could not write configuration file: %s" % e
 
+def seek(fn):
+  NORM = '\033[0;37;40m' # normal gray
+  SCOL = '\033[32;40m' # green
+  FCOL = '\033[31;40m' # red
+  if not config['termcolors']:
+    NORM = ""
+    SCOL = ""
+    FCOL = ""
+  if os.path.exists(fn):
+    return "%sFound%s" % (SCOL,NORM)
+  else:
+    return "%sNot Found!%s" % (FCOL,NORM)
+
 def setDefaults():
   global defaults
   defaults = {}
-  defaults['pos'] = "(20,40)" # Default window position and size, debug level
-  defaults['size'] = "(620,440)"
-  defaults['debug'] = "0"
-  defaults['familyfirst'] = False # Does the family name come first?
-  defaults['usemiddle'] = True # Does the name include a middle or maiden name?
-  defaults['startnewperson'] = False # Start by opening a new person file?
-  defaults['specialrelsonly'] = False # use only realm-defined relations?
-  defaults['showstories'] = "idlist" # Show titles, or just reference codes?
-  defaults['informat'] = "xml" # input/output formats
-  defaults['outformat'] = "xml"
-  defaults['openduplicatetabs'] = False # Should we open duplicate tabs?
-  defaults['realmdir'] = "realms/example/" # Where should I look for XML files and configs?
-  defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
-  defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
-  defaults['century'] = 2000
   defaults['centbreak'] = 69
-  defaults['uselistfile'] = True # Whether to...
-  """ save/load a list file instead of walking through each XML file
-  to determine its class (saves load time/disk writes, but requires
-  keeping the list file up to date).
-  """
-  defaults['printemptyXMLtags'] = False # output includes <emptyelements />?
+  defaults['century'] = 2000
+  defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
+  defaults['debug'] = "0"
   defaults['dtddir'] = "dtd/" # Where are doctype defs kept?
   defaults['dtdurl'] = os.path.abspath(defaults['dtddir']) # What reference goes in the XML files?
+  defaults['duplicatetabs'] = False # Should we open duplicate tabs?
+  defaults['familyfirst'] = False # Does the family name come first?
+  defaults['informat'] = "xml" # input/output formats
+  defaults['outformat'] = "xml"
+  defaults['pos'] = "(20,40)" # Default window position and size, debug level
+  defaults['printemptyXMLtags'] = False # output includes <emptyelements />?
+  defaults['realmdir'] = "realms/" # Where should I look for XML files and configs?
+  defaults['realmfile'] = "default" # Which realm file should I load by default?
+  defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
+  defaults['rlmincfg'] = False # Allow realm-specific items in config file? (will act as defaults)
+  defaults['saverealm'] = False # Save realm on exit?
+  defaults['seenfirstrun'] = False # Seen the first-run tutorial?
+  defaults['showstories'] = "idlist" # Show titles, or just reference codes?
+  defaults['size'] = "(620,440)"
+  defaults['specialrelsonly'] = False # use only realm-defined relations?
+  defaults['startnewperson'] = False # Start by opening a new person file?
+  defaults['termcolors'] = False # Use ANSI codes in debug output?
+  defaults['uselistfile'] = True # Whether to save/load a list file instead of walking through each XML file to determine its class (saves load time/disk writes, but requires keeping the list file up to date).
+  defaults['usemiddle'] = True # Does the name include a middle or maiden name?
   defaults['xslurl'] = os.path.abspath("xsl/") # What reference goes in the XML files?
 
   defaults['set'] = True
@@ -177,12 +251,14 @@ def validateConfig(config):
       setDefaults()
   except NameError:
     setDefaults()
-  configs = ["pos","size","debug", "informat", "outformat", "openduplicatetabs", "realmdir", "datestyle", "century", "centbreak","realmname"]
-  for key in configs:
+  keylist = []
+  keylist.extend(cfgkeys)
+  if config.get("rlmincfg",False):
+    keylist.extend(rlmkeys)
+  for key in keylist:
     config[key] = config.get(key,defaults[key])
-  if not os.path.exists(os.path.abspath(config['realmdir'])): # must be a valid directory
-    bsay("?","Fatal error. Realm directory %s does not exist! Exiting." % config['realmdir'])
-    exit(-1)
+    if config[key] == "True": config[key] = True
+    if config[key] == "False": config[key] = False
   pos = config.get("pos",defaults['pos']) # default position
   siz = config.get("size",defaults['size']) # default size
   pattern = re.compile(r'\(\s?(\d+)\s?,\s?(\d+)\s?\)')
@@ -196,18 +272,26 @@ def validateConfig(config):
     config['size'] = (int(match.group(1)),int(match.group(2)))
   else:
     config['size'] = (620,440)
-# Person options
-  configs = ["familyfirst","usemiddle","specialrelsonly","showstories","startnewperson"]
-  for key in configs:
-    config[key] = config.get(key,defaults[key])
-# XML file options
-  configs = ["uselistfile","printemptyXMLtags","dtddir","dtdurl","xslurl"]
-  for key in configs:
-    if key == "dtdurl":
-      config['dtdurl'] = config.get(key,os.path.abspath(config['dtddir'])) # What reference goes in the XML files?
-    else:
-      config[key] = config.get(key,defaults[key])
+  config['debug'] = int(config.get("debug",0))
   return config
+
+def validateRealm(realm):
+  for key in realm.keys():
+    if key not in rlmkeys: # Only allow keys in the realm-specific keys list
+      del realm[key]
+  for key in rlmkeys:
+    # XML file options
+    if key == "dtdurl":
+      realm['dtdurl'] = realm.get(key,os.path.abspath(realm['dtddir']))
+    # other options
+    else:
+      realm[key] = realm.get(key,defaults[key])
+      if realm[key] == "True": realm[key] = True
+      if realm[key] == "False": realm[key] = False
+  if not os.path.exists(os.path.abspath(realm['realmdir'])): # must be a valid directory
+    bsay("?","Fatal error. Realm directory %s does not exist! Exiting." % os.path.abspath(realm['realmdir']))
+    exit(-1)
+  return realm
 
 ### Wrappers
 def getCitiesIn(state):

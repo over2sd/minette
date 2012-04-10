@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="person.xsl"?>
+<?xml-stylesheet type="text/xsl" href="/home/skreyola/wri/fic/cur/chardb/py/xsl/person.xsl"?>
 <!DOCTYPE person SYSTEM "person.dtd">
 <person>
 	<commonname>Jane Doe</commonname>
-  <ctitle>Mrs.</ctitle>
+	<ctitle>Mrs.</ctitle>
 	<gname>Jane</gname>
 	<fname>Doe</fname>
 	<nname>Muffins</nname>
 	<gender>F</gender>
 	<bday>1978/7/8b</bday>
-	<dday></dday>
-	<stories>My Tale 2</stories>
+	<stories>mt2</stories>
 	<mention>MT, ch 1, s 1</mention>
 	<appear1ch>MT 2.2</appear1ch>
 	<appear1wr>MT 2.2</appear1wr>
-	<conflict></conflict>
 	<leadrel>Wife</leadrel>
 	<bodytyp>average height, average build</bodytyp>
 	<age>39 (2017)</age>
@@ -26,37 +24,35 @@
 	<attposs>a purse</attposs>
 	<asmell>Orange Sable perfume</asmell>
 	<personality>easy-going</personality>
-	<speech></speech>
-	<currocc><pos>Secretary of the Interior</pos><events><date>2000/1/1b</date><event>Appointed</event></events></currocc>
+	<currocc>
+		<pos>Secretary of the Interior</pos>
+	</currocc>
 	<strength>patience</strength>
 	<weak>color-blindness</weak>
 	<mole>walks with a slight limp</mole>
 	<hobby>singing, building thermonuclear devices</hobby>
-	<misc></misc>
 	<ethnic>islander</ethnic>
 	<origin>Tin Island</origin>
-	<backstory></backstory>
 	<residence>a small apartment on 15th street</residence>
 	<minchar>father</minchar>
 	<talent>sewing</talent>
-	<abil></abil>
 	<sgoal>To finish the Times crossword puzzle</sgoal>
-	<other></other>
 	<relat>
 		<related>John Doe</related>
 		<relation>Husband</relation>
 		<file>doe-john</file>
+		<rtype>fam</rtype>
 		<events>
-			<mstone>
-				<date>2005/1/2b</date>
-				<event>Married</event>
-			</mstone>
 			<mstone>
 				<date>2004/6/1b</date>
 				<event>First date</event>
 			</mstone>
+			<mstone>
+				<date>2005/1/2b</date>
+				<event>Married</event>
+			</mstone>
 		</events>
-		<rtype>fam</rtype>
 		<cat>person</cat>
 	</relat>
+	<update>12/04/09b</update>
 </person>

@@ -8,7 +8,7 @@ import re
 import xml.etree.ElementTree as etree
 
 import common
-from debug import (printPretty,lineno)
+from debug import (printPretty,lineno,showConfig)
 from globdata import (config,worldList,cities,people,places,states,placeList)
 from status import status
 import xmlout
@@ -63,7 +63,7 @@ def getCityList(order):
 def getCityLoc(fileid):
   root = etree.Element("place")
   fn = os.path.join(config['realmdir'],"%s.xml" % fileid)
-  status.push(0,"reading city location from XML... '" + fn + "'")
+  status.push(0,"reading city location from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -132,7 +132,7 @@ def getStateList(order):
 def getStateName(fileid):
   root = etree.Element("state")
   fn = os.path.join(config['realmdir'],fileid + ".xml")
-  status.push(0,"reading city location from XML... '" + fn + "'")
+  status.push(0,"reading city location from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -146,7 +146,7 @@ def getStateName(fileid):
 
 def idExists(fileid):
   global config
-  if config['debug'] > 3: print "seeking " + os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml") + "...",
+  if config['debug'] > 3: print "seeking %s..." % os.path.join(os.path.abspath(config['realmdir']),"%s.xml" % fileid),
   return os.path.exists(os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml"))
 
 def listThings(pretty):
@@ -155,7 +155,7 @@ def listThings(pretty):
     printPretty(places)
     printPretty(cities)
     printPretty(states)
-    printPretty(config)
+    showConfig()
   else:
     print people
     print places
@@ -182,10 +182,10 @@ def loadCity(fileid):
     dinf[tag] = ["",False]
   if not dinf.get("places"): dinf['places'] = {}
   if not idExists(fileid):
-    status.push(0,"new city created... '" + fileid + "'")
+    status.push(0,"new city created... '%s'" % fileid)
     return dinf
-  fn = os.path.join(config['realmdir'],fileid + ".xml")
-  status.push(0,"loading city from XML... '" + fn + "'")
+  fn = os.path.join(config['realmdir'],"%s.xml" % fileid)
+  status.push(0,"loading city from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -258,10 +258,10 @@ def loadPerson(fileid):
   dinf['currocc']['events'] = events
   dinf['formocc']['events'] = events
   if not idExists(fileid):
-    status.push(0,"new person created... '" + fileid + "'")
+    status.push(0,"new person created... '%s'" % fileid)
     return (dinf,drel)
   fn = os.path.join(config['realmdir'],fileid + ".xml")
-  status.push(0,"loading person from XML... '" + fn + "'")
+  status.push(0,"loading person from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -401,10 +401,10 @@ def loadPlace(fileid):
     dinf[tag] = ["",False]
   # if no relations or notes, leave blank
   if not idExists(fileid):
-    status.push(0,"new place created... '" + fileid + "'")
+    status.push(0,"new place created... '%s'" % fileid)
     return (dinf,drel)
-  fn = os.path.join(config['realmdir'],fileid + ".xml")
-  status.push(0,"loading place from XML... '" + fn + "'")
+  fn = os.path.join(config['realmdir'],"%s.xml" % fileid)
+  status.push(0,"loading place from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -488,11 +488,11 @@ def loadState(fileid):
   dinf['cities'] = {}
   dinf['events'] = {}
   if not idExists(fileid):
-    status.push(0,"new state created... '" + fileid + "'")
+    status.push(0,"new state created... '%s'" % fileid)
     return dinf
   statefile = fileid
-  fn = os.path.join(config['realmdir'],fileid + ".xml")
-  status.push(0,"loading state from XML... '" + fn + "'")
+  fn = os.path.join(config['realmdir'],"%s.xml" % fileid)
+  status.push(0,"loading state from XML... '%s'" % fn)
   try:
     with codecs.open(fn,'rU','utf-8') as f:
       tree = etree.parse(f)
@@ -584,7 +584,7 @@ def populateWorld():
           elif values[0] == "org":
             orgs.append(values[1])
           else:
-            print "Unknown type " + values[0] + " found"
+            print "Unknown type %s found" % values[0]
       except Exception as e:
         print "There was an error in the configuration file: %s" % e
   elif not os.path.exists(config['realmdir']):
@@ -620,7 +620,7 @@ def populateWorld():
         elif line == "org":
           orgs.append(ilist[i])
         else:
-          print "Unknown type " + line + " found"
+          print "Unknown type %s found" % line
   if config['debug'] > 2: print "\nPersons: %s\nPlaces: %s\nCities: %s\nStates: %s\nOrgs: %s\n" % (persons,places,cities,states,orgs)
   worldList['p'] = persons
   worldList['l'] = places

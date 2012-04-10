@@ -299,7 +299,7 @@ def displayPerson(callingWidget,fileid, tabrow):
     tab = people[fileid].get("tab")
     if tab is not None:
       warnme = True
-      if not config['openduplicatetabs']: # If it's in our people variable, it's already been loaded
+      if not config['duplicatetabs']:
         status.push(0,"'" + fileid + "' is Already open. Switching to existing tab instead of loading...")
         tabrow.set_current_page(tab)
         for i in range(len(tabrow)):

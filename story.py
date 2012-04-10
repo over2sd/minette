@@ -11,7 +11,7 @@ from status import status
 
 def storyEditor(caller,parent):
   global stories
-  myStories(config['worlddir'])
+  myStories(config['realmdir'])
 #  print "Story editor"
   ed = gtk.Window(gtk.WINDOW_TOPLEVEL)
   ed.show()
@@ -25,7 +25,7 @@ def storyEditor(caller,parent):
   bar.show()
   button = gtk.Button("Save List")
   button.show()
-  button.connect("clicked",saveList,config['worlddir'])
+  button.connect("clicked",saveList,config['realmdir'])
   bar.pack_start(button,False,False,2)
   button = gtk.Button("Add Story")
   button.show()
@@ -117,7 +117,7 @@ def storyPicker(parent,name,value):
   picklist = common.csplit(str(value))
   title = "Stories involving %s" % name
   if not len(stories):
-    stories = myStories(config.get("worlddir"))
+    stories = myStories(config.get("realmdir"))
   askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,None)
   askbox.add_button("Cancel",1)
   askbox.add_button("Set",0)
