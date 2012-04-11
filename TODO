@@ -2,3 +2,5 @@ TODO:
 Relationships, auto reversal
 See if _ can be escaped in addSubMenuItem text values
 Add explanation of fileid to tutorial page
+Fix saving of state's cities list
+Make state save milestones in date order

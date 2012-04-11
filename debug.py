@@ -91,6 +91,8 @@ def printPretty(string,**kwargs):
   depth = 0
   un = 2
   b = ""
+  closetag = False
+  bump = False
   if string == "{}":
     string = "(empty dictionary)"
   elif string == "":
@@ -118,12 +120,24 @@ def printPretty(string,**kwargs):
       output += "%s" % COMMA + c + NORM
     elif c == '<':
       if not xml: output += "%s" % ANGLES + c + NORM
-      else: pass
+      elif closetag:
+        depth -= un
+        bump = True
+        closetag = False
+      else:
+        depth += un
     elif b == '<' and xml:
       x = ""
-      if c != '/': x = "\n%s" % pad(depth)
+      if c != '/':
+        x = "\n%s" % pad(depth)
+      else:
+        closetag = True
+        if bump:
+          x = "\n%s" % pad(depth)
+          bump = False
       output += "%s" % x + ANGLES + '<' + NORM + c
     elif c == '>':
+      if b == '/': depth -= un
       output += "%s" % ANGLES + c + NORM
     elif c == ':':
       output += "%s" % COLON + c + NORM

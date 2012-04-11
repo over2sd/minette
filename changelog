@@ -1,3 +1,7 @@
+2012-04-11:
+- State now properly loads/saves milestones
+- Improved pretty print of XML stream
+
 2012-04-10:
 - Fixed minor error in dateChooser
 - printStack now bolds some key info

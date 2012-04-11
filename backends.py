@@ -122,6 +122,12 @@ def loadConfig(fn = None,recursion = 0):
   global config
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
+  print "%s Seeking %s..." % (lineno(),fn),
+  fn = os.path.abspath(fn)
+  r = seek(fn)
+  print r
+  if "Not" in r:
+    return config
   lines = readfile(fn)
   for line in lines:
     try:
@@ -155,8 +161,8 @@ def loadRealm(fn = None,recursion = 0):
   if fn is None or fn == "":
     print "Could not load realm information. No filename provided!"
     exit(-1)
-  fn = os.path.abspath(fn)
   print "%s Seeking %s..." % (lineno(),fn),
+  fn = os.path.abspath(fn)
   r = seek(fn)
   print r
   if "Not" in r:
@@ -175,8 +181,9 @@ def loadRealm(fn = None,recursion = 0):
           realm.update(loadRealm(rf,recursion))
     except Exception as e:
       print "There was an error in the realm file: %s" % e
-  fn = os.path.abspath(realm.get("realmdir",""))
+  fn = realm.get("realmdir","")
   print "%s Seeking %s... %s" % (lineno(),fn,seek(fn))
+  fn = os.path.abspath(fn)
   realm = validateRealm(realm)
   realm['realmloaded'] = True
   return realm
@@ -203,7 +210,7 @@ def seek(fn):
   NORM = '\033[0;37;40m' # normal gray
   SCOL = '\033[32;40m' # green
   FCOL = '\033[31;40m' # red
-  if not config['termcolors']:
+  if not config.get("termcolors",False):
     NORM = ""
     SCOL = ""
     FCOL = ""

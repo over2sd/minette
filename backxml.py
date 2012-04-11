@@ -486,7 +486,8 @@ def loadState(fileid):
   for tag in tags:
     dinf[tag] = ["",False]
   dinf['cities'] = {}
-  dinf['events'] = {}
+  dinf['m'] = {}
+  dinf['m']['events'] = {}
   if not idExists(fileid):
     status.push(0,"new state created... '%s'" % fileid)
     return dinf
@@ -523,6 +524,25 @@ def loadState(fileid):
                 print c.tag + ': ' + c.text,
         else: # no relat length
           if config['debug'] > 0: print "Empty city tag."
+      elif root[i].tag == "events":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['m']['events']))
+            dinf['m']['events'][k] = {}
+            for j in node:
+              print "%s: %s" % (j.tag,j.text)
+              if j.tag and j.text:
+                dinf['m']['events'][k][j.tag] = [j.text.strip(),False]
+              else:
+                if config['debug'] > 0:
+                  print "Invalid milestone tag:"
+                  for c in node:
+                    print c.tag + ': ' + c.text,
+          if config['debug'] > 0: printPretty(dinf['m']['events'])
+        else: # no relat length
+          if config['debug'] > 0: print "Empty milestone tag."
+
       elif root[i].text is not None:
         dinf[root[i].tag] = [root[i].text.strip(), False]
         if config['debug'] > 2: print str(i) + " ",
@@ -880,20 +900,19 @@ def saveState(fileid,data):
       else:
         print "no cities found"
     elif tag == "events":
-      nodes = info.get("events")
+      nodes = info.get("m")
+      nodes = nodes.get("events")
       if nodes is not None:
         events = etree.Element("events")
         for node in nodes.keys():
-          if nodes[node].get("name"):
+          if nodes[node].get("event"):
             connected = etree.Element("mstone")
-            value = info['cities'][node].get("name")
+            value = info['m']['events'][node].get("event")
             if value is None: value = ['',False]
-            etree.SubElement(connected,"name").text = value[0]
-            value = node
-            if value is None: value = ''
-            etree.SubElement(connected,"file").text = value
-            value = info['cities'][node].get("note")
-            if value is not None and len(value[0]) > 0: etree.SubElement(connected,"note").text = value[0]
+            etree.SubElement(connected,"event").text = value[0]
+            value = info['m']['events'][node].get("date")
+            if value is None: value = ['',False]
+            etree.SubElement(connected,"date").text = value[0]
             events.append(connected)
           else:
             print "A required tag is missing from event %s." % node

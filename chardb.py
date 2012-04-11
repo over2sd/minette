@@ -136,7 +136,7 @@ class Base:
     gtk.main_quit()
 
 if __name__ == "__main__":
-  print "Minette v0.90 loading..."
+  print "Minette v%s loading..." % version
   fn = None
   if len(sys.argv) > 1:
     print "%s" % sys.argv

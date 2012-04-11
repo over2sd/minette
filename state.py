@@ -310,10 +310,10 @@ def initSmile(self,fileid,tabs):
   if not states[fileid]['info']['m'].get("events"): states[fileid]['info']['m']['events'] = {}
   mileadd.connect("clicked",addMilestone,scroll,row2,states.get(fileid),fileid,"info","m",boxwidth)
   if r.get("events"):
-    for i in r['events']:
-#      showMile(row3,r,i,fileid,relid)
+    for i in sorted(r['events']):
+#      showMile(row2,r,i,fileid,relid)
 
-#def showMile(row3,r,i,fileid,relid):
+#def showMile(row2,r,i,fileid,relid):
       events = r['events'][i]
 #  print str(events)
       if events.get("date") and events.get("event"):
@@ -327,16 +327,17 @@ def initSmile(self,fileid,tabs):
         d.show()
         d.set_width_chars(12)
         d.set_text(events['date'][0])
-        data = people.get(fileid)
-        activateRelEntry(d,scroll,data,fileid,relid,"date",i)
+        data = states.get(fileid)
+        activateInfoEntry(d,scroll,data,fileid,"m",3,["events",i,"date"])
         rowmile.pack_start(d,1,1,2)
+        placeCalendarButton(data,rowmile,d,[fileid,"m","events",i,"date"])
         e = gtk.Entry()
         e.show()
         e.set_width_chars(18)
         e.set_text(events['event'][0])
-        activateRelEntry(e,scroll,data,fileid,relid,"event",i)
+        activateInfoEntry(e,scroll,data,fileid,"m",3,["events",i,"event"])
         rowmile.pack_start(e,1,1,2)
-        row3.add(rowmile)
+        row2.pack_start(rowmile,0,0,2)
   pass
 # """
 
