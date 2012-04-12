@@ -1,3 +1,9 @@
+2012-04-12:
+- Made defaults for realm-specific items unique
+- Added some options for realm processing
+- Added a select-from-list dialog
+- LoadRealm works
+
 2012-04-11:
 - State now properly loads/saves milestones
 - Improved pretty print of XML stream

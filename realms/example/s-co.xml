@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/home/skreyola/wri/fic/cur/chardb/py/xsl/state.xsl"?>
+<!DOCTYPE person SYSTEM "state.dtd">
+<state>
+	<name>Confusion</name>
+	<start>2012/04/10b</start>
+	<scue>Founded</scue>
+	<events>
+		<mstone>
+			<event>War declared</event>
+			<date>2012/03/11b</date>
+		</mstone>
+		<mstone>
+			<event>Armistice signed</event>
+			<date>2012/04/18b</date>
+		</mstone>
+		<mstone>
+			<event>Celebration held</event>
+			<date>2012/04/25b</date>
+		</mstone>
+	</events>
+	<update>12/04/11b</update>
+</state>

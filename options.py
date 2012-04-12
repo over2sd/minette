@@ -296,6 +296,29 @@ def optionSetter(caller,parent = "?"):
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("Likerealm handling:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  c = gtk.combo_box_new_text()
+  selected = -1
+  options["matchlike"] = config.get("matchlike",2)
+  i = 0
+  formats = ["Keep likerealm and track which options are from where","Keep likerealm and save only options that differ","Save all options and omit likerealm"]
+  for f in formats:
+    if i == options.get("matchlike"): selected = i
+    c.append_text(f)
+    i += 1
+  if selected != -1:
+    c.set_active(selected)
+  c.connect("changed",setOpt,None,options,"matchlike",3)
+  c.connect("move-active",setOpt,options,"matchlike",3)
+  c.connect("focus",scrollOnTab,scroll)
+  c.connect("focus-in-event",scrollOnTab,scroll)
+  c.show()
+  row.pack_start(c,False,False,2)
+  sw.pack_start(row)
   resp = 0
   while resp not in [-6,-5]:
     resp = optbox.run()

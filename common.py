@@ -188,16 +188,6 @@ def chooseCity(caller,format,kwargs):
       data['info'][statefilekey] = [loc[3],True]
       data['changed'] = True
 
-def clearMenus(caller = None):
-  global menuBar
-  if menuBar:
-    for i in menuBar.get_children():
-      text =  i.get_label()
-      if text not in ["_Realm","_Help"]:
-        i.destroy()
-        if config['debug'] > 0: print "%s destroyed." % text
-    print "Menus destroyed!"
-
 def dateChoose(caller,target,data,path,kwargs = {}):
   nomark = False
   for key in kwargs:
@@ -312,44 +302,6 @@ def findFile(n,fn):
     found = False
   return (found,fn)
 
-def firstRunTab(base,tabrow):
-  tabrow.fr = gtk.VBox()
-  tabrow.fr.show()
-  tabrow.append_page(tabrow.fr,gtk.Label("Tutorial"))
-# ..............................................................................................
-  tut1 = "\n\tWelcome to Minette, an electronic writer's companion.\
-\n\tThis world information manager (sometimes called a writer's bible) aims to help you keep track of all your continuity information (sometimes called a literary canon), so that your writing can be consistent throughout your short story, novel, or series of stories.\
-\n\tThis tutorial will only display as long as you do not use a configuration file. Load with a configuration file as the first argument, create 'default.cfg' in the program's directory, or click the checkbox below to stop seeing this welcome tab.\
-\n\tEditing the options for this program/realm will also create the configuration file and stop this tab from being shown. However, you can always bring this tab back by visiting the Help menu.\
-\n\tMinette helps you do this by keeping track of discrete records in several categories: Person (for most of your characters, even those who aren't human), Landmark (for places, locations, or other szettings that aren't cities), City, and State (for nations, states, or other overarching regions).\
-\n\tYou may want to begin by visiting the options menu (Realm>Options), where you can set several options for this program overall and for each realm individually. Options include whether given names follow family names or precede them, whether your characters have and use middle names, and what storage method you wish to use for your data.\
-\n\tIf you don't create a new realm, you will be working in the default realm, in the default realm directory. This is fine if your stories all take place in the same 'universe', but you may wish to create different realms for different stories, to make finding a character from a particular story or sage much easier.\
-\n\tTo begin storing information for your realm, use the menus to load an existing record or make a new record.\
-\n\tNote: To set a Landmark's location, you must have created at least one City and one State record."
-# ..............................................................................................
-  tabrow.tut = gtk.TextView()
-  tabrow.tut.set_editable(False)
-  tabrow.tut.set_wrap_mode(gtk.WRAP_WORD)
-  buff = tabrow.tut.get_buffer()
-  buff.set_text(tut1)
-  tabrow.tut.show()
-  tabrow.tut.set_border_width(2)
-  tabrow.tut.set_left_margin(7)
-  tabrow.tut.set_right_margin(7)
-  sw = gtk.ScrolledWindow()
-  sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
-  sw.show()
-  sw.add(tabrow.tut)
-  tabrow.fr.pack_start(sw,1,1,4)
-  tabrow.close = gtk.Button("Close Tutorial")
-  tabrow.close.show()
-  tabrow.close.connect("clicked",kill,tabrow.fr)
-  tabrow.toggle = gtk.CheckButton("Don't show again")
-  tabrow.toggle.show()
-  tabrow.toggle.connect("clicked",setTutorialSeen)
-  tabrow.fr.pack_start(tabrow.toggle,0,0,2)
-  tabrow.fr.pack_start(tabrow.close,0,0,2)
-
 def getAge(s,e):
   ey = e.year
   em = e.month
@@ -392,28 +344,6 @@ def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing i
     makeThis(caller,fileid,tabs)
   else:
     say(four)
-
-def loadRealm(fn):
-  clearMenus()
-  worldList = {} # clear worldList
-  backends.loadRealm(fn)
-  backends.populateWorld()
-  # reAddLoadMenus
-  pass
-
-def loadRealmCst(parent):
-  fn = ""
-  # file select dialog, or rather, a dialog that gives a button for each realm file in the realms directory
-  loadRealm(fn)
-  pass
-
-def loadRealmStd(fileid): # From a menu list
-  fn = validateFileid(fileid)
-  fn = "realms/%s.rlm" % fn
-  loadRealm(fn)
-
-def newRealm(parent):
-  pass
 
 def preRead(force,cat,path,depth = 0,retries = 0):
   """Using the global dict for the given category, and given a list of keys 'path' and an integer 'depth',
@@ -515,9 +445,6 @@ def preRead(force,cat,path,depth = 0,retries = 0):
     if config['debug'] > limit: debugPath(root,path)
     return False
 
-def reAddLoadMenu(parent,cat):
-  menuList[cat]['f'](parent,menuList[cat].get("m"))
-
 def reloadThis(caller,closer,opener,fileid,mark,target):
   status.push(0,"Attempting to reload %s..." % fileid)
   closer(caller,fileid,mark)
@@ -526,9 +453,6 @@ def reloadThis(caller,closer,opener,fileid,mark,target):
 def reorderTabs(tabs):
   """Functions looks at a notebook and reorders the tab numbers after one is closed"""
   # TODO: Write this... or figure out whether it's still needed.
-  pass
-
-def saveRealm(fn):
   pass
 
 def seek(fn):
@@ -550,14 +474,6 @@ def setDate(cal,target):
   style = config.get('datestyle',"%Y/%m/%db")
   if True: style = re.sub(r'%y',r'%Y',style)
   target.set_text(time.strftime(style,t))
-
-def setTutorialSeen(caller,event = None):
-  global config
-  config['seenfirstrun'] = caller.get_active()
-  if config['debug'] > 6:
-    print "%s %s" % (caller,caller.get_active())
-    printPretty(config)
-  backends.saveConfig(config.get("file","default.cfg"))
 
 def parseDate(date):
   if date == "": date = config['agedate']
@@ -1080,25 +996,6 @@ def addLoadSubmenuItem(lm, num):
   molo.show()
   itemMore.set_submenu(molo)
   return molo
-
-def addHelpMenu(self,target):
-  itemH = gtk.MenuItem("_Help",True)
-  itemH.show()
-  target.append(itemH)
-  h = gtk.Menu()
-  h.show()
-  itemH.set_submenu(h)
-  itemHT = gtk.MenuItem("_Tutorial",True)
-  h.append(itemHT)
-  itemHT.show()
-  itemHT.connect("activate",firstRunTab,self.tabs)
-  itemHA = gtk.MenuItem("_About",True)
-  h.append(itemHA)
-  itemHA.show()
-  itemHA.connect("activate",showHelp,self)
-
-def showHelp(caller,parent):
-  bsay(parent,"Icons provided by http://www.fatcow.com/free-icons")
 
 def updateTitle():
   global mainWin

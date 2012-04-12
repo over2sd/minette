@@ -3,9 +3,9 @@ pygtk.require('2.0')
 import gtk
 
 from choices import (getRelsP, getRelsL)
-from common import askBoxProcessor
+import common
 from debug import printPretty
-from globdata import (worldList,mainWin)
+from globdata import (worldList,mainWin,config)
 
 def getPersonConnections(cat,rgender = 'N',pgender = 'N'): # More likely to need relation's gender than person's
   d = {}
@@ -31,7 +31,88 @@ def getPlaceConnections(cat):
     d.update(rels)
   return d
 
+def listSelectBox(parent = "?",items = [],title = "",**kwargs):
+  lt = 0
+  rows = 20
+  cannew = False
+  newname = "Value"
+  for key in kwargs:
+    if config['debug'] > 3: print "%s:%s" % (key,kwargs[key])
+    if key == "listtype": lt = kwargs[key]
+    if key == "height": rows = kwargs[key]
+    if key == "allownew": cannew = kwargs[key]
+    if key == "type": newname = kwargs[key]
+  global mainWin
+  if parent == "?": parent = mainWin
+  end = len(items) + 1
+  if len(title) == 0: title = "Select Record"
+  askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",end))
+  ilist = []
+  answers = {}
+  sepnames = {}
+  if lt == 0:
+    for i in items:
+      ilist.append(["a",i,i]) # I thought I would need to make this a tuple, and I will, when I expand the function to include lists that are cat,value,descriptive triplets
+    sepnames['a'] = "All"
+  colbox = gtk.HBox()
+  colbox.show()
+  askbox.vbox.pack_start(colbox,True,True,1)
+  col = gtk.VBox()
+  col.show()
+  colbox.pack_start(col,False,False,1)
+  bound = rows
+  sepcount = 0
+  if cannew:
+    rid = len(answers)
+    answers[str(rid)] = ["","",""]
+    newbut = gtk.Button("New %s" % newname)
+    newbut.show()
+    newbut.connect("clicked",common.askBoxProcessor,askbox,rid)
+    col.pack_start(newbut)
+  if True: # Placeholders for cat processing
+    if True:
+      if True:
+        """
+  for li in sepnames.keys():
+    if worldList.get(li):
+      count = len(worldList[li])
+      if count > 0 and len(worldList[li][0]) > 0:
+        sep = gtk.Label(sepnames.get(li,("Other","other"))[0])
+        sep.show()
+        sepcount += 1
+        if len(answers) + sepcount >= bound:
+          col = gtk.VBox()
+          col.show()
+          colbox.pack_start(col,False,False,1)
+          sepcount = 1
+          bound += rows
+          col.pack_start(sep,True,True,1)
+        """
+        for value in sorted(ilist):
+          if len(answers) + sepcount >= bound:
+            col = gtk.VBox()
+            col.show()
+            colbox.pack_start(col,False,False,1)
+            sepcount = 0
+            bound += rows
+          if len(value[1]) > 0:
+            rid = len(answers)
+            answers[str(rid)] = (value[0],value[1],value[2])
+            button = gtk.Button(value[2])
+            button.show()
+            button.connect("clicked",common.askBoxProcessor,askbox,rid)
+            col.pack_start(button)
+  width, height = askbox.get_size()
+  askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
+  answers[str(end)] = [None,None,None]
+  answer = askbox.run()
+  askbox.destroy()
+  if answer < 0: answer = end
+  return answers[str(answer)]
+
+
 def recordSelectBox(parent,fileid,title = "",fromtypes = ['l','o','p']):
+  global mainWin
   if parent == "?": parent = mainWin
   global worldList
   if len(title) == 0: title = "Select Record"
@@ -79,7 +160,7 @@ def recordSelectBox(parent,fileid,title = "",fromtypes = ['l','o','p']):
           answers[str(rid)] = (value,sepnames[li][1])
           button = gtk.Button(value)
           button.show()
-          button.connect("clicked",askBoxProcessor,askbox,rid)
+          button.connect("clicked",common.askBoxProcessor,askbox,rid)
           col.pack_start(button)
   width, height = askbox.get_size()
   askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))

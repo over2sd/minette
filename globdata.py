@@ -22,10 +22,11 @@ relsL = {}
 menuBar = gtk.MenuBar()
 menuBar.show()
 realms = {}
+defaults = {}
 mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 rlmkeys = ["agedate","centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
   "hideage","informat","outformat","printemptyXMLtags","realmdir","realmname",
   "showstories","specialrelsonly","uselistfile","usemiddle","xslurl"]
-cfgkeys = ["debug","pos","duplicatetabs","realmfile","seenfirstrun","size",
-  "startnewperson","termcolors","saverealm","rlmincfg"]
-version = "0.90"
+cfgkeys = ["debug","duplicatetabs","matchlike","pos","realmfile","rlmincfg",
+  "saverealm","seenfirstrun","size","startnewperson","termcolors"]
+version = "0.90.01"

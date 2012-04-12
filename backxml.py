@@ -627,9 +627,9 @@ def populateWorld():
             print "Unknown type %s found" % values[0]
       except Exception as e:
         print "   There was an error in the configuration file: %s" % e
-  elif not found:
-    print "  Fatal error. Realm directory %s does not exist! Exiting." % config['realmdir']
-    exit(-1)
+#  elif not found:
+#    print "  Fatal error. Realm directory %s does not exist! Exiting." % config['realmdir']
+#    exit(-1)
   else:
     print "  Generating worldList from directory..."
     olist = os.listdir(config['realmdir'])

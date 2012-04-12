@@ -7,7 +7,7 @@ import os
 from status import status
 from common import (say,bsay,skrTimeStamp,findFile)
 from debug import (printPretty,lineno)
-from globdata import (config,worldList,cfgkeys,rlmkeys)
+from globdata import (config,worldList,cfgkeys,rlmkeys,defaults)
 # from configobj import ConfigObj
 
 def criticalDefaults():
@@ -115,16 +115,25 @@ def killListFile(caller = None):
   global status
   status.push(0,"WorldList destroyed!")
 
+def killRealmOpts():
+  for k in rlmkeys:
+    del config[k]
+  loadConfig(config.get("file",None),9)
+
 def loadConfig(fn = None,recursion = 0):
   """Returns a dict containing the config options in the Minette config file."""
   maxrecursion = 3
   lines = []
   global config
+  global defaults
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
   (found,fn) = findFile(lineno(),fn)
   if not found:
     print " [W] Config %s not loaded." % fn
+    if not defaults.get("set",False):
+      setDefaults()
+    config.update(defaults)
     return config
   lines = readfile(fn)
   for line in lines:
@@ -141,7 +150,7 @@ def loadConfig(fn = None,recursion = 0):
       print " [E] There was an error in the configuration file: %s" % e
   config['file'] = fn
   config = validateConfig(config)
-  if len(config.get("realmfile","")) > 0:
+  if len(config.get("realmfile","")) > 0 and recursion <= maxrecursion:
     rf = "realms/%s.rlm" % config['realmfile']
     realm = loadRealm(rf)
     config.update(realm)
@@ -170,8 +179,8 @@ def loadRealm(fn = None,recursion = 0):
       if line:
         values = [x.strip() for x in line.split('=')]
         if values[0] != "likerealm":
-          if not realm.get(values[0]): realm[values[0]] = values[1] # existing options will not be clobbered
-        elif recursion < maxrecursion: # likerealm must be first option, or its options may be ignored.
+          realm[values[0]] = values[1] # unlike config, existing realm options WILL be clobbered
+        elif recursion < maxrecursion: # likerealm must be first option, or it may clobber options for the parent realm.
           rf = "realms/%s.rlm" % values[1]
           recursion += 1
           realm.update(loadRealm(rf,recursion))
@@ -187,10 +196,7 @@ def loadRealm(fn = None,recursion = 0):
   return realm
 
 def saveConfig(fn):
-  try:
-    if not defaults.get("set",False):
-      setDefaults()
-  except NameError:
+  if not defaults.get("set",False):
     setDefaults()
   lines = []
   for key in config.keys():
@@ -211,30 +217,31 @@ def setDefaults():
   defaults['centbreak'] = 69
   defaults['century'] = 2000
   defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
-  defaults['debug'] = "0"
+  defaults['debug'] = 0
   defaults['dtddir'] = "dtd/" # Where are doctype defs kept?
   defaults['dtdurl'] = os.path.join("../../",defaults['dtddir']) # What reference goes in the XML files?
   defaults['duplicatetabs'] = False # Should we open duplicate tabs?
   defaults['familyfirst'] = False # Does the family name come first?
   defaults['hideage'] = False # Show only the calculated age, hiding freetext entry?
-  defaults['informat'] = "xml" # input/output formats
-  defaults['outformat'] = "xml"
-  defaults['pos'] = "(20,40)" # Default window position and size, debug level
+  defaults['informat'] = "xml" # input format
+  defaults['matchlike'] = 2 # Write options from 'likerealm'? 2: write all options to realm; 1: write only options that differ from likerealm target; 0: Keep track of which options came from likerealm and don't write those
+  defaults['outformat'] = "xml" # output format
+  defaults['pos'] = (20,40) # Default window position and size, debug level
   defaults['printemptyXMLtags'] = False # output includes <emptyelements />?
-  defaults['realmdir'] = "realms/" # Where should I look for XML files and configs?
+  defaults['realmdir'] = "realms/default/" # Where should I look for XML files and configs?
   defaults['realmfile'] = "default" # Which realm file should I load by default?
   defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
   defaults['rlmincfg'] = False # Allow realm-specific items in config file? (will act as defaults)
   defaults['saverealm'] = False # Save realm on exit?
   defaults['seenfirstrun'] = False # Seen the first-run tutorial?
   defaults['showstories'] = "idlist" # Show titles, or just reference codes?
-  defaults['size'] = "(620,440)"
+  defaults['size'] = (620,440)
   defaults['specialrelsonly'] = False # use only realm-defined relations?
   defaults['startnewperson'] = False # Start by opening a new person file?
   defaults['termcolors'] = False # Use ANSI codes in debug output?
   defaults['uselistfile'] = True # Whether to save/load a list file instead of walking through each XML file to determine its class (saves load time/disk writes, but requires keeping the list file up to date).
   defaults['usemiddle'] = True # Does the name include a middle or maiden name?
-  defaults['xslurl'] = os.path.abspath("xsl/") # What reference goes in the XML files?
+  defaults['xslurl'] = "xsl/" # What reference goes in the XML files?
 
   defaults['set'] = True
 
@@ -256,17 +263,23 @@ def validateConfig(config):
   pos = config.get("pos",defaults['pos']) # default position
   siz = config.get("size",defaults['size']) # default size
   pattern = re.compile(r'\(\s?(\d+)\s?,\s?(\d+)\s?\)')
-  match = pattern.search(pos)
+  match = False
+  if pos == str(pos): # otherwise, must be reloading config, no need to reprocess
+    match = pattern.search(pos)
   if match:
     config['pos'] = (int(match.group(1)),int(match.group(2)))
   else:
     config['pos'] = (0,0)
-  match = pattern.search(siz)
+  match = False
+  if siz == str(siz): # otherwise, must be reloading config, no need to reprocess
+    match = pattern.search(siz)
   if match:
     config['size'] = (int(match.group(1)),int(match.group(2)))
   else:
     config['size'] = (620,440)
-  config['debug'] = int(config.get("debug",0))
+  keys = ["debug","matchlike",]
+  for k in keys:
+    config[k] = int(config.get(k,0))
   return config
 
 def validateRealm(realm):
@@ -326,6 +339,15 @@ def idExists(fileid,rectyp):
     backsql.idExists(fileid,rectyp)
   else:
     backxml.idExists(fileid)
+
+def listRealms():
+  rlist = os.listdir("realms/")
+  olist = []
+  for r in rlist:
+    if ".rlm" in r:
+      olist.append(r[:-4])
+  if config['debug'] > 0: printPretty(olist)
+  return olist
 
 def listThingsGTK(caller,pretty = 1):
   if config['informat'] == "sql":

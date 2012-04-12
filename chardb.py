@@ -6,15 +6,11 @@ pygtk.require('2.0')
 import gtk
 
 from os import path
-from backends import (worldList,loadConfig,populateWorld,storeWindowExit,killListFile,\
-writeListFile,getPlaceListGTK,listThingsGTK)
-from city import addCityMenu
-from common import (addHelpMenu,firstRunTab,clearMenus,updateTitle,newRealm,loadRealmCst,saveRealm)
+import backends
+import common
 from globdata import (config,mainWin,menuBar,version)
+import menu
 from options import optionSetter
-from person import addPersonMenu
-from place import addPlaceMenu
-from state import addStateMenu
 from status import status
 from story import storyEditor
 from getmod import recordSelectBox
@@ -27,7 +23,7 @@ class Base:
     global mainWin
     global menuBar
     self.window = mainWin
-    updateTitle()
+    common.updateTitle()
     self.window.connect("delete_event", self.delete_event)
     self.window.connect("destroy", self.destroy)
     self.window.set_border_width(3)
@@ -41,7 +37,7 @@ class Base:
     self.box1.show()
     self.tabs = gtk.Notebook()
     self.tabs.set_scrollable(True)
-    if not config.get("seenfirstrun"): firstRunTab(self,self.tabs)
+    if not config.get("seenfirstrun"): menu.firstRunTab(self,self.tabs)
     self.accgroup = gtk.AccelGroup() # for use on menus
     self.window.add_accel_group(self.accgroup)
     Base.makeMenus(self)
@@ -78,28 +74,30 @@ class Base:
     itemRN = gtk.MenuItem("_New",True)
     itemRN.show()
     r.append(itemRN)
-    itemRN.connect("activate",newRealm)
+    itemRN.connect("activate",menu.newRealm)
     itemRL = gtk.MenuItem("_Load",True)
     itemRL.show()
     r.append(itemRL)
-    itemRL.connect("activate",loadRealmCst)
+    itemRL.connect("activate",menu.loadRealmCst,self)
     itemRS = gtk.MenuItem("_Save",True)
     itemRS.show()
     r.append(itemRS)
-    itemRS.connect("activate",saveRealm)
+    itemRS.connect("activate",menu.saveRealm)
     if config['debug'] > 0:
       itemRP = gtk.MenuItem("Show _PlaceList",True)
       itemRP.show()
       r.append(itemRP)
-      itemRP.connect("activate",getPlaceListGTK)
+      itemRP.connect("activate",backends.getPlaceListGTK)
       itemRR = gtk.MenuItem("List _Records",True)
       itemRR.show()
       r.append(itemRR)
-      itemRR.connect("activate",listThingsGTK)
+      itemRR.connect("activate",backends.listThingsGTK)
+      """
       itemRM = gtk.MenuItem("Clear _Menus",True)
       itemRM.show()
       r.append(itemRM)
-      itemRM.connect("activate",clearMenus)
+      itemRM.connect("activate",menu.clearMenus)
+      """
     itemRO = gtk.MenuItem("_Options",True)
     itemRO.show()
     r.append(itemRO)
@@ -112,20 +110,17 @@ class Base:
       itemRC = gtk.MenuItem("_Clear list file",True)
       r.append(itemRC)
       itemRC.show()
-      itemRC.connect("activate",killListFile)
+      itemRC.connect("activate",backends.killListFile)
     itemRQ = gtk.MenuItem("_Quit",True)
     itemRQ.show()
     k,m = gtk.accelerator_parse("<Control>Q")
     itemRQ.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
     r.append(itemRQ)
-    itemRQ.connect("activate", storeWindowExit,self.window)
+    itemRQ.connect("activate", backends.storeWindowExit,self.window)
 # Person
 #    if config['realmloaded']:
-    addPersonMenu(self,menuBar)
-    addPlaceMenu(self,menuBar)
-    addCityMenu(self,menuBar)
-    addStateMenu(self,menuBar)
-    addHelpMenu(self,menuBar)
+    menu.doMenus(self)
+    menu.addHelpMenu(self,menuBar)
 
   def delete_event(self,widget,event,data=None):
     if config['debug'] > 3: print self.window.get_size()
@@ -143,11 +138,11 @@ if __name__ == "__main__":
     fn = sys.argv[1] # for now, config must be first argument
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
-  loadConfig(fn)
-  populateWorld()
+  backends.loadConfig(fn)
+  backends.populateWorld()
   fn = path.join(config['realmdir'],"myrealm.cfg")
   if config['uselistfile'] and not path.exists(fn):
     print " writing list file so you won't have to walk the directory again..."
-    writeListFile()
+    backends.writeListFile()
   base = Base(fn)
   base.main()
