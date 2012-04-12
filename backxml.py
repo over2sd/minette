@@ -176,6 +176,8 @@ def loadCity(fileid):
   statename = ""
   statefile = ""
   cityname = ""
+  dinf['m'] = {}
+  dinf['m']['events'] = {}
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
   tags = ["name","state","statefile","start","scue","end","ecue","place"]
   for tag in tags:
@@ -216,6 +218,24 @@ def loadCity(fileid):
                 print c.tag + ': ' + c.text,
         else: # no relat length
           if config['debug'] > 0: print "Empty place tag."
+      elif root[i].tag == "events":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['m']['events']))
+            dinf['m']['events'][k] = {}
+            for j in node:
+              if j.tag and j.text:
+                dinf['m']['events'][k][j.tag] = [j.text.strip(),False]
+              else:
+                if config['debug'] > 0:
+                  print "Invalid milestone tag:"
+                  for c in node:
+                    print c.tag + ': ' + c.text,
+          if config['debug'] > 3: printPretty(dinf['m']['events'])
+        else: # no relat length
+          if config['debug'] > 0: print "Empty milestone tag."
+
       elif root[i].text is not None:
         if root[i].tag == "statefile":
           statefile = root[i].text.strip()
@@ -531,7 +551,6 @@ def loadState(fileid):
             k = str(len(dinf['m']['events']))
             dinf['m']['events'][k] = {}
             for j in node:
-              print "%s: %s" % (j.tag,j.text)
               if j.tag and j.text:
                 dinf['m']['events'][k][j.tag] = [j.text.strip(),False]
               else:
@@ -539,7 +558,7 @@ def loadState(fileid):
                   print "Invalid milestone tag:"
                   for c in node:
                     print c.tag + ': ' + c.text,
-          if config['debug'] > 0: printPretty(dinf['m']['events'])
+          if config['debug'] > 3: printPretty(dinf['m']['events'])
         else: # no relat length
           if config['debug'] > 0: print "Empty milestone tag."
 
@@ -563,15 +582,16 @@ def populateWorld():
   states = []
   orgs = []
   # other data types.
-  if config['uselistfile'] and os.path.exists(fn):
-    print "Loading worldList from file..."
+  (found,fn) = common.findFile(lineno(),fn)
+  if config['uselistfile'] and found:
+    print "  Loading worldList from file..."
     lines = []
     try:
       with codecs.open(fn,'rU','utf-8') as conf:
         lines = conf.readlines()
         conf.close()
     except IOError as e:
-      print " Could not open worldlist file: %s" % e
+      print "   Could not open worldlist file: %s" % e
       exit(1)
     for line in lines:
       try:
@@ -606,12 +626,12 @@ def populateWorld():
           else:
             print "Unknown type %s found" % values[0]
       except Exception as e:
-        print "There was an error in the configuration file: %s" % e
-  elif not os.path.exists(config['realmdir']):
-    print "Fatal error. World directory %s does not exist! Exiting." % config['realmdir']
+        print "   There was an error in the configuration file: %s" % e
+  elif not found:
+    print "  Fatal error. Realm directory %s does not exist! Exiting." % config['realmdir']
     exit(-1)
   else:
-    print "Generating worldList from directory..."
+    print "  Generating worldList from directory..."
     olist = os.listdir(config['realmdir'])
     nlist = []
     ilist = []
@@ -621,23 +641,24 @@ def populateWorld():
         nlist.append(olist[i])
     for i in range(len(nlist)):
       fn = os.path.join(config['realmdir'],nlist[i])
-      line = getline(fn,2)
-      match = line.find("SYSTEM")
-      if match == -1:
-        line = getline(fn,3)
+      line = ""; match = -1; lno = 2
+      while match == -1 and lno < 6:
+        line = getline(fn,lno)
         match = line.find("SYSTEM")
-      if match != -1:
+        lno += 1
+      match2 = line.find(".dtd")
+      if match != -1 and match2 > match:
         match += 8 # trims 'SYSTEM "'
-        line = line[match:-7] # trims '.dtd">\n'
-        if line == "person":
+        line = line[match:match2] # trims '.dtd">\n'
+        if "person" in line:
           persons.append(ilist[i])
-        elif line == "place":
+        elif "place" in line:
           places.append(ilist[i])
-        elif line == "city":
+        elif "city" in line:
           cities.append(ilist[i])
-        elif line == "state":
+        elif "state" in line:
           states.append(ilist[i])
-        elif line == "org":
+        elif "org" in line:
           orgs.append(ilist[i])
         else:
           print "Unknown type %s found" % line
@@ -693,7 +714,7 @@ def saveCity(fileid,data):
   fn = fileid + ".xml"
   city = etree.Element("city")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","state","statefile","start","scue","end","ecue","places","update"]
+  tags = ["name","state","statefile","start","scue","end","ecue","events","places","update"]
   for tag in tags:
     if tag == "places":
       nodes = info.get("places")
@@ -716,6 +737,26 @@ def saveCity(fileid,data):
             print "A required tag is missing from place %s." % node
       else:
         print "no places found"
+    elif tag == "events":
+      nodes = info.get("m")
+      nodes = nodes.get("events")
+      if nodes is not None:
+        events = etree.Element("events")
+        for node in nodes.keys():
+          if nodes[node].get("event"):
+            connected = etree.Element("mstone")
+            value = info['m']['events'][node].get("event")
+            if value is None: value = ['',False]
+            etree.SubElement(connected,"event").text = value[0]
+            value = info['m']['events'][node].get("date")
+            if value is None: value = ['',False]
+            etree.SubElement(connected,"date").text = value[0]
+            events.append(connected)
+          else:
+            print "A required tag is missing from event %s." % node
+        city.append(events)
+      else:
+        print "no events found"
     elif tag == "update":
       etree.SubElement(city,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
@@ -942,7 +983,7 @@ def saveXMLtree(tree,category,fileid):
     out = xmlout.prettyXML(tree)
   start = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<?xml-stylesheet type=\"text/xsl\" href=\""
   start += os.path.join(config['xslurl'],"%s.xsl" % category)
-  start += "\"?>\n<!DOCTYPE person SYSTEM \"%s.dtd\">\n" % category
+  start += "\"?>\n<!DOCTYPE person SYSTEM \"%s%s.dtd\">\n" % (config['dtdurl'],category)
   finaloutput = start + out
   if config['debug'] > 0: print finaloutput
   fn = os.path.join(os.path.abspath(config['realmdir']),fileid + ".xml")

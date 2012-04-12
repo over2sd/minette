@@ -5,7 +5,7 @@ import codecs
 import re
 import os
 from status import status
-from common import (say,bsay,skrTimeStamp)
+from common import (say,bsay,skrTimeStamp,findFile)
 from debug import (printPretty,lineno)
 from globdata import (config,worldList,cfgkeys,rlmkeys)
 # from configobj import ConfigObj
@@ -122,11 +122,9 @@ def loadConfig(fn = None,recursion = 0):
   global config
   if fn is None:
     fn = "default.cfg" # using 3-letter extension for MSWin compatibility, I hope.
-  print "%s Seeking %s..." % (lineno(),fn),
-  fn = os.path.abspath(fn)
-  r = seek(fn)
-  print r
-  if "Not" in r:
+  (found,fn) = findFile(lineno(),fn)
+  if not found:
+    print " [W] Config %s not loaded." % fn
     return config
   lines = readfile(fn)
   for line in lines:
@@ -140,7 +138,7 @@ def loadConfig(fn = None,recursion = 0):
           recursion += 1
           loadConfig(values[1],recursion)
     except Exception as e:
-      print "There was an error in the configuration file: %s" % e
+      print " [E] There was an error in the configuration file: %s" % e
   config['file'] = fn
   config = validateConfig(config)
   if len(config.get("realmfile","")) > 0:
@@ -161,11 +159,9 @@ def loadRealm(fn = None,recursion = 0):
   if fn is None or fn == "":
     print "Could not load realm information. No filename provided!"
     exit(-1)
-  print "%s Seeking %s..." % (lineno(),fn),
-  fn = os.path.abspath(fn)
-  r = seek(fn)
-  print r
-  if "Not" in r:
+  (found,fn) = findFile(lineno(),fn)
+  if not found:
+    print " [W] Realm %s not loaded." % fn
     return realm
   lines = readfile(fn)
   for line in lines:
@@ -182,8 +178,10 @@ def loadRealm(fn = None,recursion = 0):
     except Exception as e:
       print "There was an error in the realm file: %s" % e
   fn = realm.get("realmdir","")
-  print "%s Seeking %s... %s" % (lineno(),fn,seek(fn))
-  fn = os.path.abspath(fn)
+  (found,fn) = findFile(lineno(),fn)
+  if not found:
+    print " [E] Fatal error. Realm directory %s not found!" % fn
+    exit(-1)
   realm = validateRealm(realm)
   realm['realmloaded'] = True
   return realm
@@ -206,19 +204,6 @@ def saveConfig(fn):
   except IOError as e:
     print " Could not write configuration file: %s" % e
 
-def seek(fn):
-  NORM = '\033[0;37;40m' # normal gray
-  SCOL = '\033[32;40m' # green
-  FCOL = '\033[31;40m' # red
-  if not config.get("termcolors",False):
-    NORM = ""
-    SCOL = ""
-    FCOL = ""
-  if os.path.exists(fn):
-    return "%sFound%s" % (SCOL,NORM)
-  else:
-    return "%sNot Found!%s" % (FCOL,NORM)
-
 def setDefaults():
   global defaults
   defaults = {}
@@ -228,7 +213,7 @@ def setDefaults():
   defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
   defaults['debug'] = "0"
   defaults['dtddir'] = "dtd/" # Where are doctype defs kept?
-  defaults['dtdurl'] = os.path.abspath(defaults['dtddir']) # What reference goes in the XML files?
+  defaults['dtdurl'] = os.path.join("../../",defaults['dtddir']) # What reference goes in the XML files?
   defaults['duplicatetabs'] = False # Should we open duplicate tabs?
   defaults['familyfirst'] = False # Does the family name come first?
   defaults['hideage'] = False # Show only the calculated age, hiding freetext entry?

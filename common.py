@@ -302,29 +302,53 @@ def displayStage2(target,labelWidget):
   page.set_border_width(5)
   return page
 
+def findFile(n,fn):
+  found = True
+  print "%s Seeking %s..." % (n,fn),
+  fn = os.path.abspath(fn)
+  r = seek(fn)
+  print r
+  if "Not" in r:
+    found = False
+  return (found,fn)
+
 def firstRunTab(base,tabrow):
   tabrow.fr = gtk.VBox()
   tabrow.fr.show()
-  tabrow.append_page(tabrow.fr,gtk.Label("First Run Tutorial"))
+  tabrow.append_page(tabrow.fr,gtk.Label("Tutorial"))
 # ..............................................................................................
-  tut1 = "\n\t\
-This tutorial will only display as long as you do not use a configuration file. Load with a\
-\nconfiguration file as the first argument, or create 'default.cfg' in the program's directory\
-\nto stop seeing this welcome tab.\
-\n\tTo begin, Use the Person menu to load an existing record or make a new record.\
-\n\tTo set a Landmark's location, you must create at least one City and one State record."
+  tut1 = "\n\tWelcome to Minette, an electronic writer's companion.\
+\n\tThis world information manager (sometimes called a writer's bible) aims to help you keep track of all your continuity information (sometimes called a literary canon), so that your writing can be consistent throughout your short story, novel, or series of stories.\
+\n\tThis tutorial will only display as long as you do not use a configuration file. Load with a configuration file as the first argument, create 'default.cfg' in the program's directory, or click the checkbox below to stop seeing this welcome tab.\
+\n\tEditing the options for this program/realm will also create the configuration file and stop this tab from being shown. However, you can always bring this tab back by visiting the Help menu.\
+\n\tMinette helps you do this by keeping track of discrete records in several categories: Person (for most of your characters, even those who aren't human), Landmark (for places, locations, or other szettings that aren't cities), City, and State (for nations, states, or other overarching regions).\
+\n\tYou may want to begin by visiting the options menu (Realm>Options), where you can set several options for this program overall and for each realm individually. Options include whether given names follow family names or precede them, whether your characters have and use middle names, and what storage method you wish to use for your data.\
+\n\tIf you don't create a new realm, you will be working in the default realm, in the default realm directory. This is fine if your stories all take place in the same 'universe', but you may wish to create different realms for different stories, to make finding a character from a particular story or sage much easier.\
+\n\tTo begin storing information for your realm, use the menus to load an existing record or make a new record.\
+\n\tNote: To set a Landmark's location, you must have created at least one City and one State record."
 # ..............................................................................................
-  tabrow.tut = gtk.Label(tut1)
+  tabrow.tut = gtk.TextView()
+  tabrow.tut.set_editable(False)
+  tabrow.tut.set_wrap_mode(gtk.WRAP_WORD)
+  buff = tabrow.tut.get_buffer()
+  buff.set_text(tut1)
   tabrow.tut.show()
-  tabrow.fr.add(tabrow.tut)
+  tabrow.tut.set_border_width(2)
+  tabrow.tut.set_left_margin(7)
+  tabrow.tut.set_right_margin(7)
+  sw = gtk.ScrolledWindow()
+  sw.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+  sw.show()
+  sw.add(tabrow.tut)
+  tabrow.fr.pack_start(sw,1,1,4)
   tabrow.close = gtk.Button("Close Tutorial")
   tabrow.close.show()
   tabrow.close.connect("clicked",kill,tabrow.fr)
   tabrow.toggle = gtk.CheckButton("Don't show again")
   tabrow.toggle.show()
   tabrow.toggle.connect("clicked",setTutorialSeen)
-  tabrow.fr.add(tabrow.toggle)
-  tabrow.fr.add(tabrow.close)
+  tabrow.fr.pack_start(tabrow.toggle,0,0,2)
+  tabrow.fr.pack_start(tabrow.close,0,0,2)
 
 def getAge(s,e):
   ey = e.year
@@ -507,6 +531,19 @@ def reorderTabs(tabs):
 def saveRealm(fn):
   pass
 
+def seek(fn):
+  NORM = '\033[0;37;40m' # normal gray
+  SCOL = '\033[80C\033[12D\033[32;40m' # green
+  FCOL = '\033[80C\033[12D\033[31;40m' # red
+  if not config.get("termcolors",False):
+    NORM = " "
+    SCOL = " "
+    FCOL = " "
+  if os.path.exists(fn):
+    return "%sFound%s" % (SCOL,NORM)
+  else:
+    return "%sNot Found!%s" % (FCOL,NORM)
+
 def setDate(cal,target):
   (y,m,d) = cal.get_date()
   t = (y,m,d,0,0,0,0,0,0)
@@ -523,11 +560,13 @@ def setTutorialSeen(caller,event = None):
   backends.saveConfig(config.get("file","default.cfg"))
 
 def parseDate(date):
+  if date == "": date = config['agedate']
   now = datetime.datetime.now()
   y = now.year
   m = now.month
   d = now.day
   pattern = re.compile(r'.*?([0-9]+)[/\.]([0-9]+)[/\.]([0-9]+)b?')
+  # Some day, this pattern should come from a parse of config['datestyle']
   result = pattern.search(date)
   if result:
     y = long(result.group(1))
@@ -1049,10 +1088,10 @@ def addHelpMenu(self,target):
   h = gtk.Menu()
   h.show()
   itemH.set_submenu(h)
-  itemHF = gtk.MenuItem("Show _First-run Tutorial",True)
-  h.append(itemHF)
-  itemHF.show()
-  itemHF.connect("activate",firstRunTab,self.tabs)
+  itemHT = gtk.MenuItem("_Tutorial",True)
+  h.append(itemHT)
+  itemHT.show()
+  itemHT.connect("activate",firstRunTab,self.tabs)
   itemHA = gtk.MenuItem("_About",True)
   h.append(itemHA)
   itemHA.show()

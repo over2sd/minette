@@ -1,6 +1,10 @@
 2012-04-11:
 - State now properly loads/saves milestones
 - Improved pretty print of XML stream
+- Added milestone load/display/save to cities
+- Expanded tutorial
+- Improved console output, which most users will never see
+- Date buttons now start on realm's agedate when not given an existing value
 
 2012-04-10:
 - Fixed minor error in dateChooser

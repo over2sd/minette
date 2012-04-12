@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged,getFileid,preRead)
+say,bsay,kill,markChanged,getFileid,preRead,addMilestone)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (cities,places,worldList,config)
@@ -159,8 +159,11 @@ def displayCity(callingWidget,fileid, tabrow):
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
+  tabrow.labelm = gtk.Label("Milestones")
+  tabrow.vbox.ftabs.milepage = displayStage2(tabrow.vbox.ftabs,tabrow.labelm)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
   initCinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow)
+  initCmile(tabrow.vbox.ftabs.milepage, fileid,tabrow)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   cities[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
@@ -269,6 +272,70 @@ def initCinfo(self, fileid,tabs):
         newplace = True
         pushPlace(fileid,l,lbook[l])
       packPlace(self.notebox,scroll,data,fileid,l,lbook[l],tabs,newplace)
+
+def initCmile(self,fileid,tabs):
+  global cities
+  data = {}
+  scroll = self.get_parent()
+  try:
+    data = cities.get(fileid)
+  except KeyError as e:
+    print "initSmile: An error occurred accessing %s: %s" % (fileid,e)
+    return
+  row = gtk.HBox()
+  row.show()
+  self.pack_start(row,False,False,2)
+  mileadd = gtk.Button("New Milestone")
+  mileadd.show()
+  mileadd.set_alignment(0.75,0.05)
+  row.pack_start(mileadd,0,0,5)
+  dhead = gtk.Label("Date")
+  dhead.show()
+  dhead.set_width_chars(8)
+  row.pack_start(dhead,1,1,2)
+  ehead = gtk.Label("Event")
+  ehead.show()
+  ehead.set_width_chars(18)
+  row.pack_start(ehead,1,1,2)
+  row.show_all()
+  row2 = gtk.VBox()
+  row2.show()
+  self.pack_start(row2,1,1,2)
+  boxwidth = self.size_request()[0]
+  if not cities[fileid]['info'].get("m"): cities[fileid]['info']['m'] = {}
+  r = cities[fileid]['info'].get('m')
+  if not cities[fileid]['info']['m'].get("events"): cities[fileid]['info']['m']['events'] = {}
+  mileadd.connect("clicked",addMilestone,scroll,row2,cities.get(fileid),fileid,"info","m",boxwidth)
+  if r.get("events"):
+    for i in sorted(r['events']):
+#      showMile(row2,r,i,fileid,relid)
+
+#def showMile(row2,r,i,fileid,relid):
+      events = r['events'][i]
+#  print str(events)
+      if events.get("date") and events.get("event"):
+        rowmile = gtk.HBox()
+        rowmile.show()
+        blank = gtk.Label()
+        blank.show()
+        blank.set_width_chars(12)
+        rowmile.pack_start(blank,0,0,2)
+        d = gtk.Entry()
+        d.show()
+        d.set_width_chars(12)
+        d.set_text(events['date'][0])
+        data = cities.get(fileid)
+        activateInfoEntry(d,scroll,data,fileid,"m",3,["events",i,"date"])
+        rowmile.pack_start(d,1,1,2)
+        placeCalendarButton(data,rowmile,d,[fileid,"m","events",i,"date"])
+        e = gtk.Entry()
+        e.show()
+        e.set_width_chars(18)
+        e.set_text(events['event'][0])
+        activateInfoEntry(e,scroll,data,fileid,"m",3,["events",i,"event"])
+        rowmile.pack_start(e,1,1,2)
+        row2.pack_start(rowmile,0,0,2)
+  pass
 
 def mkCity(callingWidget,fileid,tabs):
   global cities
