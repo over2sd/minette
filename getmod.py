@@ -59,7 +59,7 @@ def listSelectBox(parent = "?",items = [],title = "",**kwargs):
   askbox.vbox.pack_start(colbox,True,True,1)
   col = gtk.VBox()
   col.show()
-  colbox.pack_start(col,False,False,1)
+  colbox.pack_start(col,True,True,1)
   bound = rows
   sepcount = 0
   if cannew:
@@ -92,7 +92,7 @@ def listSelectBox(parent = "?",items = [],title = "",**kwargs):
           if len(answers) + sepcount >= bound:
             col = gtk.VBox()
             col.show()
-            colbox.pack_start(col,False,False,1)
+            colbox.pack_start(col,True,True,1)
             sepcount = 0
             bound += rows
           if len(value[1]) > 0:
@@ -103,6 +103,8 @@ def listSelectBox(parent = "?",items = [],title = "",**kwargs):
             button.connect("clicked",common.askBoxProcessor,askbox,rid)
             col.pack_start(button)
   width, height = askbox.get_size()
+  if len(title) > width / 10: width = (len(title) * 9 + 90)
+  askbox.resize(width,height)
   askbox.move((gtk.gdk.screen_width() / 2) - (width / 2),(gtk.gdk.screen_height() / 2) - (height / 2))
   answers[str(end)] = [None,None,None]
   answer = askbox.run()

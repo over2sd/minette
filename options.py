@@ -14,7 +14,7 @@ def copyOpts(o):
   global config
   config.update(o)
 
-def optionSetter(caller,parent = "?"):
+def optionSetter(caller,parent = "?",canskip = True):
   global config
   global status
   options = {}
@@ -24,6 +24,7 @@ def optionSetter(caller,parent = "?"):
     print "parent: %s" % parent
   title = "Setting Options"
   optbox = gtk.Dialog(title,parent,gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_APPLY,gtk.RESPONSE_APPLY,gtk.STOCK_OK,gtk.RESPONSE_OK))
+  if not canskip: optbox.get_action_area().get_children()[2].set_sensitive(False) # buttons seem to number right to left
   if not config.get("nowindowstore"):
     optbox.set_geometry_hints(None,int(config['size'][0] * factor),int(config['size'][1] * (factor - 0.05)))
 #  optbox.set_decorated(False)
@@ -312,8 +313,8 @@ def optionSetter(caller,parent = "?"):
     i += 1
   if selected != -1:
     c.set_active(selected)
-  c.connect("changed",setOpt,None,options,"matchlike",3)
-  c.connect("move-active",setOpt,options,"matchlike",3)
+  c.connect("changed",setOpt,None,options,"matchlike",1)
+  c.connect("move-active",setOpt,options,"matchlike",1)
   c.connect("focus",scrollOnTab,scroll)
   c.connect("focus-in-event",scrollOnTab,scroll)
   c.show()

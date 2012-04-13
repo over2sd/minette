@@ -3,11 +3,14 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
+import os
+
 import backends
 import city
 import common
 import getmod
 from globdata import (config, menuBar,worldList)
+import options
 import person
 import place
 import state
@@ -121,13 +124,32 @@ def loadRealmStd(self,fileid): # From a menu list
   fn = "realms/%s.rlm" % fn # even for SQL backend, I need the realm file to tell me how to access data
   loadRealm(self,f)
 
-def newRealm(parent):
+def newRealm(parent,self):
+  common.getFileid(parent,self,mkRealm,"realm","Please enter a new unique filing identifier.","Realmid:","This short identifier will be used to identify the realm in selection dialogs and realm files. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces, directories, or an extension, such as \".rlm\".")
+
+def mkRealm(caller,fileid,self):
+  global config
+  realms = backends.listRealms()
+  (e,f,g) = getmod.listSelectBox("?",realms,"Choose a realm to mimic")
+  if f is None or f == "":
+    print "cancel"
+  else:
+    print "Creating %s from %s"% (fileid,f)
+    old = backends.loadRealm(f)
+    config.update(old)
+  config['realmname'] = "New Realm"
+  config['realmdir'] = "realms/default/"
+  config['realmfile'] = fileid
+  backends.saveRealm(fileid)
+  loadRealm(self,"realms/%s.rlm" % fileid)
+  options.optionSetter(caller,self.window,False)
   print "newRealm called. Does nothing."
   pass
 
 def saveRealm(fn):
-  print "saveRealm calle. Does nothing."
-  pass
+  print "saveRealm called."
+  backends.saveRealm(config['realmfile'])
+  common.bsay("?","Done")
 
 def setTutorialSeen(caller,event = None):
   global config

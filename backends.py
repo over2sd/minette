@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+# from configobj import ConfigObj
+from linecache import getline
 import re
 import os
+
 from status import status
 from common import (say,bsay,skrTimeStamp,findFile)
 from debug import (printPretty,lineno)
 from globdata import (config,worldList,cfgkeys,rlmkeys,defaults)
-# from configobj import ConfigObj
 
 def criticalDefaults():
   missing = {}
@@ -210,6 +212,40 @@ def saveConfig(fn):
   except IOError as e:
     print " Could not write configuration file: %s" % e
 
+def saveRealm(fi):
+  if not defaults.get("set",False):
+    setDefaults()
+  lines = []
+  print "Saving realm %s"% fi
+  fi = "realms/%s.rlm"% fi
+  line = getline(fi,1)
+  comp = {}
+  matchlike = config.get("matchlike",False)
+  if "likerealm" in line:
+    values = [a.strip() for a in line.split('=')]
+    comp = loadRealm("realms/%s.rlm"% values[1])
+    lines.append(line)
+  write = False
+  for key in config.keys():
+    if key in rlmkeys and config[key] != defaults.get(key):
+      write = False
+      if matchlike == 2:
+        write = True
+      elif matchlike == 1 and config.get(key) != comp.get(key):
+        write = True
+      elif matchlike == 0 and key in rlmsavekeys:
+        write = True
+      if write:
+        lines.append("%s = %s\n" % (key,config[key]))
+  try:
+    f = open(os.path.abspath(fi), 'w')
+    if config['debug'] > 0: printPretty(lines)
+    f.writelines(lines)
+  except IOError as e:
+    print " Could not write configuration file: %s" % e
+  finally:
+    f.close()
+
 def setDefaults():
   global defaults
   defaults = {}
@@ -289,7 +325,7 @@ def validateRealm(realm):
   for key in rlmkeys:
     # XML file options
     if key == "dtdurl":
-      realm['dtdurl'] = realm.get(key,os.path.abspath(realm['dtddir']))
+      realm['dtdurl'] = realm.get("dtddir",os.path.join("../../",realm['dtddir']))
     # other options
     else:
       realm[key] = realm.get(key,defaults[key])
@@ -346,7 +382,7 @@ def listRealms():
   for r in rlist:
     if ".rlm" in r:
       olist.append(r[:-4])
-  if config['debug'] > 0: printPretty(olist)
+  if config['debug'] > 2: printPretty(olist)
   return olist
 
 def listThingsGTK(caller,pretty = 1):

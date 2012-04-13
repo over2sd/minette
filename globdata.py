@@ -29,4 +29,4 @@ rlmkeys = ["agedate","centbreak","century","datestyle","dtddir","dtdurl","family
   "showstories","specialrelsonly","uselistfile","usemiddle","xslurl"]
 cfgkeys = ["debug","duplicatetabs","matchlike","pos","realmfile","rlmincfg",
   "saverealm","seenfirstrun","size","startnewperson","termcolors"]
-version = "0.90.01"
+version = "0.90.05"

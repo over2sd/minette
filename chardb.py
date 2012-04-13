@@ -74,7 +74,7 @@ class Base:
     itemRN = gtk.MenuItem("_New",True)
     itemRN.show()
     r.append(itemRN)
-    itemRN.connect("activate",menu.newRealm)
+    itemRN.connect("activate",menu.newRealm,self)
     itemRL = gtk.MenuItem("_Load",True)
     itemRL.show()
     r.append(itemRL)

@@ -3,6 +3,8 @@
 - Added some options for realm processing
 - Added a select-from-list dialog
 - LoadRealm works
+- newRealm works
+- saveRealm works
 
 2012-04-11:
 - State now properly loads/saves milestones
