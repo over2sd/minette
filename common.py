@@ -341,6 +341,7 @@ def getFileid(caller,tabs,makeThis,cat,one = "Please enter a new unique filing i
   fileid = askBox("?",one,two,subtext=three,nospace=True)
   fileid = validateFileid(fileid)
   if fileid and len(fileid) > 0:
+    if makeThis is None: return fileid
     makeThis(caller,fileid,tabs)
   else:
     say(four)

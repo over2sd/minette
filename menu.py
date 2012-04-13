@@ -110,7 +110,7 @@ def loadRealm(self,fn):
 def loadRealmCst(parent,self):
   f = ""
   options = backends.listRealms()
-  (e,f,g) = getmod.listSelectBox("?",options,"Choose a realm to load",allownew=True,newname="Realm")
+  (e,f,g) = getmod.listSelectBox("?",options,title="Choose a realm to load",allownew=True,newname="Realm")
   if f is None:
     print "cancel"
   elif f == "":
@@ -125,26 +125,28 @@ def loadRealmStd(self,fileid): # From a menu list
   loadRealm(self,f)
 
 def newRealm(parent,self):
-  common.getFileid(parent,self,mkRealm,"realm","Please enter a new unique filing identifier.","Realmid:","This short identifier will be used to identify the realm in selection dialogs and realm files. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces, directories, or an extension, such as \".rlm\".")
+  fileid = common.getFileid(parent,None,None,"realm","Please enter a new unique filing identifier.","Realmid:","This short identifier will be used to identify the realm in selection dialogs and realm files. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces, directories, or an extension, such as \".rlm\".")
+  name = common.askBox("?","Please enter a name for your new realm.","Realm Name:",subtext="This is the name that will show up in the titlebar when you are in this realm.",nospace=False)
+  rdir = common.askBox("?","Please enter the subdirectory where this realm's files will go.","Realm directory:",subtext="This directory may be a fully qualified path, or a path relative to %s/"% os.path.abspath("./"),nospace=True)
+  mkRealm(parent,self,fileid,name,rdir)
 
-def mkRealm(caller,fileid,self):
+def mkRealm(caller,self,fileid,name,rdir):
   global config
   realms = backends.listRealms()
-  (e,f,g) = getmod.listSelectBox("?",realms,"Choose a realm to mimic")
+  (e,f,g) = getmod.listSelectBox("?",realms,title="Choose a realm to mimic",abort="None")
   if f is None or f == "":
     print "cancel"
   else:
     print "Creating %s from %s"% (fileid,f)
     old = backends.loadRealm(f)
     config.update(old)
-  config['realmname'] = "New Realm"
-  config['realmdir'] = "realms/default/"
+  config['realmname'] = name # "New Realm"
+  config['realmdir'] = rdir # "realms/default/"
   config['realmfile'] = fileid
   backends.saveRealm(fileid)
   loadRealm(self,"realms/%s.rlm" % fileid)
   options.optionSetter(caller,self.window,False)
-  print "newRealm called. Does nothing."
-  pass
+  saveRealm(fileid)
 
 def saveRealm(fn):
   print "saveRealm called."

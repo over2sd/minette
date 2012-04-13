@@ -27,6 +27,6 @@ mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
 rlmkeys = ["agedate","centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
   "hideage","informat","outformat","printemptyXMLtags","realmdir","realmname",
   "showstories","specialrelsonly","uselistfile","usemiddle","xslurl"]
-cfgkeys = ["debug","duplicatetabs","matchlike","pos","realmfile","rlmincfg",
+cfgkeys = ["debug","duplicatetabs","matchlike","pos","loadrealm","rlmincfg",
   "saverealm","seenfirstrun","size","startnewperson","termcolors"]
 version = "0.90.05"

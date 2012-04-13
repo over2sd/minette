@@ -152,8 +152,9 @@ def loadConfig(fn = None,recursion = 0):
       print " [E] There was an error in the configuration file: %s" % e
   config['file'] = fn
   config = validateConfig(config)
-  if len(config.get("realmfile","")) > 0 and recursion <= maxrecursion:
-    rf = "realms/%s.rlm" % config['realmfile']
+  config['realmfile'] = ""
+  if len(config.get("loadrealm","")) > 0 and recursion <= maxrecursion:
+    rf = "realms/%s.rlm" % config['loadrealm']
     realm = loadRealm(rf)
     config.update(realm)
   else:
@@ -170,6 +171,7 @@ def loadRealm(fn = None,recursion = 0):
   if fn is None or fn == "":
     print "Could not load realm information. No filename provided!"
     exit(-1)
+  realm['realmfile'] = fn
   (found,fn) = findFile(lineno(),fn)
   if not found:
     print " [W] Realm %s not loaded." % fn
@@ -260,12 +262,13 @@ def setDefaults():
   defaults['familyfirst'] = False # Does the family name come first?
   defaults['hideage'] = False # Show only the calculated age, hiding freetext entry?
   defaults['informat'] = "xml" # input format
+  defaults['loadrealm'] = "" # Which realm file should I load by default?
   defaults['matchlike'] = 2 # Write options from 'likerealm'? 2: write all options to realm; 1: write only options that differ from likerealm target; 0: Keep track of which options came from likerealm and don't write those
   defaults['outformat'] = "xml" # output format
   defaults['pos'] = (20,40) # Default window position and size, debug level
   defaults['printemptyXMLtags'] = False # output includes <emptyelements />?
   defaults['realmdir'] = "realms/default/" # Where should I look for XML files and configs?
-  defaults['realmfile'] = "default" # Which realm file should I load by default?
+  defaults['realmfile'] = "" # Which realm file is currently loaded? (internal only)
   defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
   defaults['rlmincfg'] = False # Allow realm-specific items in config file? (will act as defaults)
   defaults['saverealm'] = False # Save realm on exit?

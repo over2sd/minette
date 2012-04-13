@@ -10,6 +10,16 @@ from common import (scrollOnTab,updateTitle,placeCalendarButton)
 from globdata import (mainWin,config)
 from status import status
 
+def chooseRealm(caller,target):
+  options = backends.listRealms()
+  (e,f,g) = getmod.listSelectBox("?",options,title="Choose a realm to load on startup")
+  if f is None or f == "":
+    print "Aborted"
+  else:
+    target.set_text()
+    setOpt(caller,None,options,"loadrealm",2)
+
+
 def copyOpts(o):
   global config
   config.update(o)
@@ -297,6 +307,20 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
+  row = gtk.HBox()
+  row.show()
+  label = gtk.Label("Load this realm automatically:")
+  label.show()
+  row.pack_start(label,False,False,2)
+  d = gtk.Label()
+  d.set_text(config.get("loadrealm",""))
+  d.show()
+  row.pack_start(d,True,True,2)
+  but = gtk.Button("Select Realm")
+  but.connect("clicked",chooseRealm,d)
+  but.show()
+  row.pack_start(but,False,False,2)
+  sw.pack_start(row)
   row = gtk.HBox()
   row.show()
   label = gtk.Label("Likerealm handling:")

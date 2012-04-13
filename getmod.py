@@ -31,22 +31,26 @@ def getPlaceConnections(cat):
     d.update(rels)
   return d
 
-def listSelectBox(parent = "?",items = [],title = "",**kwargs):
+def listSelectBox(parent = "?",items = [],**kwargs):
   lt = 0
   rows = 20
   cannew = False
   newname = "Value"
+  abort = "Cancel"
+  title = ""
   for key in kwargs:
     if config['debug'] > 3: print "%s:%s" % (key,kwargs[key])
     if key == "listtype": lt = kwargs[key]
     if key == "height": rows = kwargs[key]
     if key == "allownew": cannew = kwargs[key]
     if key == "type": newname = kwargs[key]
+    if key == "abort": abort = kwargs[key]
+    if key == "title": title = kwargs[key]
   global mainWin
   if parent == "?": parent = mainWin
   end = len(items) + 1
-  if len(title) == 0: title = "Select Record"
-  askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,("Cancel",end))
+  if title is None or len(title) == 0: title = "Select Record"
+  askbox = gtk.Dialog(title,parent,gtk.DIALOG_DESTROY_WITH_PARENT,(abort,end))
   ilist = []
   answers = {}
   sepnames = {}
