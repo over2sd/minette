@@ -199,6 +199,9 @@ def loadRealm(fn = None,recursion = 0):
   realm['realmloaded'] = True
   return realm
 
+def mkDir(d):
+  print "%s would be made, if this function were coded."% os.path.abspath(d)
+
 def saveConfig(fn):
   if not defaults.get("set",False):
     setDefaults()
@@ -218,6 +221,7 @@ def saveRealm(fi):
   if not defaults.get("set",False):
     setDefaults()
   lines = []
+  if fi is None or fi == "": fi = "default"
   print "Saving realm %s"% fi
   fi = "realms/%s.rlm"% fi
   line = getline(fi,1)

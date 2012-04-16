@@ -1,3 +1,8 @@
+2012-04-16:
+- Additional accelerator keys
+- saveRealm processes empty filename as default
+- Options window apply button sensitivity toggle
+
 2012-04-12:
 - Made defaults for realm-specific items unique
 - Added some options for realm processing

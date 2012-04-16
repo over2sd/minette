@@ -5,24 +5,28 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 
-from debug import printPretty
+import backends
 from common import (scrollOnTab,updateTitle,placeCalendarButton)
+from debug import printPretty
+import getmod
 from globdata import (mainWin,config)
 from status import status
 
-def chooseRealm(caller,target):
-  options = backends.listRealms()
-  (e,f,g) = getmod.listSelectBox("?",options,title="Choose a realm to load on startup")
+def chooseRealm(caller,target,options):
+  realms = backends.listRealms()
+  (e,f,g) = getmod.listSelectBox("?",realms,title="Choose a realm to load on startup")
   if f is None or f == "":
     print "Aborted"
   else:
-    target.set_text()
-    setOpt(caller,None,options,"loadrealm",2)
-
+    target.set_text(f)
+    setOpt(target,None,options,"loadrealm",2)
 
 def copyOpts(o):
   global config
   config.update(o)
+
+def mayApply(self,target):
+  target.set_sensitive(True)
 
 def optionSetter(caller,parent = "?",canskip = True):
   global config
@@ -35,6 +39,9 @@ def optionSetter(caller,parent = "?",canskip = True):
   title = "Setting Options"
   optbox = gtk.Dialog(title,parent,gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_APPLY,gtk.RESPONSE_APPLY,gtk.STOCK_OK,gtk.RESPONSE_OK))
   if not canskip: optbox.get_action_area().get_children()[2].set_sensitive(False) # buttons seem to number right to left
+  applyBut = optbox.get_action_area().get_children()[1]
+  applyBut.set_sensitive(False)
+#  optbox.get_action_area().get_children()[0].set_sensitive(False)
   if not config.get("nowindowstore"):
     optbox.set_geometry_hints(None,int(config['size'][0] * factor),int(config['size'][1] * (factor - 0.05)))
 #  optbox.set_decorated(False)
@@ -46,7 +53,9 @@ def optionSetter(caller,parent = "?",canskip = True):
   scroll.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
   scroll.add_with_viewport(sw)
   optbox.vbox.add(scroll)
-  label = gtk.Label("Realm-specific Options for %s" % config['realmfile'])
+  rf = config['realmfile']
+  if rf == "": rf = "<unspecified>"
+  label = gtk.Label("Realm-specific Options for %s" % rf)
   label.show()
   sw.pack_start(label,False,False,7)
   row = gtk.HBox()
@@ -56,6 +65,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.set_text(config.get("realmname","Unnamed Realm"))
   optbox.set_title("Setting Options - %s" % e.get_text())
   e.connect("changed",setOpt,None,options,"realmname",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -68,6 +78,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.show()
   e.set_text(config.get("realmdir",""))
   e.connect("changed",setOpt,None,options,"realmdir",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -77,12 +88,14 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb = gtk.CheckButton("Family name comes first (Eastern style names)")
   cb.set_active(config.get("familyfirst",False))
   cb.connect("toggled",setOpt,None,options,"familyfirst",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Use middle/maiden names")
   cb.set_active(config.get("usemiddle",True))
   cb.connect("toggled",setOpt,None,options,"usemiddle",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
@@ -110,6 +123,7 @@ def optionSetter(caller,parent = "?",canskip = True):
       i += 1
     c.set_active(selected)
     c.connect("changed",setOpt,None,options,key,3)
+    c.connect("changed",mayApply,applyBut)
     c.connect("changed",toggleBoxes,None,sqlbox,xmlbox,options)
     c.connect("move-active",setOpt,options,key,3)
     c.connect("move-active",toggleBoxes,sqlbox,xmlbox,options)
@@ -135,6 +149,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb = gtk.CheckButton("Include empty tags when saving XML files")
   cb.set_active(config.get("printemptyXMLtags",False))
   cb.connect("toggled",setOpt,None,options,"printemptyXMLtags",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   xb.pack_start(cb)
@@ -144,6 +159,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.show()
   e.set_text(config.get("dtddir",""))
   e.connect("changed",setOpt,None,options,"dtddir",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -156,6 +172,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.show()
   e.set_text(config.get("dtdurl",""))
   e.connect("changed",setOpt,None,options,"dtdurl",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -168,6 +185,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.show()
   e.set_text(config.get("xslurl",""))
   e.connect("changed",setOpt,None,options,"xslurl",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -183,6 +201,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   s1.set_increments(1,10)
   s1.show()
   s1.connect("value-changed",setOpt,None,options,"century",5)
+  s1.connect("value-changed",mayApply,applyBut)
   s1.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -195,6 +214,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   s2.set_increments(1,10)
   s2.show()
   s2.connect("value-changed",setOpt,None,options,"centbreak",4)
+  s2.connect("value-changed",mayApply,applyBut)
   s2.connect("focus-in-event",scrollOnTab,scroll)
   row.pack_start(label,False,False,2)
   row.pack_start(s2,True,True,2)
@@ -207,6 +227,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb = gtk.CheckButton("Show only calculated date")
   cb.set_active(config.get("hideage",True))
   cb.connect("toggled",setOpt,None,options,"hideage",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
@@ -216,6 +237,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e = gtk.Entry()
   e.set_text(config.get("agedate","06/08/10b"))
   e.connect("changed",setOpt,None,options,"agedate",2)
+  e.connect("changed",mayApply,applyBut)
   e.show()
   row.show()
   row.pack_start(label,0,0,2)
@@ -228,6 +250,7 @@ def optionSetter(caller,parent = "?",canskip = True):
   e.show()
   e.set_text(config.get("datestyle","%y/%m/%db"))
   e.connect("changed",setOpt,None,options,"datestyle",2)
+  e.connect("changed",mayApply,applyBut)
   e.connect("focus-in-event",scrollOnTab,scroll)
   row.show()
   label.show()
@@ -237,12 +260,14 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb = gtk.CheckButton("Use list files for this realm")
   cb.set_active(config.get("uselistfile",True))
   cb.connect("toggled",setOpt,None,options,"uselistfile",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Use only realm-defined relationships, not free text")
   cb.set_active(config.get("uselistfile",True))
   cb.connect("toggled",setOpt,None,options,"uselistfile",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
@@ -264,7 +289,9 @@ def optionSetter(caller,parent = "?",canskip = True):
     i += 1
   c.set_active(selected)
   c.connect("changed",setOpt,None,options,"showstories",3)
+  c.connect("changed",mayApply,applyBut)
   c.connect("move-active",setOpt,options,"showstories",3)
+  c.connect("move-active",mayApply,applyBut)
   c.connect("focus",scrollOnTab,scroll)
   c.connect("focus-in-event",scrollOnTab,scroll)
   c.show()
@@ -280,30 +307,35 @@ def optionSetter(caller,parent = "?",canskip = True):
   cb = gtk.CheckButton("Don't store window size/position")
   cb.set_active(config.get("nowindowstore",False))
   cb.connect("toggled",setOpt,None,options,"nowindowstore",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Accept realm-specific options in the config file")
   cb.set_active(config.get("rlmincfg",False))
   cb.connect("toggled",setOpt,None,options,"rlmincfg",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Opening a new person file at startup")
   cb.set_active(config.get("startnewperson",False))
   cb.connect("toggled",setOpt,None,options,"startnewperson",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Allow opening duplicate tabs")
   cb.set_active(config.get("duplicatetabs",False))
   cb.connect("toggled",setOpt,None,options,"duplicatetabs",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
   cb = gtk.CheckButton("Save the active realm file on exit")
   cb.set_active(config.get("saverealm",False))
   cb.connect("toggled",setOpt,None,options,"saverealm",1)
+  cb.connect("toggled",mayApply,applyBut)
   cb.connect("focus-in-event",scrollOnTab,scroll)
   cb.show()
   sw.pack_start(cb)
@@ -317,7 +349,8 @@ def optionSetter(caller,parent = "?",canskip = True):
   d.show()
   row.pack_start(d,True,True,2)
   but = gtk.Button("Select Realm")
-  but.connect("clicked",chooseRealm,d)
+  but.connect("clicked",chooseRealm,d,options)
+  but.connect("clicked",mayApply,applyBut)
   but.show()
   row.pack_start(but,False,False,2)
   sw.pack_start(row)
@@ -338,7 +371,9 @@ def optionSetter(caller,parent = "?",canskip = True):
   if selected != -1:
     c.set_active(selected)
   c.connect("changed",setOpt,None,options,"matchlike",1)
+  c.connect("changed",mayApply,applyBut)
   c.connect("move-active",setOpt,options,"matchlike",1)
+  c.connect("move-active",mayApply,applyBut)
   c.connect("focus",scrollOnTab,scroll)
   c.connect("focus-in-event",scrollOnTab,scroll)
   c.show()
@@ -351,11 +386,11 @@ def optionSetter(caller,parent = "?",canskip = True):
       t = "Options applied."
       print t
       status.push(0,t)
-      printPretty(options)
       copyOpts(options)
       if options.get("realmname") is not None: updateTitle()
       options = {}
       optbox.set_title("Setting Options - %s" % config.get("realmname","Unnamed Realm"))
+      applyBut.set_sensitive(False)
     if resp == -6:
       t = "Cancelled"
       print t
@@ -366,7 +401,6 @@ def optionSetter(caller,parent = "?",canskip = True):
       t = "Options accepted."
       print t
       status.push(0,t)
-      printPretty(options)
       optbox.destroy()
       copyOpts(options)
       if options.get("realmname") is not None: updateTitle()
@@ -396,7 +430,6 @@ def toggleBoxes(self,event,sbox,xbox,o = {}):
     sbox.show()
   else:
     sbox.hide()
-
 
 def setDates(caller,acw,cbw,ow):
   out = "Test dates: "

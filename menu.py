@@ -128,7 +128,9 @@ def newRealm(parent,self):
   fileid = common.getFileid(parent,None,None,"realm","Please enter a new unique filing identifier.","Realmid:","This short identifier will be used to identify the realm in selection dialogs and realm files. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces, directories, or an extension, such as \".rlm\".")
   name = common.askBox("?","Please enter a name for your new realm.","Realm Name:",subtext="This is the name that will show up in the titlebar when you are in this realm.",nospace=False)
   rdir = common.askBox("?","Please enter the subdirectory where this realm's files will go.","Realm directory:",subtext="This directory may be a fully qualified path, or a path relative to %s/"% os.path.abspath("./"),nospace=True)
-  mkRealm(parent,self,fileid,name,rdir)
+  if rdir is not None and rdir != "":
+    backends.mkDir(rdir)
+    mkRealm(parent,self,fileid,name,rdir)
 
 def mkRealm(caller,self,fileid,name,rdir):
   global config
@@ -149,9 +151,22 @@ def mkRealm(caller,self,fileid,name,rdir):
   saveRealm(fileid)
 
 def saveRealm(fn):
-  print "saveRealm called."
+  fn = config['realmfile']
+  if fn is not None and fn != "":
+    backends.saveRealm(fn)
+  else:
+    saveRealmAs()
+  common.bsay("?","Saved.")
+
+def saveRealmAs():
+  fileid = common.getFileid("?",None,None,"realm","Please enter a new unique filing identifier.","Realmid:","This short identifier will be used to identify the realm in selection dialogs and realm files. Valid characters are A-Z, 0-9, underscore, and dash. Do not include spaces, directories, or an extension, such as \".rlm\".")
+  name = common.askBox("?","Please enter a name for your new realm.","Realm Name:",subtext="This is the name that will show up in the titlebar when you are in this realm.",nospace=False)
+  rdir = common.askBox("?","Please enter the subdirectory where this realm's files will go.","Realm directory:",subtext="This directory may be a fully qualified path, or a path relative to %s/"% os.path.abspath("./"),nospace=True)
+  backends.mkDir(rdir)
+  config['realmname'] = name # "New Realm"
+  config['realmdir'] = rdir # "realms/default/"
+  config['realmfile'] = fileid
   backends.saveRealm(config['realmfile'])
-  common.bsay("?","Done")
 
 def setTutorialSeen(caller,event = None):
   global config

@@ -73,14 +73,20 @@ class Base:
 
     itemRN = gtk.MenuItem("_New",True)
     itemRN.show()
+    k,m = gtk.accelerator_parse("<Control>N")
+    itemRN.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
     r.append(itemRN)
     itemRN.connect("activate",menu.newRealm,self)
     itemRL = gtk.MenuItem("_Load",True)
     itemRL.show()
+    k,m = gtk.accelerator_parse("<Control>L")
+    itemRL.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
     r.append(itemRL)
     itemRL.connect("activate",menu.loadRealmCst,self)
     itemRS = gtk.MenuItem("_Save",True)
     itemRS.show()
+    k,m = gtk.accelerator_parse("<Control>S")
+    itemRS.add_accelerator("activate",self.accgroup,k,m,gtk.ACCEL_VISIBLE)
     r.append(itemRS)
     itemRS.connect("activate",menu.saveRealm)
     if config['debug'] > 0:
@@ -120,7 +126,6 @@ class Base:
 # Person
 #    if config['realmloaded']:
     menu.doMenus(self)
-    menu.addHelpMenu(self,menuBar)
 
   def delete_event(self,widget,event,data=None):
     if config['debug'] > 3: print self.window.get_size()
