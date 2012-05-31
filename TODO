@@ -4,4 +4,9 @@ See if _ can be escaped in addSubMenuItem text values
 Add explanation of fileid to tutorial page
 Fix saving of state's cities list
 Make state save milestones in date order
-Load realms dialog that provides buttons for realms found
+New Realm creates directory if it doesn't exist
+Fix bug: New Realm should not ask for info twice (fixed?)
+design: put a rule at the end of each scrolling page, marked 30, or with # of changes?
+debug: make printPretty sort keys in dictionaries so the output is consistent
+backend: check for paths relative to ~
+options: add color picker buttons for background colors

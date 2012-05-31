@@ -188,7 +188,7 @@ def chooseCity(caller,format,kwargs):
       data['info'][statefilekey] = [loc[3],True]
       data['changed'] = True
 
-def dateChoose(caller,target,data,path,kwargs = {}):
+def dateChoose(caller,target,data,path,alts,kwargs = {}):
   nomark = False
   for key in kwargs:
     if config['debug'] > 0: print "%s:%s" % (key,kwargs[key])
@@ -225,9 +225,9 @@ def dateChoose(caller,target,data,path,kwargs = {}):
     setDate(cal,target)
   askbox.destroy()
   if not nomark:
-    checkForChange(target,None,data,path)
+    checkForChange(target,None,data,path,alts)
 
-def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener):
+def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener,altList):
   target.vbox = gtk.VBox()
   target.vbox.show()
   target.vbox.ftabs = gtk.Notebook()
@@ -240,6 +240,7 @@ def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener):
   image.set_from_file("img/save.png")
   save.set_image(image)
   save.connect("clicked",saveFunc,fileid)
+  save.connect("clicked",markSaved,altList)
   save.show()
   bbar.pack_start(save)
   if config['debug'] > 0:
@@ -529,7 +530,7 @@ def csplit(s):
   if not values: values = []
   return values
 
-def buildarow(scroll,name,data,fileid,key,style = 0):
+def buildarow(scroll,name,data,fileid,key,alts,style = 0):
   """Returns a row containing the given key description and value in a GTK HBox."""
   row = gtk.HBox()
   row.set_border_width(2)
@@ -541,10 +542,10 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
     value = getInf(data,["info",key])
     row.e = gtk.Entry()
     row.e.set_text(value)
-    activateInfoEntry(row.e,scroll,data,fileid,key)
+    activateInfoEntry(row.e,alts,scroll,data,fileid,key)
   if style == 1:
     valign = 0.03
-    row.e = buildaposition(scroll,data,fileid,key)
+    row.e = buildaposition(scroll,data,fileid,key,alts)
   if style == 2:
     value = getInf(data,["info",key])
     row.e = gtk.Label()
@@ -565,10 +566,10 @@ def buildarow(scroll,name,data,fileid,key,style = 0):
   row.pack_start(row.e,1,1,2)
   if style == 3:
     path = [fileid,"info",key]
-    placeCalendarButton(data,row,row.e,path)
+    placeCalendarButton(data,row,row.e,path,alts)
   return row
 
-def placeCalendarButton(data,row,target,path,**kwargs):
+def placeCalendarButton(data,row,target,path,alts,**kwargs):
   """Puts a nice little calendar button in row. The calendar button updates
   target with the selected value."""
 #  printPretty("args: %s %s %s %s" % (data,row,target,path))
@@ -578,7 +579,7 @@ def placeCalendarButton(data,row,target,path,**kwargs):
   image.set_from_file("img/date.png")
   datebut.set_image(image)
   datebut.unset_flags(gtk.CAN_FOCUS)
-  datebut.connect("clicked",dateChoose,target,data,path,kwargs)
+  datebut.connect("clicked",dateChoose,target,data,path,alts,kwargs)
   row.pack_start(datebut,0,0,2)
 
 def getInf(data,path,default = ""):
@@ -607,7 +608,7 @@ def getInf(data,path,default = ""):
       printPretty("getInf: (nonfatal) %s yields %s with error %s" % (path,data.get(path[-1],(default,False)),e),False)
   return value
 
-def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
+def activateInfoEntry(self,alts, scroll, data, fileid, key, extra = 0, exargs = []):
   if config['debug'] > 4:
     printPretty("%s\n%s" % (data,[fileid,key,exargs]))
   cat = data.get("cat")
@@ -615,31 +616,33 @@ def activateInfoEntry(self, scroll, data, fileid, key, extra = 0, exargs = []):
 #  if cat in ['p','l','c']:
   path = [fileid,"info",key]
   for i in range(len(exargs)): path.append(exargs[i])
-  self.connect("focus-out-event", checkForChange,data,path)
-  self.connect("activate", checkForChange,None,data,path)
+  self.connect("focus-out-event", checkForChange,data,path,alts)
+  self.connect("activate", checkForChange,None,data,path,alts)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
-def activateNoteEntry(self, scroll, data, fileid, i,date):
+def activateNoteEntry(self,alts, scroll, data, fileid, i,date):
   cat = data.get("cat")
   path = []
   if cat == 'l': path = [fileid,"info","notes",i,"content"]
-  self.connect("focus-out-event", checkForChange,data,path,date)
-  self.connect("activate", checkForChange,None,data,path,date)
+  self.connect("focus-out-event", checkForChange,data,path,alts,date)
+  self.connect("activate", checkForChange,None,data,path,alts,date)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
-def checkForChange(self,event,data,path,optionaltarget = None):
+def checkForChange(self,event,data,path,alts,optionaltarget = None):
   if config['debug'] > 3: print "Checking %s" % str(path)
   if getInf(data,path[1:]) != self.get_text():
     if config['debug'] > 2 : print "%s vs %s" % (getInf(data,path[1:]),self.get_text())
-    markChanged(self,data.get("cat"),path)
+    markChanged(self,data.get("cat"),path,alts)
     if optionaltarget: # Automatically update a linked date field
       optionaltarget.set_text(skrTimeStamp(config['datestyle']))
-      markChanged(optionaltarget,data.get("cat"),path)
+      markChanged(optionaltarget,data.get("cat"),path,alts)
 
-def markChanged(self,cat,path):
+def markChanged(self,cat,path,alts):
+  global config
   if path == str(path):
     path = [path] # prevents string from being processed as a long list
-  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse("#CCCCDD")) # change background for edited
+  self.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse(config['altcolor'])) # change background for edited
+  if self not in alts: alts.append(self)
   end = len(path)
   value = ["",False]
   value[1] = True
@@ -710,6 +713,13 @@ def markChanged(self,cat,path):
       debugPath(root,path)
       return
 
+def markSaved(caller,alts):
+  global config
+  for w in alts:
+    w.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse(config['savecolor'])) # change background for saved
+  alts = []
+  return
+
 def expandTitles(value):
   global stories
   titles = ""
@@ -750,7 +760,7 @@ def setStories(caller,data,fileid,x,parent):
       value = expandTitles(value)
     x.set_text(value)
 
-def buildaposition(scroll,data,fileid,key): #only applicable to people, but can't put it back in people because of circular import :(
+def buildaposition(scroll,data,fileid,key,alts): #only applicable to people, but can't put it back in people because of circular import :(
   """Returns a GTK VBox containing the data values of the given position."""
   t = gtk.VBox()
   t.show()
@@ -790,7 +800,7 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
       r.show()
       rpos = gtk.Entry()
       extraargs = ["pos",]
-      activateInfoEntry(rpos,scroll,data,fileid,key,len(extraargs),extraargs)
+      activateInfoEntry(rpos,alts,scroll,data,fileid,key,len(extraargs),extraargs)
       rpos.show()
       rpos.set_text(value)
       rpos.set_width_chars(16)
@@ -815,7 +825,7 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
         if value: value = value[0]
         rda = gtk.Entry()
         extraargs = ["events",str(i),"date"]
-        activateInfoEntry(rda,scroll,data,fileid,key,len(extraargs),extraargs)
+        activateInfoEntry(rda,alts,scroll,data,fileid,key,len(extraargs),extraargs)
         rda.show()
         rda.set_width_chars(12)
         rda.set_text(value)
@@ -834,7 +844,7 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
         if value: value = value[0]
         rev = gtk.Entry()
         extraargs = ["events",str(i),"event"]
-        activateInfoEntry(rev,scroll,people.get(fileid),fileid,key,len(extraargs),extraargs)
+        activateInfoEntry(rev,alts,scroll,people.get(fileid),fileid,key,len(extraargs),extraargs)
         rev.show()
         rev.set_width_chars(18)
         rev.set_text(value)
@@ -845,7 +855,7 @@ def buildaposition(scroll,data,fileid,key): #only applicable to people, but can'
     t.addmile.connect("clicked",addMilestone,scroll,t,data,fileid,"info",key,width)
   return t
 
-def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
+def addMilestone(caller,scroll,alts,target,data,fileid,side,key,boxwidth):
   i = 0
   err = False
   if data:
@@ -897,24 +907,24 @@ def addMilestone(caller,scroll,target,data,fileid,side,key,boxwidth):
     e.set_width_chars(18)
     e.set_text(getInf(data,[side,key,'events',i,'event']))
     if side == "relat":
-      activateRelEntry(d,scroll,data,fileid,key,"date",i)
-      activateRelEntry(e,scroll,data,fileid,key,"event",i)
+      activateRelEntry(d,alts,scroll,data,fileid,key,"date",i)
+      activateRelEntry(e,alts,scroll,data,fileid,key,"event",i)
     elif side == "info":
       extraargs = ["events",i,"date"]
-      activateInfoEntry(d,scroll,data,fileid,key,len(extraargs),extraargs)
+      activateInfoEntry(d,alts,scroll,data,fileid,key,len(extraargs),extraargs)
       extraargs[2] = "event"
-      activateInfoEntry(e,scroll,data,fileid,key,len(extraargs),extraargs)
+      activateInfoEntry(e,alts,scroll,data,fileid,key,len(extraargs),extraargs)
     rowmile.pack_start(e,1,1,2)
     target.pack_start(rowmile,0,0,1)
 
-def activateRelEntry(self,scroll,data,fileid,relid,key,event = None):
+def activateRelEntry(self,alts,scroll,data,fileid,relid,key,event = None):
   path = [fileid,"relat",relid]
   if event:
     path.extend(["events",event,key])
   else:
     path.append(key)
-  self.connect("focus-out-event", checkForChange,data,path)
-  self.connect("activate", checkForChange,None,data,path)
+  self.connect("focus-out-event", checkForChange,data,path,alts)
+  self.connect("activate", checkForChange,None,data,path,alts)
   self.connect("focus-in-event",scrollOnTab,scroll)
 
 def scrollOnTab(caller,x,scroll):

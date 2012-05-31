@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="xsl/person.xsl"?>
+<!DOCTYPE person SYSTEM "../../dtd/person.dtd">
+<person>
+	<update>12/05/31b</update>
+</person>

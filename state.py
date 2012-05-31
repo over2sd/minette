@@ -105,7 +105,7 @@ def buildStateRow(scroll,data,fileid):
   return row
 """
 
-def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
+def chooseCity(parent,target,tabs,scroll,data,statef,stalts,title = ""):
   global status
   global cities
   city = recordSelectBox(None,statef,title,'c')
@@ -131,7 +131,7 @@ def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
     if cityname == "":
       status.push(0,"Registering place in %s cancelled" % cityf)
       return False
-    packCity(target,scroll,data,statef,city[0],cityname,tabs,True)
+    packCity(target,scroll,data,statef,city[0],cityname,tabs,True,stalts)
     status.push(0,"Registered %s in %s" % (city[1],statef))
     return True
   else:
@@ -140,6 +140,7 @@ def chooseCity(parent,target,tabs,scroll,data,statef,title = ""):
 
 def displayState(callingWidget,fileid, tabrow):
   global states
+  stalts = []
   warnme = False
   if states.get(fileid,None):
     tab = states[fileid].get("tab")
@@ -157,19 +158,19 @@ def displayState(callingWidget,fileid, tabrow):
     states[fileid]['info'] = loadState(fileid)
     states[fileid]['changed'] = False
     states[fileid]['cat'] = 's'
-  displayStage1(tabrow,fileid,'s',saveThisS,showState,preClose,displayState) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
+  displayStage1(tabrow,fileid,'s',saveThisS,showState,preClose,displayState,stalts) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.labelm = gtk.Label("Milestones")
   tabrow.vbox.ftabs.milepage = displayStage2(tabrow.vbox.ftabs,tabrow.labelm)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initSinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow)
-  initSmile(tabrow.vbox.ftabs.milepage, fileid,tabrow)
+  initSinfo(tabrow.vbox.ftabs.infpage, fileid,tabrow,stalts)
+  initSmile(tabrow.vbox.ftabs.milepage, fileid,tabrow,stalts)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   states[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
-def initSinfo(self, fileid,tabs):
+def initSinfo(self, fileid,tabs,stalts):
   global states
   data = {}
   scroll = self.get_parent()
@@ -185,7 +186,7 @@ def initSinfo(self, fileid,tabs):
   self.s1 = gtk.HSeparator()
   self.pack_start(self.s1,False,False,2)
   self.s1.show()
-  name = buildarow(scroll,"Name:",data,fileid,'name')
+  name = buildarow(scroll,"Name:",data,fileid,'name',stalts)
   self.pack_start(name,0,0,2)
   row = gtk.HBox()
   row.show()
@@ -196,11 +197,11 @@ def initSinfo(self, fileid,tabs):
   start = gtk.Entry(25)
   start.show()
   start.set_text(getInf(data,path))
-  activateInfoEntry(start,scroll,data,fileid,"start")
+  activateInfoEntry(start,stalts,scroll,data,fileid,"start")
   row.pack_start(start,True,True,2)
   path2 = [fileid,"info"]
   path2.append(path[-1])
-  placeCalendarButton(data,row,start,path2)
+  placeCalendarButton(data,row,start,path2,stalts)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -208,7 +209,7 @@ def initSinfo(self, fileid,tabs):
   scue.show()
   path[1] = "scue"
   scue.set_text(getInf(data,path))
-  activateInfoEntry(scue,scroll,data,fileid,"scue")
+  activateInfoEntry(scue,stalts,scroll,data,fileid,"scue")
   row.pack_start(scue,True,True,2)
   self.pack_start(row,False,False,2)
   row = gtk.HBox()
@@ -220,11 +221,11 @@ def initSinfo(self, fileid,tabs):
   end.show()
   path[1] = "end"
   end.set_text(getInf(data,path))
-  activateInfoEntry(end,scroll,data,fileid,"end")
+  activateInfoEntry(end,stalts,scroll,data,fileid,"end")
   row.pack_start(end,True,True,2)
   path2 = [fileid,"info"]
   path2.append(path[-1])
-  placeCalendarButton(data,row,end,path2)
+  placeCalendarButton(data,row,end,path2,stalts)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -232,7 +233,7 @@ def initSinfo(self, fileid,tabs):
   ecue.show()
   path[1] = "ecue"
   ecue.set_text(getInf(data,path))
-  activateInfoEntry(ecue,scroll,data,fileid,"ecue")
+  activateInfoEntry(ecue,stalts,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
   self.notebox = gtk.VBox()
@@ -261,7 +262,7 @@ def initSinfo(self, fileid,tabs):
     cityname = getInf(statecities,[fi,"name"],"")
     pushLoc(fileid,statename,fi,cityname)
   cbook = getCitiesIn(fileid)
-  addbut.connect("clicked",chooseCity,self.notebox,tabs,scroll,data,fileid,"Register in %s..." % statename)
+  addbut.connect("clicked",chooseCity,self.notebox,tabs,scroll,data,fileid,stalts,"Register in %s..." % statename)
   box.pack_end(addbut,False,False,1)
   self.notebox.pack_start(box,False,False,1)
   for c in sorted(cbook.keys()):
@@ -276,7 +277,7 @@ def initSinfo(self, fileid,tabs):
       else:
         common.say("Error getting cityname.")
 
-def initSmile(self,fileid,tabs):
+def initSmile(self,fileid,tabs,stalts):
   global states
   data = {}
   scroll = self.get_parent()
@@ -328,9 +329,9 @@ def initSmile(self,fileid,tabs):
         d.set_width_chars(12)
         d.set_text(events['date'][0])
         data = states.get(fileid)
-        activateInfoEntry(d,scroll,data,fileid,"m",3,["events",i,"date"])
+        activateInfoEntry(d,stalts,scroll,data,fileid,"m",3,["events",i,"date"])
         rowmile.pack_start(d,1,1,2)
-        placeCalendarButton(data,rowmile,d,[fileid,"m","events",i,"date"])
+        placeCalendarButton(data,rowmile,d,[fileid,"m","events",i,"date"],stalts)
         e = gtk.Entry()
         e.show()
         e.set_width_chars(18)
@@ -354,7 +355,7 @@ def mkState(callingWidget,fileid,tabs):
     saveThisS(callingWidget,fileid)
   displayState(callingWidget,fileid,tabs)
 
-def packCity(box,scroll,data,statef,cityf,value,tabs,newcity):
+def packCity(box,scroll,data,statef,cityf,value,tabs,newcity,stalts):
   row = gtk.HBox()
   row.show()
   note = ""
@@ -373,7 +374,7 @@ def packCity(box,scroll,data,statef,cityf,value,tabs,newcity):
   row.pack_start(centry,1,1,2)
   centry.set_text(note)
   activateInfoEntry(centry,scroll,data,statef,"cities",2,[cityf,"note"])
-  if newcity: markChanged(centry,'s',[statef,"info","cities",cityf,"note"])
+  if newcity: markChanged(centry,'s',[statef,"info","cities",cityf,"note"],stalts)
   killbut = gtk.Button("Unregister")
   killbut.show()
   image = gtk.Image()

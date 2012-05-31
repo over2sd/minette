@@ -256,10 +256,12 @@ def setDefaults():
   global defaults
   defaults = {}
   defaults['agedate'] = "06/08/10b" # Date for calculating ages
+  defaults['altcolor'] = "#CCCCDD"
   defaults['centbreak'] = 69
   defaults['century'] = 2000
   defaults['datestyle'] = "%y/%m/%db" # Style of date output, Assumed century for 2-digit years, earliest year of previous century
   defaults['debug'] = 0
+  defaults['defaultstory'] = True # Auto-set stories value if realm has one and only one story?
   defaults['dtddir'] = "dtd/" # Where are doctype defs kept?
   defaults['dtdurl'] = os.path.join("../../",defaults['dtddir']) # What reference goes in the XML files?
   defaults['duplicatetabs'] = False # Should we open duplicate tabs?
@@ -275,6 +277,7 @@ def setDefaults():
   defaults['realmfile'] = "" # Which realm file is currently loaded? (internal only)
   defaults['realmname'] = "Unnamed Setting" # What should I call the setting/world/realm?
   defaults['rlmincfg'] = False # Allow realm-specific items in config file? (will act as defaults)
+  defaults['savecolor'] = "#CCFFCC"
   defaults['saverealm'] = False # Save realm on exit?
   defaults['seenfirstrun'] = False # Seen the first-run tutorial?
   defaults['showstories'] = "idlist" # Show titles, or just reference codes?

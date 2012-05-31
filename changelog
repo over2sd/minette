@@ -1,3 +1,9 @@
+2012-05-31:
+- Fixed a len(None) check
+- Added option to auto-set stories value in new record if realm has only one story
+- When records are saved, background of altered fields changes again
+- Added option for modified/saved colors in fields
+
 2012-04-16:
 - Additional accelerator keys
 - saveRealm processes empty filename as default

@@ -24,9 +24,9 @@ menuBar.show()
 realms = {}
 defaults = {}
 mainWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-rlmkeys = ["agedate","centbreak","century","datestyle","dtddir","dtdurl","familyfirst",
+rlmkeys = ["agedate","centbreak","century","datestyle","defaultstory","dtddir","dtdurl","familyfirst",
   "hideage","informat","outformat","printemptyXMLtags","realmdir","realmname",
   "showstories","specialrelsonly","uselistfile","usemiddle","xslurl"]
-cfgkeys = ["debug","duplicatetabs","matchlike","pos","loadrealm","rlmincfg",
-  "saverealm","seenfirstrun","size","startnewperson","termcolors"]
-version = "0.90.05"
+cfgkeys = ["altcolor","debug","duplicatetabs","matchlike","pos","loadrealm","rlmincfg",
+  "savecolor","saverealm","seenfirstrun","size","startnewperson","termcolors"]
+version = "0.90.07"

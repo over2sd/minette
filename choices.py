@@ -160,3 +160,17 @@ def saveStories(realmdir):
     backends.writefile(fn,lines,True)
   else:
     bsay(None,"The path %s does not exist.")
+
+def storyDefault(target):
+  global config
+  global status
+  s = {}
+  s = myStories()
+  if s == {} or len(s) != 1 or config[defaultstory] == False: return
+  k = []
+  k.append(s.keys())
+  m = "Single-story Realm. Setting stories value to %s. To prevent this, use the story editor to add stories to the realm, or change the setting in the options dialog."
+  status.push(0,m)
+  print m
+  target.set_text(k[0])
+  return
