@@ -736,6 +736,30 @@ def expandTitles(value):
   titles = titles[:-1] # trim that last newline
   return titles
 
+def selColor(caller,target,title = "Choose a color"):
+  a = gtk.gdk.color_parse(target.get_text())
+  d = gtk.ColorSelectionDialog(title)
+  c = d.colorsel
+  c.set_current_color(a)
+  rsp = d.run()
+  if rsp == gtk.RESPONSE_OK:
+    a = c.get_current_color().to_string()
+    b = "#%s%s%s%s%s%s" % (a[1],a[2],a[5],a[6],a[9],a[10])
+    b = b.upper()
+    target.set_text(b)
+    setBack(None,target,gtk.STATE_NORMAL,b)
+  d.destroy()
+  return
+
+def setBack(caller,target,state,color = None):
+  if color == None:
+    try:
+      color = target.get_text()
+    except:
+      color = "#FFFFFF"
+  print "%s called setBack with %s" % (caller,color)
+  target.modify_base(state,gtk.gdk.color_parse(color)) # change background
+
 def setStories(caller,data,fileid,x,parent):
   name = getInf(data,["info","commonname"])
   cat = data.get("cat")

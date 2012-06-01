@@ -1,3 +1,7 @@
+2012-06-01:
+- options: background color fields preview chosen color
+- options: added color picker buttons for background colors
+
 2012-05-31:
 - Fixed a len(None) check
 - Added option to auto-set stories value in new record if realm has only one story
