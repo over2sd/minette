@@ -1,6 +1,7 @@
 2012-06-01:
 - options: background color fields preview chosen color
 - options: added color picker buttons for background colors
+- That feature I added yesterday, to auto-set stories value? It works now.
 
 2012-05-31:
 - Fixed a len(None) check

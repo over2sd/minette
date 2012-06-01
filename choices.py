@@ -1,8 +1,11 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
+from debug import printPretty
+
 import backends
 from globdata import (config,stories,relsP,relsL)
+from status import status
 import os
 
 def allGenders(order = 0):
@@ -161,16 +164,17 @@ def saveStories(realmdir):
   else:
     bsay(None,"The path %s does not exist.")
 
-def storyDefault(target):
+def storyDefault(target,rd):
   global config
   global status
   s = {}
-  s = myStories()
-  if s == {} or len(s) != 1 or config[defaultstory] == False: return
-  k = []
-  k.append(s.keys())
-  m = "Single-story Realm. Setting stories value to %s. To prevent this, use the story editor to add stories to the realm, or change the setting in the options dialog."
+  s = myStories(rd)
+  if s == {} or len(s) != 1 or config['defaultstory'] == False: return
+  k = s.keys()
+  printPretty(k)
+  v = k[0]
+  m = "Single-story Realm. Setting stories value to %s. To prevent this, use the story editor to add stories to the realm, or change the setting in the options dialog." % v
   status.push(0,m)
   print m
-  target.set_text(k[0])
+  target.set_text(v)
   return

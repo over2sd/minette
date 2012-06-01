@@ -113,7 +113,7 @@ def initPinfo(self, fileid,psalts):
   self.s1.show()
   self.stories = buildarow(scroll,"Stories:",people.get(fileid),fileid,'stories',psalts,2)
   self.add(self.stories)
-  
+  storyDefault(self.stories.e,config['realmdir'])
   self.mention = buildarow(scroll,"First Mention:",people.get(fileid),fileid,'mention',psalts)
   self.add(self.mention)
   self.appearch = buildarow(scroll,"First appeared (chron):",people.get(fileid),fileid,'appear1ch',psalts)
