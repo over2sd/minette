@@ -11,7 +11,7 @@ from choices import (allGenders, storyDefault)
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
 displayStage1,displayStage2,addLoadSubmenuItem,getFileid,addLocButton,placeCalendarButton,\
-preRead,ageText,getCat)
+preRead,ageText,getCat,buildaspectrow)
 from debug import (printPretty,lineno)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import (people,places,cities,states,items,orgs)
@@ -174,7 +174,7 @@ def initPinfo(self, fileid,psalts):
   self.add(self.mole)
   self.hobby = buildarow(scroll,"Hobby:",people.get(fileid),fileid,'hobby',psalts)
   self.add(self.hobby)
-  self.aspects = buildaspectrow(scroll,people.get(fileid),fileid)
+  self.aspects = buildaspectrow(scroll,people.get(fileid),fileid,psalts) # ,display = 0)
   self.add(self.aspects)
   self.l9 = gtk.Label("Miscellany")
   self.l9.set_alignment(0,1)

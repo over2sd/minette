@@ -39,7 +39,7 @@ def prettyXML(root):
   out = "\n"
   for i in range(len(root)):
     if root[i].tag is not None:
-      if root[i].tag in ["relat","formocc","currocc","events"]:
+      if root[i].tag in ["relat","formocc","currocc","events","aspects"]:
         specialtext = "\n"
         for j in root[i]:
           if j.tag == "events":
@@ -58,6 +58,14 @@ def prettyXML(root):
             for k in j:
               mtext = "\n"
               if config['printemptyXMLtags'] or len(k.text) > 2:
+                etext += wrapelement(k.tag,k.text,3)
+            if config['printemptyXMLtags'] or len(etext) > 2:
+              specialtext += wrapelement(j.tag,etext,2)
+          elif j.tag == "aspects":
+            etext = "\n"
+            for k in j:
+              mtext = "\n"
+              if config['printemptyXMLtags'] or len(k.text) > 0:
                 etext += wrapelement(k.tag,k.text,3)
             if config['printemptyXMLtags'] or len(etext) > 2:
               specialtext += wrapelement(j.tag,etext,2)

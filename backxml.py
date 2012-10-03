@@ -178,11 +178,11 @@ def loadCity(fileid):
   cityname = ""
   dinf['m'] = {}
   dinf['m']['events'] = {}
-  dinf['aspects'] = {}
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
   tags = ["name","state","statefile","start","scue","end","ecue","place","aspects"]
   for tag in tags:
     dinf[tag] = ["",False]
+  dinf['aspects'] = {}
   if not dinf.get("places"): dinf['places'] = {}
   if not idExists(fileid):
     status.push(0,"new city created... '%s'" % fileid)
@@ -817,23 +817,18 @@ def saveCity(fileid,data):
         city.append(events)
       else:
         print "no events found"
-
-
-#       822       #
+#       820       #
     elif tag == "aspects":
       nodes = info.get("aspects")
       if nodes is not None:
         aspects = etree.Element("aspects")
-        for node in range(len(nodes)):
-          connected = etree.Element("text")
-          if nodes[node] is None: value = ['',False]
-          etree.SubElement(connected,"text").text = value[0]
-          aspects.append(connected)
-          city.append(aspects)
+        for node in sorted(nodes.keys()):
+          value = nodes[node]
+          if value is None: value = ['',False]
+          etree.SubElement(aspects,"text").text = value[0]
+        city.append( aspects )
       else:
           print "no aspects found"
-
-
 
     elif tag == "update":
       etree.SubElement(city,tag).text = common.skrTimeStamp(config['datestyle'])
@@ -912,24 +907,18 @@ def savePerson(fileid,data):
               events.append(mstone)
           occ.append(events)
         person.append( occ )
-
-
-
-#       822       #
+#       820       #
     elif tag == "aspects":
       nodes = info.get("aspects")
       if nodes is not None:
         aspects = etree.Element("aspects")
-        for node in range(len(nodes)):
-          connected = etree.Element("text")
-          if nodes[node] is None: value = ['',False]
-          etree.SubElement(connected,"text").text = value[0]
-          aspects.append(connected)
-          person.append(aspects)
+        for node in sorted(nodes.keys()):
+          value = nodes[node]
+          if value is None: value = ['',False]
+          etree.SubElement(aspects,"text").text = value[0]
+        person.append( aspects )
       else:
           print "no aspects found"
-
-
 
     elif tag == "update":
       etree.SubElement(person,tag).text = common.skrTimeStamp(config['datestyle'])
@@ -998,24 +987,18 @@ def savePlace(fileid,data):
                 place.append(note)
       else:
         print "no notes"
-
-
-
-#       822       #
+#       820       #
     elif tag == "aspects":
       nodes = info.get("aspects")
       if nodes is not None:
         aspects = etree.Element("aspects")
-        for node in range(len(nodes)):
-          connected = etree.Element("text")
-          if nodes[node] is None: value = ['',False]
-          etree.SubElement(connected,"text").text = value[0]
-          aspects.append(connected)
-          place.append(aspects)
+        for node in sorted(nodes.keys()):
+          value = nodes[node]
+          if value is None: value = ['',False]
+          etree.SubElement(aspects,"text").text = value[0]
+        place.append( aspects )
       else:
           print "no aspects found"
-
-
 
     elif tag == "update":
       etree.SubElement(place,tag).text = common.skrTimeStamp(config['datestyle'])
@@ -1035,7 +1018,7 @@ def saveState(fileid,data):
   fn = fileid + ".xml"
   state = etree.Element("state")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","start","scue","end","ecue","cities","events","update"]
+  tags = ["name","start","scue","end","ecue","cities","events","aspects","update"]
   for tag in tags:
     if tag == "cities":
       nodes = info.get("cities")
@@ -1076,24 +1059,18 @@ def saveState(fileid,data):
         state.append(events)
       else:
         print "no events found"
-
-
-
-#       822       #
+#       820       #
     elif tag == "aspects":
       nodes = info.get("aspects")
       if nodes is not None:
         aspects = etree.Element("aspects")
-        for node in range(len(nodes)):
-          connected = etree.Element("text")
-          if nodes[node] is None: value = ['',False]
-          etree.SubElement(connected,"text").text = value[0]
-          aspects.append(connected)
-          state.append(aspects)
+        for node in sorted(nodes.keys()):
+          value = nodes[node]
+          if value is None: value = ['',False]
+          etree.SubElement(aspects,"text").text = value[0]
+        state.append( aspects )
       else:
           print "no aspects found"
-
-
 
     elif tag == "update":
       etree.SubElement(state,tag).text = common.skrTimeStamp(config['datestyle'])
@@ -1145,3 +1122,18 @@ def updateLocs(cityname,locfile,statefile):
     lockeys["%s, %s" % (cityname,statename)] = locfile
     cityloc = [cityname,statefile,statename]
     locs[locfile] = cityloc
+
+def xmlementSpy(root):
+  for i in range(len(root)):
+    if root[i].tag is not None:
+      if root[i].text is None:
+        for j in range(len(root[i])):
+          if root[i][j].tag is not None:
+            if root[i][j].text is None:
+              for k in range(len(root[i][j])):
+                if root[i][j][k].tag is not None:
+                  print "%s=>%s->%s: %s" % (root[i].tag,root[i][j].tag,root[i][j][k].tag,root[i][j][k].text)
+            else:
+              print "%s->%s: %s" % (root[i].tag,root[i][j].tag,root[i][j].text)
+      else:
+        print "%s: %s" % (root[i].tag,root[i].text)

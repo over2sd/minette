@@ -187,6 +187,7 @@ def chooseCity(caller,format,kwargs):
       data['info'][statekey] = [loc[4],True]
       data['info'][statefilekey] = [loc[3],True]
       data['changed'] = True
+  entry.grab_focus() # This will trigger the entry field to check for changed even if the user clicks save immediately after accepting the askCity dialog.
 
 def dateChoose(caller,target,data,path,alts,kwargs = {}):
   nomark = False
@@ -877,6 +878,33 @@ def buildaposition(scroll,data,fileid,key,alts): #only applicable to people, but
     (x,y,width,height) = r.get_allocation()
     t.addmile.connect("clicked",addMilestone,scroll,t,data,fileid,"info",key,width)
   return t
+
+def buildaspectrow(scroll,data,fileid,alts,display = 0):
+  row = gtk.HBox()
+  row.col = gtk.VBox()
+  row.label = gtk.Label("Aspects: ")
+  row.label.set_width_chars(20)
+  row.label.set_alignment(1,0)
+  row.show()
+  row.col.show()
+  row.label.show()
+  row.pack_start(row.label,False,False,2)
+  row.pack_start(row.col,True,True,2)
+  a = data['info'].get("aspects",{})
+  if (a == {}):
+    data['info']['aspects']['0'] = ['',False]
+    data['info']['aspects']['1'] = ['',False]
+    data['info']['aspects']['2'] = ['',False]
+  row.al = {}
+  for x in sorted(a.keys()):
+    value = getInf(data,["info","aspects",x])
+    row.al[x] = gtk.Entry()
+    row.al[x].set_text(value)
+    row.al[x].show()
+    row.col.pack_start(row.al[x],1,1,1)
+    extraargs = [x,]
+    activateInfoEntry(row.al[x],alts,scroll,data,fileid,"aspects",len(extraargs),extraargs)
+  return row
 
 def addMilestone(caller,scroll,alts,target,data,fileid,side,key,boxwidth):
   i = 0

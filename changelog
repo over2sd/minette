@@ -1,3 +1,7 @@
+2012-10-03:
+- Added display, fixed saving of aspects to person, city.
+- Fixed a bug where origin field in person record wouldn't save the new value unless the field was selected and deselected.
+
 2012-10-02:
 - Added aspect fields to all primary record types. (loading, and theoretically saving - displaying/editing still TODO.)
 - Fixed an error in buildaposition() that was truncating event text.

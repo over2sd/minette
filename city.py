@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadCity,idExists,saveCity,getStateList,updateLocs,getPlacesIn,pushLoc,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged,getFileid,preRead,addMilestone)
+say,bsay,kill,markChanged,getFileid,preRead,addMilestone,buildaspectrow)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (cities,places,worldList,config)
@@ -236,6 +236,8 @@ def initCinfo(self, fileid,tabs,ctalts):
   activateInfoEntry(ecue,ctalts,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
+  self.aspects = buildaspectrow(scroll,cities.get(fileid),fileid,ctalts) # ,display = 0)
+  self.add(self.aspects)
   self.notebox = gtk.VBox()
   self.notebox.show()
   self.pack_start(self.notebox,True,False,2)
