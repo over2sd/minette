@@ -238,6 +238,16 @@ def initCinfo(self, fileid,tabs,ctalts):
   self.pack_start(row,False,False,2)
   self.aspects = buildaspectrow(scroll,cities.get(fileid),fileid,ctalts) # ,display = 0)
   self.add(self.aspects)
+  '''
+	Population
+	Major products/industries
+	Major landmarks (list?)
+	Primary power
+	Secondary powers
+	Demographics/Main race
+	Districts (notebox)
+	History?
+'''
   self.notebox = gtk.VBox()
   self.notebox.show()
   self.pack_start(self.notebox,True,False,2)

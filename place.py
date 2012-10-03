@@ -10,7 +10,7 @@ from backends import (loadPlace, savePlace, config, writeListFile, idExists,worl
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
-displayStage2,dateChoose,getFileid,addLocButton)
+displayStage2,dateChoose,getFileid,addLocButton,buildaspectrow)
 from debug import printPretty
 from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
@@ -284,6 +284,8 @@ def initLinfo(self, fileid,plalts):
   activateInfoEntry(ecue,plalts,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
+  self.aspects = buildaspectrow(scroll,places.get(fileid),fileid,plalts) # ,display = 0)
+  self.add(self.aspects)
   label = gtk.Label("Stories")
   label.set_alignment(0,0)
   label.show()

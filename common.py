@@ -891,10 +891,9 @@ def buildaspectrow(scroll,data,fileid,alts,display = 0):
   row.pack_start(row.label,False,False,2)
   row.pack_start(row.col,True,True,2)
   a = data['info'].get("aspects",{})
-  if (a == {}):
-    data['info']['aspects']['0'] = ['',False]
-    data['info']['aspects']['1'] = ['',False]
-    data['info']['aspects']['2'] = ['',False]
+  if (a == {} or len(a) < 1): data['info']['aspects']['0'] = ['',False]
+  if (len(a) < 2): data['info']['aspects']['1'] = ['',False]
+  if (len(a) < 3): data['info']['aspects']['2'] = ['',False]
   row.al = {}
   for x in sorted(a.keys()):
     value = getInf(data,["info","aspects",x])

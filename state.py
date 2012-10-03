@@ -10,7 +10,7 @@ from math import floor
 from backends import (loadState,idExists,saveState,pushLoc,getCitiesIn,getCityList)
 from common import (addLoadSubmenuItem,displayStage1,displayStage2,askBox,\
 validateFileid,buildarow,getInf,scrollOnTab,activateInfoEntry,placeCalendarButton,\
-say,bsay,kill,markChanged, getFileid,addMilestone)
+say,bsay,kill,markChanged, getFileid,addMilestone,buildaspectrow)
 from debug import printPretty
 from getmod import recordSelectBox
 from globdata import (states,cities,worldList,config)
@@ -179,7 +179,7 @@ def initSinfo(self, fileid,tabs,stalts):
   except KeyError as e:
     print "initSinfo: An error occurred accessing %s: %s" % (fileid,e)
     return
-  label = gtk.Label("State:")
+  label = gtk.Label("General")
   label.set_alignment(0,0)
   label.show()
   self.pack_start(label,0,0,1)
@@ -236,6 +236,29 @@ def initSinfo(self, fileid,tabs,stalts):
   activateInfoEntry(ecue,stalts,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
+  '''
+	Vitals:
+		State (i.e., empire, kingdom, republic, grand tribe)
+		Adjective (Florida businesses)
+		People (Floridians)
+		Head of state (Governor)
+		Capital (Tallahassee)
+		Population
+		Major resources
+	Politics:
+		Capital governance
+		Foreign relations
+		Organization (general)
+	Culture
+		Expected behaviors
+		Rumors
+	History
+	Geography
+	Economy
+	Demographics
+'''
+  self.aspects = buildaspectrow(scroll,states.get(fileid),fileid,stalts) # ,display = 0)
+  self.add(self.aspects)
   self.notebox = gtk.VBox()
   self.notebox.show()
   self.pack_start(self.notebox,True,False,2)
