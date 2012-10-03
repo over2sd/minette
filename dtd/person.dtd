@@ -37,7 +37,7 @@
 <!ELEMENT nameorder ( #CDATA ) >
 <!ELEMENT origin ( #PCDATA ) >
 <!ELEMENT other ( #PCDATA ) >
-<!ELEMENT person ( commonname?, ctitle?, gname?, mname?, fname?, nname?, nameorder?, gender?, bday?, dday?, stories?, mention?, appear1ch?, appear1wr?, conflict?, leadrel?, bodytyp?, age?, skin?, eyes?, hair?, dmarks?, dress?, attposs?, asmell?, personality?, speech?, formocc?, currocc?, strength?, weak?, mole?, hobby?, misc?, ethnic?, origin?, backstory?, residence?, minchar?, talent?, abil?, sgoal?, other?, relat?, update? ) >
+<!ELEMENT person ( commonname?, ctitle?, gname?, mname?, fname?, nname?, nameorder?, gender?, bday?, dday?, stories?, mention?, appear1ch?, appear1wr?, conflict?, leadrel?, bodytyp?, age?, skin?, eyes?, hair?, dmarks?, dress?, attposs?, asmell?, personality?, speech?, formocc?, currocc?, strength?, weak?, mole?, hobby?, misc?, ethnic?, origin?, backstory?, residence?, minchar?, talent?, abil?, sgoal?, other?, relat?, aspects?, update? ) >
 <!ELEMENT personality ( #PCDATA ) >
 <!ELEMENT pos ( #PCDATA ) >
 <!ELEMENT relat ( related, relation, file?, rtype, events*, cat, realm? ) >
@@ -57,3 +57,5 @@
 <!ELEMENT type ( #PCDATA ) >
 <!ELEMENT weak ( #PCDATA ) >
 <!ELEMENT update ( #PCDATA )>
+<!ELEMENT aspects ( text* )>
+<!ELEMENT text ( #CDATA )>

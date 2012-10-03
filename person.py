@@ -174,6 +174,8 @@ def initPinfo(self, fileid,psalts):
   self.add(self.mole)
   self.hobby = buildarow(scroll,"Hobby:",people.get(fileid),fileid,'hobby',psalts)
   self.add(self.hobby)
+  self.aspects = buildaspectrow(scroll,people.get(fileid),fileid)
+  self.add(self.aspects)
   self.l9 = gtk.Label("Miscellany")
   self.l9.set_alignment(0,1)
   self.l9.show()

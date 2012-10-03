@@ -178,8 +178,9 @@ def loadCity(fileid):
   cityname = ""
   dinf['m'] = {}
   dinf['m']['events'] = {}
+  dinf['aspects'] = {}
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","state","statefile","start","scue","end","ecue","place"]
+  tags = ["name","state","statefile","start","scue","end","ecue","place","aspects"]
   for tag in tags:
     dinf[tag] = ["",False]
   if not dinf.get("places"): dinf['places'] = {}
@@ -235,7 +236,20 @@ def loadCity(fileid):
           if config['debug'] > 3: printPretty(dinf['m']['events'])
         else: # no relat length
           if config['debug'] > 0: print "Empty milestone tag."
-
+      elif root[i].tag == "aspects":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['aspects']))
+            dinf['aspects'][k] = {}
+            if node.tag and node.text:
+              dinf['aspects'][k] = [node.text.strip(),False]
+            else:
+              if config['debug'] > 0:
+                print "Invalid aspects tag:"
+                print node.tag + ': ' + node.text,
+        else: # no aspects length
+          if config['debug'] > 0: print "Empty aspects tag."
       elif root[i].text is not None:
         if root[i].tag == "statefile":
           statefile = root[i].text.strip()
@@ -260,7 +274,7 @@ def loadPerson(fileid):
   root = etree.Element("person")
   text = None
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["commonname", "ctitle", "gname", "mname", "fname", "nname", "nameorder", "gender", "bday", "dday", "stories", "mention", "appear1ch", "appear1wr", "conflict", "leadrel", "bodytyp", "age", "skin", "eyes", "hair", "dmarks", "dress", "attposs", "asmell", "personality", "speech", "formocc", "currocc", "strength", "weak", "mole", "hobby", "misc", "ethnic", "origin", "backstory", "residence", "minchar", "talent", "abil", "sgoal", "other", "relat", "update"]
+  tags = ["commonname", "ctitle", "gname", "mname", "fname", "nname", "nameorder", "gender", "bday", "dday", "stories", "mention", "appear1ch", "appear1wr", "conflict", "leadrel", "bodytyp", "age", "skin", "eyes", "hair", "dmarks", "dress", "attposs", "asmell", "personality", "speech", "formocc", "currocc", "strength", "weak", "mole", "hobby", "misc", "ethnic", "origin", "backstory", "residence", "minchar", "talent", "abil", "sgoal", "other", "relat", "aspects", "update"]
   tags.remove("currocc")
   tags.remove("formocc")
   tags.remove("relat")
@@ -271,6 +285,7 @@ def loadPerson(fileid):
   dinf['currocc']['pos'] = ["",False]
   dinf['formocc'] = {}
   dinf['formocc']['pos'] = ["",False]
+  dinf['aspects'] = {}
   events = {}
   events['0'] = {}
   events['0']['date'] = ["",False]
@@ -391,6 +406,20 @@ def loadPerson(fileid):
           events['0']['date'] = ["",False]
           events['0']['event'] = ["",False]
           dinf['formocc']['events'] = events
+      elif root[i].tag == "aspects":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['aspects']))
+            dinf['aspects'][k] = {}
+            if node.tag and node.text:
+              dinf['aspects'][k] = [node.text.strip(),False]
+            else:
+              if config['debug'] > 0:
+                print "Invalid aspects tag:"
+                print node.tag + ': ' + node.text,
+        else: # no aspects length
+          if config['debug'] > 0: print "Empty aspects tag."
       elif root[i].text is not None:
 #        print ".",
         dinf[root[i].tag] = [root[i].text.strip(), False]
@@ -420,6 +449,7 @@ def loadPlace(fileid):
   for tag in tags:
     dinf[tag] = ["",False]
   # if no relations or notes, leave blank
+  dinf['aspects'] = {}
   if not idExists(fileid):
     status.push(0,"new place created... '%s'" % fileid)
     return (dinf,drel)
@@ -471,6 +501,20 @@ def loadPlace(fileid):
           dinf['notes'][x]['date'] = [root[i].find("date").text.strip(),False]
 #      elif root[i].tag == "formocc":
 #        print ",",
+      elif root[i].tag == "aspects":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['aspects']))
+            dinf['aspects'][k] = {}
+            if node.tag and node.text:
+              dinf['aspects'][k] = [node.text.strip(),False]
+            else:
+              if config['debug'] > 0:
+                print "Invalid aspects tag:"
+                print node.tag + ': ' + node.text,
+        else: # no aspects length
+          if config['debug'] > 0: print "Empty aspects tag."
       elif root[i].text is not None:
         if root[i].tag == "statefile":
           statef = root[i].text.strip()
@@ -502,12 +546,13 @@ def loadState(fileid):
   statename = ""
   statefile = ""
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","start","scue","end","ecue"]
+  tags = ["name","start","scue","end","ecue","aspects","update"]
   for tag in tags:
     dinf[tag] = ["",False]
   dinf['cities'] = {}
   dinf['m'] = {}
   dinf['m']['events'] = {}
+  dinf['aspects'] = {}
   if not idExists(fileid):
     status.push(0,"new state created... '%s'" % fileid)
     return dinf
@@ -561,6 +606,21 @@ def loadState(fileid):
           if config['debug'] > 3: printPretty(dinf['m']['events'])
         else: # no relat length
           if config['debug'] > 0: print "Empty milestone tag."
+
+      elif root[i].tag == "aspects":
+        if len(root[i]) > 0:
+          nodes = root[i]
+          for node in nodes:
+            k = str(len(dinf['aspects']))
+            dinf['aspects'][k] = {}
+            if node.tag and node.text:
+              dinf['aspects'][k] = [node.text.strip(),False]
+            else:
+              if config['debug'] > 0:
+                print "Invalid aspects tag:"
+                print node.tag + ': ' + node.text,
+        else: # no aspects length
+          if config['debug'] > 0: print "Empty aspects tag."
 
       elif root[i].text is not None:
         dinf[root[i].tag] = [root[i].text.strip(), False]
@@ -714,7 +774,7 @@ def saveCity(fileid,data):
   fn = fileid + ".xml"
   city = etree.Element("city")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","state","statefile","start","scue","end","ecue","events","places","update"]
+  tags = ["name","state","statefile","start","scue","end","ecue","events","places","aspects","update"]
   for tag in tags:
     if tag == "places":
       nodes = info.get("places")
@@ -757,6 +817,24 @@ def saveCity(fileid,data):
         city.append(events)
       else:
         print "no events found"
+
+
+#       822       #
+    elif tag == "aspects":
+      nodes = info.get("aspects")
+      if nodes is not None:
+        aspects = etree.Element("aspects")
+        for node in range(len(nodes)):
+          connected = etree.Element("text")
+          if nodes[node] is None: value = ['',False]
+          etree.SubElement(connected,"text").text = value[0]
+          aspects.append(connected)
+          city.append(aspects)
+      else:
+          print "no aspects found"
+
+
+
     elif tag == "update":
       etree.SubElement(city,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
@@ -776,7 +854,7 @@ def savePerson(fileid,data):
   fn = fileid + ".xml"
   person = etree.Element("person")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["commonname", "ctitle", "gname", "mname", "fname", "nname", "nameorder", "gender", "bday", "dday", "stories", "mention", "appear1ch", "appear1wr", "conflict", "leadrel", "bodytyp", "age", "skin", "eyes", "hair", "dmarks", "dress", "attposs", "asmell", "personality", "speech", "formocc", "currocc", "strength", "weak", "mole", "hobby", "misc", "ethnic", "origin", "backstory", "residence", "minchar", "talent", "abil", "sgoal", "other", "relat", "update"]
+  tags = ["commonname", "ctitle", "gname", "mname", "fname", "nname", "nameorder", "gender", "bday", "dday", "stories", "mention", "appear1ch", "appear1wr", "conflict", "leadrel", "bodytyp", "age", "skin", "eyes", "hair", "dmarks", "dress", "attposs", "asmell", "personality", "speech", "formocc", "currocc", "strength", "weak", "mole", "hobby", "misc", "ethnic", "origin", "backstory", "residence", "minchar", "talent", "abil", "sgoal", "other", "relat", "aspects", "update"]
   reltags = ["related", "relation", "file", "rtype", "events", "cat", "realm"]
   for tag in tags:
     if tag == "relat":
@@ -834,6 +912,25 @@ def savePerson(fileid,data):
               events.append(mstone)
           occ.append(events)
         person.append( occ )
+
+
+
+#       822       #
+    elif tag == "aspects":
+      nodes = info.get("aspects")
+      if nodes is not None:
+        aspects = etree.Element("aspects")
+        for node in range(len(nodes)):
+          connected = etree.Element("text")
+          if nodes[node] is None: value = ['',False]
+          etree.SubElement(connected,"text").text = value[0]
+          aspects.append(connected)
+          person.append(aspects)
+      else:
+          print "no aspects found"
+
+
+
     elif tag == "update":
       etree.SubElement(person,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
@@ -854,7 +951,7 @@ def savePlace(fileid,data):
   place = etree.Element("place")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
   tags = ["commonname","name","start","scue","end","ecue","stories","mention","desc","address","loc","locfile","state",\
-"statefile","note", "relat","update"]
+"statefile","note", "relat", "aspects", "update"]
   reltags = ["related", "relation", "file", "rtype", "events", "cat", "realm"]
   for tag in tags:
     if tag == "relat":
@@ -901,6 +998,25 @@ def savePlace(fileid,data):
                 place.append(note)
       else:
         print "no notes"
+
+
+
+#       822       #
+    elif tag == "aspects":
+      nodes = info.get("aspects")
+      if nodes is not None:
+        aspects = etree.Element("aspects")
+        for node in range(len(nodes)):
+          connected = etree.Element("text")
+          if nodes[node] is None: value = ['',False]
+          etree.SubElement(connected,"text").text = value[0]
+          aspects.append(connected)
+          place.append(aspects)
+      else:
+          print "no aspects found"
+
+
+
     elif tag == "update":
       etree.SubElement(place,tag).text = common.skrTimeStamp(config['datestyle'])
     else:
@@ -960,6 +1076,25 @@ def saveState(fileid,data):
         state.append(events)
       else:
         print "no events found"
+
+
+
+#       822       #
+    elif tag == "aspects":
+      nodes = info.get("aspects")
+      if nodes is not None:
+        aspects = etree.Element("aspects")
+        for node in range(len(nodes)):
+          connected = etree.Element("text")
+          if nodes[node] is None: value = ['',False]
+          etree.SubElement(connected,"text").text = value[0]
+          aspects.append(connected)
+          state.append(aspects)
+      else:
+          print "no aspects found"
+
+
+
     elif tag == "update":
       etree.SubElement(state,tag).text = common.skrTimeStamp(config['datestyle'])
     else:

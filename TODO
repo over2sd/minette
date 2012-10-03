@@ -9,3 +9,6 @@ Fix bug: New Realm should not ask for info twice (fixed?)
 design: put a rule at the end of each scrolling page, marked 30, or with # of changes?
 debug: make printPretty sort keys in dictionaries so the output is consistent
 backend: check for paths relative to ~
+add fields from OP wiki cities/nations to city/state records
+add record aspects
+add hover tooltips

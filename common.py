@@ -865,7 +865,6 @@ def buildaposition(scroll,data,fileid,key,alts): #only applicable to people, but
         datebut.connect("clicked",dateChoose,rda,data,path)
         r.pack_start(datebut,0,0,2)
         value = getInf(data,["info",key,"events",str(i),"event"])
-        if value: value = value[0]
         rev = gtk.Entry()
         extraargs = ["events",str(i),"event"]
         activateInfoEntry(rev,alts,scroll,people.get(fileid),fileid,key,len(extraargs),extraargs)
