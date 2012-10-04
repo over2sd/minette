@@ -6,9 +6,9 @@ Fix saving of state's cities list
 Make state save milestones in date order
 New Realm creates directory if it doesn't exist
 Fix bug: New Realm should not ask for info twice (fixed?)
-design: put a rule at the end of each scrolling page, marked 30, or with # of changes?
 debug: make printPretty sort keys in dictionaries so the output is consistent
 backend: check for paths relative to ~
 add fields to city/state records (listed in comments)
 add record aspects option e.g., "States have aspects" checkbox, etc.
 add hover tooltips
+Ctrl-Q should ask about unsaved changes.

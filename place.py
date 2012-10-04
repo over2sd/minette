@@ -10,7 +10,7 @@ from backends import (loadPlace, savePlace, config, writeListFile, idExists,worl
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,activateNoteEntry,\
 skrTimeStamp,addLoadSubmenuItem,expandTitles,placeCalendarButton,preRead,displayStage1,\
-displayStage2,dateChoose,getFileid,addLocButton,buildaspectrow)
+displayStage2,dateChoose,getFileid,addLocButton,buildaspectrow,setRuletext)
 from debug import printPretty
 from getmod import (getPlaceConnections,recordSelectBox)
 from globdata import (config,places,worldList)
@@ -20,7 +20,7 @@ from story import (storyPicker,)
 from choices import allPlaceCats
 """
 
-def addNote(caller,scroll,plalts,target,fileid,dval = None,cval = None,i = 0):
+def addNote(caller,scroll,ar,plalts,target,fileid,dval = None,cval = None,i = 0):
   path = [fileid,"info","notes"]
   if not preRead(True,'l',path,3):
     return
@@ -45,7 +45,7 @@ def addNote(caller,scroll,plalts,target,fileid,dval = None,cval = None,i = 0):
   if cval: content.set_text(cval)
   row.pack_end(content,1,1,2)
   target.pack_start(row,False,False,2)
-  activateNoteEntry(content,plalts, scroll, data, fileid,i,date)
+  activateNoteEntry(content,ar,plalts, scroll, data, fileid,i,date)
 
 def addPlaceMenu(self,target):
   itemL = gtk.MenuItem("_Landmark",True)
@@ -99,7 +99,7 @@ def addPlaceSubmenu(tabs,ll,places):
     menu_items.connect("activate",displayPlace,i,tabs)
     menu_items.show()
 
-def addRelToBox(self,target,relid,fileid,tabs,scroll,plalts):
+def addRelToBox(self,target,relid,fileid,tabs,scroll,ar,plalts):
   global places
   cat = relid[1]
   relid = relid[0]
@@ -144,7 +144,7 @@ def addRelToBox(self,target,relid,fileid,tabs,scroll,plalts):
       # Realm needs to be addressed in the DTD for XML files... not sure if it's hierarchically higher than relat or not, or if realm should just reference connections, rather than be part of their tree (people[fileid]['realm'][realm] = [list,of,relids])
       places[fileid]['relat'][relid]['events'] = {}
       places[fileid]['changed'] = True
-      listRel(target,plalts,places[fileid]['relat'][relid],fileid,relid,scroll,tabs)
+      listRel(target,ar,plalts,places[fileid]['relat'][relid],fileid,relid,scroll,tabs)
     else:
       bsay(self,"Not clobbering existing connection to %s!" % relid)
       return
@@ -167,11 +167,11 @@ def buildLocRow(data,fileid):
   addLocButton(row,1,entry=loc,cat='l',city="loc",cityfile="locfile",state="state",statefile="statefile",data=data)
   return row
 
-def connectToPlace(parent,target,tabs,scroll,fileid,plalts,title = ""):
+def connectToPlace(parent,target,tabs,scroll,fileid,ar,plalts,title = ""):
   global status
   relid = recordSelectBox(None,fileid,title,['l','p']) # TODO: organizations?
   if relid and len(relid[1]):
-    addRelToBox(parent,target,relid,fileid,tabs,scroll,plalts)
+    addRelToBox(parent,target,relid,fileid,tabs,scroll,ar,plalts)
     status.push(0,"Added connection to %s on %s" % (relid[0],fileid))
   else:
     status.push(0,"Adding connection on %s cancelled" % fileid)
@@ -205,12 +205,17 @@ def displayPlace(callingWidget,fileid, tabrow):
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initLinfo(tabrow.vbox.ftabs.infpage, fileid,plalts)
-  initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow,plalts)
+  ar = gtk.Label()
+  ar.show()
+  ar.set_alignment(0.5,0.5)
+  setRuletext(ar,len(plalts))
+  tabrow.vbox.pack_end(ar,0,0,2)
+  initLinfo(tabrow.vbox.ftabs.infpage, fileid,ar,plalts)
+  initLrels(tabrow.vbox.ftabs.relpage, fileid,tabrow,ar,plalts)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   places[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
-def initLinfo(self, fileid,plalts):
+def initLinfo(self, fileid,ar,plalts):
   data = {}
   scroll = self.get_parent()
   try:
@@ -229,9 +234,9 @@ def initLinfo(self, fileid,plalts):
   self.s1 = gtk.HSeparator()
   self.pack_start(self.s1,False,False,2)
   self.s1.show()
-  name = buildarow(scroll,"Name:",data,fileid,'name',plalts)
+  name = buildarow(scroll,"Name:",data,fileid,'name',ar,plalts)
   self.pack_start(name,0,0,2)
-  commonname = buildarow(scroll,"Common Name:",data,fileid,'commonname',plalts)
+  commonname = buildarow(scroll,"Common Name:",data,fileid,'commonname',ar,plalts)
   self.pack_start(commonname,0,0,2)
   if commonname.e.get_text() == "" and name.e.get_text() != "":
     commonname.e.set_text(name.e.get_text())
@@ -245,11 +250,11 @@ def initLinfo(self, fileid,plalts):
   start = gtk.Entry(25)
   start.show()
   start.set_text(getInf(data,path))
-  activateInfoEntry(start,plalts,scroll,data,fileid,"start")
+  activateInfoEntry(start,ar,plalts,scroll,data,fileid,"start")
   row.pack_start(start,True,True,2)
   path2 = [fileid,"info"]
   path2.append(path[-1])
-  placeCalendarButton(data,row,start,path2,plalts)
+  placeCalendarButton(data,row,start,path2,plalts,counter=ar)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -257,7 +262,7 @@ def initLinfo(self, fileid,plalts):
   scue.show()
   path[1] = "scue"
   scue.set_text(getInf(data,path))
-  activateInfoEntry(scue,plalts,scroll,data,fileid,"scue")
+  activateInfoEntry(scue,ar,plalts,scroll,data,fileid,"scue")
   row.pack_start(scue,True,True,2)
   self.pack_start(row,False,False,2)
   row = gtk.HBox()
@@ -269,11 +274,11 @@ def initLinfo(self, fileid,plalts):
   end.show()
   path[1] = "end"
   end.set_text(getInf(data,path))
-  activateInfoEntry(end,plalts,scroll,data,fileid,"end")
+  activateInfoEntry(end,ar,plalts,scroll,data,fileid,"end")
   row.pack_start(end,True,True,2)
   path2 = [fileid,"info"]
   path2.append(path[-1])
-  placeCalendarButton(data,row,end,path2,plalts)
+  placeCalendarButton(data,row,end,path2,plalts,counter=ar)
   label = gtk.Label("Cue:")
   label.show()
   row.pack_start(label,False,False,2)
@@ -281,10 +286,10 @@ def initLinfo(self, fileid,plalts):
   ecue.show()
   path[1] = "ecue"
   ecue.set_text(getInf(data,path))
-  activateInfoEntry(ecue,plalts,scroll,data,fileid,"ecue")
+  activateInfoEntry(ecue,ar,plalts,scroll,data,fileid,"ecue")
   row.pack_start(ecue,True,True,2)
   self.pack_start(row,False,False,2)
-  self.aspects = buildaspectrow(scroll,places.get(fileid),fileid,plalts) # ,display = 0)
+  self.aspects = buildaspectrow(scroll,places.get(fileid),fileid,ar,plalts) # ,display = 0)
   self.add(self.aspects)
   label = gtk.Label("Stories")
   label.set_alignment(0,0)
@@ -293,9 +298,9 @@ def initLinfo(self, fileid,plalts):
   self.s1 = gtk.HSeparator()
   self.pack_start(self.s1,False,False,2)
   self.s1.show()
-  self.stories = buildarow(scroll,"Stories:",data,fileid,'stories',plalts,2)
+  self.stories = buildarow(scroll,"Stories:",data,fileid,'stories',ar,plalts,2)
   self.pack_start(self.stories,False,False,2)
-  self.mention = buildarow(scroll,"First Mentions:",data,fileid,'mention',plalts)
+  self.mention = buildarow(scroll,"First Mentions:",data,fileid,'mention',ar,plalts)
   self.pack_start(self.mention,False,False,2)
   self.l7 = gtk.Label("Specifications")
   self.l7.set_alignment(0,1)
@@ -304,9 +309,9 @@ def initLinfo(self, fileid,plalts):
   self.s2 = gtk.HSeparator()
   self.pack_start(self.s2,False,False,2)
   self.s2.show()
-  self.desc = buildarow(scroll,"Description:",data,fileid,'desc',plalts)
+  self.desc = buildarow(scroll,"Description:",data,fileid,'desc',ar,plalts)
   self.pack_start(self.desc,False,False,2)
-  self.address = buildarow(scroll,"Address:",data,fileid,'address',plalts)
+  self.address = buildarow(scroll,"Address:",data,fileid,'address',ar,plalts)
   self.pack_start(self.address,False,False,2)
   self.location = buildLocRow(data,fileid)
   self.pack_start(self.location,False,False,2)
@@ -325,7 +330,7 @@ def initLinfo(self, fileid,plalts):
   image = gtk.Image()
   image.set_from_file("img/add.png")
   newbut.set_image(image)
-  newbut.connect("clicked",addNote,scroll,plalts,notebox,fileid)
+  newbut.connect("clicked",addNote,scroll,ar,plalts,notebox,fileid)
   box = gtk.HBox()
   box.show()
   box.pack_end(newbut,0,0,2)
@@ -345,8 +350,12 @@ def initLinfo(self, fileid,plalts):
       if dval: dval = dval[0]
       if cval: cval = cval[0]
       if dval and cval: addNote(self,scroll,notebox,fileid,dval,cval,i)
+  el = gtk.Label("End of record")
+  el.show()
+  el.set_alignment(1,1)
+  self.pack_start(el,0,0,3)
 
-def initLrels(self, fileid,tabs,plalts):
+def initLrels(self, fileid,tabs,ar,plalts):
   scroll = self.get_parent()
   global places
   global config
@@ -417,7 +426,7 @@ def initLrels(self, fileid,tabs,plalts):
         keys.sort()
         for key in keys:
           r = rels[key]
-          listRel(self,plalts,r,fileid,key,scroll,tabs)
+          listRel(self,ar,plalts,r,fileid,key,scroll,tabs)
     if typed.get("uncat"):
       unname = "Uncategorized/New"
     label = gtk.Label("*** %s ***" % unname)
@@ -433,11 +442,15 @@ def initLrels(self, fileid,tabs,plalts):
       keys.sort()
       for key in keys:
         r = rels[key]
-        listRel(uncatbox,plalts,r,fileid,key,scroll,tabs)
+        listRel(uncatbox,ar,plalts,r,fileid,key,scroll,tabs)
   self.add(uncatbox)
-  self.addbutton.connect("clicked",connectToPlace,uncatbox,tabs,scroll,fileid,plalts,"Connect to " + nameplace)
+  self.addbutton.connect("clicked",connectToPlace,uncatbox,tabs,scroll,fileid,ar,plalts,"Connect to " + nameplace)
+  el = gtk.Label("End of record")
+  el.show()
+  el.set_alignment(1,1)
+  self.pack_start(el,0,0,3)
 
-def listRel(self,plalts,r,fileid,relid,scroll,target = None):
+def listRel(self,ar,plalts,r,fileid,relid,scroll,target = None):
   if not r.get("related"): return
   name = r['related'][0]
   if not r.get("cat"): return
@@ -459,7 +472,7 @@ def listRel(self,plalts,r,fileid,relid,scroll,target = None):
   nameentry = gtk.Entry()
   nameentry.show()
   nameentry.set_text(name)
-  activateRelEntry(nameentry,plalts,scroll,places.get(fileid),fileid,relid,"related")
+  activateRelEntry(nameentry,ar,plalts,scroll,places.get(fileid),fileid,relid,"related")
   row1.pack_start(nameentry,1,1)
   relation = gtk.Label(r['relation'][0])
   relation.show()
@@ -513,7 +526,7 @@ def listRel(self,plalts,r,fileid,relid,scroll,target = None):
         d.set_width_chars(12)
         d.set_text(events['date'][0])
         data = places.get(fileid)
-        activateRelEntry(d,plalts,scroll,data,fileid,relid,"date",i)
+        activateRelEntry(d,ar,plalts,scroll,data,fileid,relid,"date",i)
         rowmile.pack_start(d,1,1,2)
         datebut = gtk.Button()
         datebut.show()
@@ -527,7 +540,7 @@ def listRel(self,plalts,r,fileid,relid,scroll,target = None):
         e.show()
         e.set_width_chars(18)
         e.set_text(events['event'][0])
-        activateRelEntry(e,plalts,scroll,data,fileid,relid,"event",i)
+        activateRelEntry(e,ar,plalts,scroll,data,fileid,relid,"event",i)
         rowmile.pack_start(e,1,1,2)
         row3.add(rowmile)
 

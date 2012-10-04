@@ -1,3 +1,7 @@
+2012-10-04:
+- Added end-of-record markers.
+- Added #-of-changes counter.
+
 2012-10-03:
 - Added display, fixed saving of aspects to person, city, place, state.
 - Fixed a bug where origin field in person record wouldn't save the new value unless the field was selected and deselected.

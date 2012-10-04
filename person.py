@@ -11,7 +11,7 @@ from choices import (allGenders, storyDefault)
 from common import (say,bsay,askBox,validateFileid,askBoxProcessor,kill,buildarow,getInf,\
 activateInfoEntry,activateRelEntry,addMilestone,scrollOnTab,customlabel,expandTitles,\
 displayStage1,displayStage2,addLoadSubmenuItem,getFileid,addLocButton,placeCalendarButton,\
-preRead,ageText,getCat,buildaspectrow)
+preRead,ageText,getCat,buildaspectrow,setRuletext)
 from debug import (printPretty,lineno)
 from getmod import (getPersonConnections,recordSelectBox)
 from globdata import (people,places,cities,states,items,orgs)
@@ -23,7 +23,7 @@ def getit(fileid,key):
   """deprecated function. will be removed eventually."""
   raise NameError("Deprecated function getit")
 
-def initPinfo(self, fileid,psalts):
+def initPinfo(self, fileid,ar,psalts):
   global people
   global config
   info = {}
@@ -54,13 +54,13 @@ def initPinfo(self, fileid,psalts):
   self.ctitle = gtk.Entry(5)
   self.l2 = gtk.Label("Family:")
   self.fname = gtk.Entry(25)
-  activateInfoEntry(self.fname,psalts,scroll,people.get(fileid),fileid,"fname")
+  activateInfoEntry(self.fname,ar,psalts,scroll,people.get(fileid),fileid,"fname")
   self.l3 = gtk.Label("Given:")
   self.gname = gtk.Entry(25)
-  activateInfoEntry(self.gname,psalts,scroll,people.get(fileid),fileid,"gname")
+  activateInfoEntry(self.gname,ar,psalts,scroll,people.get(fileid),fileid,"gname")
   self.l4 = gtk.Label("Middle/Maiden:")
   self.mname = gtk.Entry(25)
-  activateInfoEntry(self.mname,psalts,scroll,people.get(fileid),fileid,"mname")
+  activateInfoEntry(self.mname,ar,psalts,scroll,people.get(fileid),fileid,"mname")
   self.namebox.add(self.l5)
   self.namebox.add(self.ctitle)
   self.ctitle.set_width_chars(4)
@@ -71,7 +71,7 @@ def initPinfo(self, fileid,psalts):
   data = people.get(fileid)
   self.ctitle.set_text(getInf(data,["info","ctitle"]))
   self.ctitle.show()
-  activateInfoEntry(self.ctitle,psalts,scroll,people.get(fileid),fileid,"ctitle")
+  activateInfoEntry(self.ctitle,ar,psalts,scroll,people.get(fileid),fileid,"ctitle")
   if config['familyfirst'] == True:
     self.namebox.add(self.l2)
     self.namebox.add(self.fname)
@@ -94,15 +94,15 @@ def initPinfo(self, fileid,psalts):
   self.l3.show()
   self.l4.show()
   self.l5.show()
-  self.cname = buildarow(scroll,"Common Name:",people.get(fileid),fileid,'commonname',psalts) # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
+  self.cname = buildarow(scroll,"Common Name:",people.get(fileid),fileid,'commonname',ar,psalts) # TODO: Some day, maybe move all these labels into a dict and generate these things algorithmically? What about sections?
   self.add(self.cname)
-  self.nname = buildarow(scroll,"Nickname:",people.get(fileid),fileid,'nname',psalts)
+  self.nname = buildarow(scroll,"Nickname:",people.get(fileid),fileid,'nname',ar,psalts)
   self.add(self.nname)
-  self.gender = buildGenderRow(scroll,people.get(fileid),fileid)
+  self.gender = buildGenderRow(scroll,people.get(fileid),fileid,ar,psalts)
   self.add(self.gender)
-  self.bday = buildarow(scroll,"Birth Date:",people.get(fileid),fileid,'bday',psalts,3)
+  self.bday = buildarow(scroll,"Birth Date:",people.get(fileid),fileid,'bday',ar,psalts,3)
   self.add(self.bday)
-  self.dday = buildarow(scroll,"Death Date:",people.get(fileid),fileid,'dday',psalts,3)
+  self.dday = buildarow(scroll,"Death Date:",people.get(fileid),fileid,'dday',ar,psalts,3)
   self.add(self.dday)
   self.l6 = gtk.Label("Stories")
   self.l6.set_alignment(0,0)
@@ -111,18 +111,18 @@ def initPinfo(self, fileid,psalts):
   self.s1 = gtk.HSeparator()
   self.add(self.s1)
   self.s1.show()
-  self.stories = buildarow(scroll,"Stories:",people.get(fileid),fileid,'stories',psalts,2)
+  self.stories = buildarow(scroll,"Stories:",people.get(fileid),fileid,'stories',ar,psalts,2)
   self.add(self.stories)
   storyDefault(self.stories.e,config['realmdir'])
-  self.mention = buildarow(scroll,"First Mention:",people.get(fileid),fileid,'mention',psalts)
+  self.mention = buildarow(scroll,"First Mention:",people.get(fileid),fileid,'mention',ar,psalts)
   self.add(self.mention)
-  self.appearch = buildarow(scroll,"First appeared (chron):",people.get(fileid),fileid,'appear1ch',psalts)
+  self.appearch = buildarow(scroll,"First appeared (chron):",people.get(fileid),fileid,'appear1ch',ar,psalts)
   self.add(self.appearch)
-  self.appearwr = buildarow(scroll,"First appeared (writ):",people.get(fileid),fileid,'appear1wr',psalts)
+  self.appearwr = buildarow(scroll,"First appeared (writ):",people.get(fileid),fileid,'appear1wr',ar,psalts)
   self.add(self.appearwr)
-  self.conflict = buildarow(scroll,"Conflict:",people.get(fileid),fileid,'conflict',psalts)
+  self.conflict = buildarow(scroll,"Conflict:",people.get(fileid),fileid,'conflict',ar,psalts)
   self.add(self.conflict)
-  self.leadrel = buildarow(scroll,"Relation to lead:",people.get(fileid),fileid,'leadrel',psalts)
+  self.leadrel = buildarow(scroll,"Relation to lead:",people.get(fileid),fileid,'leadrel',ar,psalts)
   self.add(self.leadrel)
   self.l7 = gtk.Label("Physical Appearance")
   self.l7.set_alignment(0,1)
@@ -131,25 +131,25 @@ def initPinfo(self, fileid,psalts):
   self.s2 = gtk.HSeparator()
   self.add(self.s2)
   self.s2.show()
-  self.bodytyp = buildarow(scroll,"Body Type:",people.get(fileid),fileid,'bodytyp',psalts)
+  self.bodytyp = buildarow(scroll,"Body Type:",people.get(fileid),fileid,'bodytyp',ar,psalts)
   self.add(self.bodytyp)
-  self.age = buildarow(scroll,"Age:",people.get(fileid),fileid,'age',psalts)
+  self.age = buildarow(scroll,"Age:",people.get(fileid),fileid,'age',ar,psalts)
   ageText(self.bday.e,self.dday.e,self.age)
   if config['hideage']: self.age.e.hide()
   self.add(self.age)
-  self.skin = buildarow(scroll,"Skin:",people.get(fileid),fileid,'skin',psalts)
+  self.skin = buildarow(scroll,"Skin:",people.get(fileid),fileid,'skin',ar,psalts)
   self.add(self.skin)
-  self.eyes = buildarow(scroll,"Eyes:",people.get(fileid),fileid,'eyes',psalts)
+  self.eyes = buildarow(scroll,"Eyes:",people.get(fileid),fileid,'eyes',ar,psalts)
   self.add(self.eyes)
-  self.hair = buildarow(scroll,"Hair:",people.get(fileid),fileid,'hair',psalts)
+  self.hair = buildarow(scroll,"Hair:",people.get(fileid),fileid,'hair',ar,psalts)
   self.add(self.hair)
-  self.dmarks = buildarow(scroll,"Distinguishing Marks:",people.get(fileid),fileid,'dmarks',psalts)
+  self.dmarks = buildarow(scroll,"Distinguishing Marks:",people.get(fileid),fileid,'dmarks',ar,psalts)
   self.add(self.dmarks)
-  self.dress = buildarow(scroll,"Dress:",people.get(fileid),fileid,'dress',psalts)
+  self.dress = buildarow(scroll,"Dress:",people.get(fileid),fileid,'dress',ar,psalts)
   self.add(self.dress)
-  self.attpos = buildarow(scroll,"Attached Possessions:",people.get(fileid),fileid,'attposs',psalts)
+  self.attpos = buildarow(scroll,"Attached Possessions:",people.get(fileid),fileid,'attposs',ar,psalts)
   self.add(self.attpos)
-  self.asmell = buildarow(scroll,"Associated Smell:",people.get(fileid),fileid,'asmell',psalts)
+  self.asmell = buildarow(scroll,"Associated Smell:",people.get(fileid),fileid,'asmell',ar,psalts)
   self.add(self.asmell)
   self.l8 = gtk.Label("Personality Traits")
   self.l8.set_alignment(0,1)
@@ -158,23 +158,23 @@ def initPinfo(self, fileid,psalts):
   self.s3 = gtk.HSeparator()
   self.add(self.s3)
   self.s3.show()
-  self.pers = buildarow(scroll,"Personality:",people.get(fileid),fileid,'personality',psalts)
+  self.pers = buildarow(scroll,"Personality:",people.get(fileid),fileid,'personality',ar,psalts)
   self.add(self.pers)
-  self.speech = buildarow(scroll,"Distinct Speech:",people.get(fileid),fileid,'speech',psalts)
+  self.speech = buildarow(scroll,"Distinct Speech:",people.get(fileid),fileid,'speech',ar,psalts)
   self.add(self.speech)
-  self.formocc = buildarow(scroll,"Former Occupation:",people.get(fileid),fileid,'formocc',psalts,1)
+  self.formocc = buildarow(scroll,"Former Occupation:",people.get(fileid),fileid,'formocc',ar,psalts,1)
   self.add(self.formocc)
-  self.curocc = buildarow(scroll,"Current Occupation:",people.get(fileid),fileid,'currocc',psalts,1)
+  self.curocc = buildarow(scroll,"Current Occupation:",people.get(fileid),fileid,'currocc',ar,psalts,1)
   self.add(self.curocc)
-  self.strength = buildarow(scroll,"Strengths:",people.get(fileid),fileid,'strength',psalts)
+  self.strength = buildarow(scroll,"Strengths:",people.get(fileid),fileid,'strength',ar,psalts)
   self.add(self.strength)
-  self.weak = buildarow(scroll,"Weakness:",people.get(fileid),fileid,'weak',psalts)
+  self.weak = buildarow(scroll,"Weakness:",people.get(fileid),fileid,'weak',ar,psalts)
   self.add(self.weak)
-  self.mole = buildarow(scroll,"Mole:",people.get(fileid),fileid,'mole',psalts)
+  self.mole = buildarow(scroll,"Mole:",people.get(fileid),fileid,'mole',ar,psalts)
   self.add(self.mole)
-  self.hobby = buildarow(scroll,"Hobby:",people.get(fileid),fileid,'hobby',psalts)
+  self.hobby = buildarow(scroll,"Hobby:",people.get(fileid),fileid,'hobby',ar,psalts)
   self.add(self.hobby)
-  self.aspects = buildaspectrow(scroll,people.get(fileid),fileid,psalts) # ,display = 0)
+  self.aspects = buildaspectrow(scroll,people.get(fileid),fileid,ar,psalts) # ,display = 0)
   self.add(self.aspects)
   self.l9 = gtk.Label("Miscellany")
   self.l9.set_alignment(0,1)
@@ -183,29 +183,33 @@ def initPinfo(self, fileid,psalts):
   self.s4 = gtk.HSeparator()
   self.add(self.s4)
   self.s4.show()
-  self.misc = buildarow(scroll,"Misc:",people.get(fileid),fileid,'misc',psalts) # make a textbox
+  self.misc = buildarow(scroll,"Misc:",people.get(fileid),fileid,'misc',ar,psalts) # make a textbox
   self.add(self.misc)
-  self.ethnic = buildarow(scroll,"Ethnic background:",people.get(fileid),fileid,'ethnic',psalts)
+  self.ethnic = buildarow(scroll,"Ethnic background:",people.get(fileid),fileid,'ethnic',ar,psalts)
   self.add(self.ethnic)
-  self.origin = buildarow(scroll,"Origin:",people.get(fileid),fileid,'origin',psalts)
+  self.origin = buildarow(scroll,"Origin:",people.get(fileid),fileid,'origin',ar,psalts)
   addLocButton(self.origin,0,entry=self.origin.e)
   self.add(self.origin)
-  self.backs = buildarow(scroll,"Background:",people.get(fileid),fileid,'backstory',psalts) # make a textbox someday?
+  self.backs = buildarow(scroll,"Background:",people.get(fileid),fileid,'backstory',ar,psalts) # make a textbox someday?
   self.add(self.backs)
-  self.residence = buildarow(scroll,"Place of residence:",people.get(fileid),fileid,'residence',psalts)
+  self.residence = buildarow(scroll,"Place of residence:",people.get(fileid),fileid,'residence',ar,psalts)
   self.add(self.residence)
-  self.minchar = buildarow(scroll,"Minor related characters:",people.get(fileid),fileid,'minchar',psalts)
+  self.minchar = buildarow(scroll,"Minor related characters:",people.get(fileid),fileid,'minchar',ar,psalts)
   self.add(self.minchar)
-  self.talent = buildarow(scroll,"Talents:",people.get(fileid),fileid,'talent',psalts)
+  self.talent = buildarow(scroll,"Talents:",people.get(fileid),fileid,'talent',ar,psalts)
   self.add(self.talent)
-  self.abil = buildarow(scroll,"Abilities:",people.get(fileid),fileid,'abil',psalts) # textbox someday?
+  self.abil = buildarow(scroll,"Abilities:",people.get(fileid),fileid,'abil',ar,psalts) # textbox someday?
   self.add(self.abil)
-  self.sgoal = buildarow(scroll,"Story goal:",people.get(fileid),fileid,'sgoal',psalts)
+  self.sgoal = buildarow(scroll,"Story goal:",people.get(fileid),fileid,'sgoal',ar,psalts)
   self.add(self.sgoal)
-  self.other = buildarow(scroll,"Other notes:",people.get(fileid),fileid,'other',psalts) # textbox someday
+  self.other = buildarow(scroll,"Other notes:",people.get(fileid),fileid,'other',ar,psalts) # textbox someday
   self.add(self.other)
+  el = gtk.Label("End of record")
+  el.show()
+  el.set_alignment(1,1)
+  self.pack_start(el,0,0,3)
 
-def initPrels(self, fileid,tabs,psalts):
+def initPrels(self, fileid,tabs,ar,psalts):
   scroll = self.get_parent()
   global people
   global config
@@ -279,7 +283,7 @@ def initPrels(self, fileid,tabs,psalts):
         keys.sort()
         for key in keys:
           r = rels[key]
-          listRel(self,r,fileid,key,scroll,psalts,tabs)
+          listRel(self,r,fileid,key,scroll,ar,psalts,tabs)
     if typed.get("uncat"):
       unname = "Uncategorized/New"
     label = gtk.Label("*** %s ***" % unname)
@@ -295,8 +299,12 @@ def initPrels(self, fileid,tabs,psalts):
       keys.sort()
       for key in keys:
         r = rels[key]
-        listRel(uncatbox,r,fileid,key,scroll,psalts,tabs)
+        listRel(uncatbox,r,fileid,key,scroll,ar,psalts,tabs)
   self.add(uncatbox)
+  el = gtk.Label("End of record")
+  el.show()
+  el.set_alignment(1,1)
+  self.pack_start(el,0,0,3)
 
 def displayPerson(callingWidget,fileid, tabrow):
   global people
@@ -327,8 +335,13 @@ def displayPerson(callingWidget,fileid, tabrow):
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  initPinfo(tabrow.vbox.ftabs.infpage, fileid,psalts)
-  initPrels(tabrow.vbox.ftabs.relpage, fileid,tabrow,psalts)
+  ar = gtk.Label()
+  ar.show()
+  ar.set_alignment(0.5,0.5)
+  setRuletext(ar,len(psalts))
+  tabrow.vbox.pack_end(ar,0,0,2)
+  initPinfo(tabrow.vbox.ftabs.infpage, fileid,ar,psalts)
+  initPrels(tabrow.vbox.ftabs.relpage, fileid,tabrow,ar,psalts)
   tabrow.set_current_page(tabrow.page_num(tabrow.vbox))
   people[fileid]["tab"] = tabrow.page_num(tabrow.vbox)
 
@@ -503,7 +516,7 @@ def listRel(self,r,fileid,relid,scroll,psalts,target = None):
         data = people.get(fileid)
         activateRelEntry(d,psalts,scroll,data,fileid,relid,"date",i)
         rowmile.pack_start(d,1,1,2)
-        placeCalendarButton(data,rowmile,d,[fileid,"relat",relid,"events",i,"date"])
+        placeCalendarButton(data,rowmile,d,[fileid,"relat",relid,"events",i,"date"],psalts,counter=ar)
         e = gtk.Entry()
         e.show()
         e.set_width_chars(18)
@@ -695,7 +708,7 @@ def toggleOrder(caller,fileid):
     people[fileid]['info']['nameorder'] = [norm,True]
     people[fileid]['changed'] = True
 
-def buildGenderRow(scroll,data,fileid,display = 0):
+def buildGenderRow(scroll,data,fileid,ar,alts,display = 0):
   row = gtk.HBox()
   row.show()
   label = gtk.Label("Gender:")
@@ -714,7 +727,7 @@ def buildGenderRow(scroll,data,fileid,display = 0):
     group = None
     for key in sorted(choices.keys()):
       rbut = gtk.RadioButton(group,choices[key])
-      rbut.connect("clicked",setGender,fileid,key)
+      rbut.connect("clicked",setGender,fileid,key,ar,alts)
       if config['debug'] > 5: print "%s : %s : %s" % (g,key,choices[key])
       if g == key or g == choices[key]:
         rbut.set_active(True)
@@ -735,18 +748,18 @@ def buildGenderRow(scroll,data,fileid,display = 0):
         selected = i
       i += 1
     gender.set_active(selected)
-    gender.connect("changed",setGenderCombo,None,fileid) # move-action sends an event, so must fill its place when change sends without one
-    gender.connect("move-active",setGenderCombo,fileid)
+    gender.connect("changed",setGenderCombo,None,fileid,ar,alts) # move-action sends an event, so must fill its place when change sends without one
+    gender.connect("move-active",setGenderCombo,fileid,ar,alts)
     gender.connect("focus",scrollOnTab,scroll)
     gender.connect("focus-in-event",scrollOnTab,scroll)
     row.pack_start(gender,True,True,2)
   return row
 
-def setGenderCombo(widget,event,fileid):
-  setGender(None,fileid,widget.get_active_text())
+def setGenderCombo(widget,event,fileid,ar,alts):
+  setGender(widget,fileid,widget.get_active_text(),ar,alts)
   print "Gender changed."
 
-def setGender(caller,fileid,key):
+def setGender(caller,fileid,key,ar,alts):
   global people
   if key != None and len(key) > 1:
     genderkeys = allGenders(1)
@@ -758,6 +771,9 @@ def setGender(caller,fileid,key):
     if config['debug'] > 2: print "New Gender: %s" % key
   else:
     bsay(None,"setGender: Could not set gender for %s." % fileid)
+  if caller not in alts: alts.append(caller)
+  caller.modify_base(gtk.STATE_NORMAL,gtk.gdk.color_parse(config['altcolor']))
+  setRuletext(ar,len(alts))
 
 def preClose(caller,fileid,target = None):
   result = -8
