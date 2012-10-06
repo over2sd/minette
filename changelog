@@ -1,3 +1,8 @@
+2012-10-06:
+- Bugfix: packCity not given enough parameters
+- Bugfix: states not saving city list
+- Set up tooltip mechanism, started adding tooltips (person)
+
 2012-10-05:
 - Save button now properly sets #-of-changes marker.
 

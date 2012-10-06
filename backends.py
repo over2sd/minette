@@ -342,8 +342,12 @@ def validateRealm(realm):
       if realm[key] == "True": realm[key] = True
       if realm[key] == "False": realm[key] = False
   if not os.path.exists(os.path.abspath(realm['realmdir'])): # must be a valid directory
-    bsay("?","Fatal error. Realm directory %s does not exist! Exiting." % os.path.abspath(realm['realmdir']))
-    exit(-1)
+    if not config.get("makerd",False):
+      bsay("?","Fatal error. Realm directory %s does not exist! Exiting." % os.path.abspath(realm['realmdir']))
+      exit(-1)
+    else:
+      print "Stupid programmer: Function missing! Write function to create realmdir!"
+      exit(-1)
   return realm
 
 ### Wrappers

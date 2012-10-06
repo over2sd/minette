@@ -301,7 +301,7 @@ def initSinfo(self, fileid,tabs,ar,stalts):
         newcity = True
         pushCity(fileid,c,cityname)
       if cityname is not None:
-        packCity(self.notebox,scroll,data,fileid,c,cityname,tabs,newcity)
+        packCity(self.notebox,scroll,data,fileid,c,cityname,tabs,newcity,ar,stalts)
       else:
         common.say("Error getting cityname.")
   el = gtk.Label("End of record")

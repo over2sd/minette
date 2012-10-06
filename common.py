@@ -533,11 +533,18 @@ def csplit(s):
   if not values: values = []
   return values
 
-def buildarow(scroll,name,data,fileid,key,ar,alts,style = 0):
+def buildarow(scroll,name,data,fileid,key,ar,alts,**kwargs):
   """Returns a row containing the given key description and value in a GTK HBox."""
+  style = 0
+  tiptext = None
+  for kw in kwargs:
+    if config['debug'] > 3: print "%s:%s" % (kw,kwargs[kw])
+    if kw == "style": style = kwargs[kw]
+    if kw == "tooltip": tiptext = kwargs[kw]
   row = gtk.HBox()
   row.set_border_width(2)
   row.show()
+  if tiptext: row.set_tooltip_text(tiptext)
   row.label = gtk.Label(name)
   row.label.set_width_chars(20)
   valign = 0.5
@@ -583,6 +590,7 @@ def placeCalendarButton(data,row,target,path,alts,**kwargs):
   datebut.set_image(image)
   datebut.unset_flags(gtk.CAN_FOCUS)
   datebut.connect("clicked",dateChoose,target,data,path,alts,kwargs)
+  datebut.set_tooltip_text("Click to choose date from calendar")
   row.pack_start(datebut,0,0,2)
 
 def getInf(data,path,default = ""):
@@ -797,19 +805,13 @@ def buildaposition(scroll,data,fileid,key,ar,alts): #only applicable to people, 
   """Returns a GTK VBox containing the data values of the given position."""
   t = gtk.VBox()
   t.show()
-  data = {}
-  try:
-    data = people[fileid]
-  except KeyError as e:
-    print "Error getting info from %s: %s" % (fileid,e)
-    return ""
   data2 = {}
-  if data.get("info"): data2 = data["info"].get(key)
+  if data.get("info"): data2 = data["info"].get(key,{})
   value = data2.get("pos")
   if value: value = value[0]
   else:
     print "no data"
-    return ""
+    return gtk.Label("Error: no data given to function")
   if data2.get("events"):
     rows = len(data2['events'])
 #    t.addpos = gtk.Button("Add Position")
@@ -835,6 +837,7 @@ def buildaposition(scroll,data,fileid,key,ar,alts): #only applicable to people, 
       extraargs = ["pos",]
       activateInfoEntry(rpos,ar,alts,scroll,data,fileid,key,len(extraargs),extraargs)
       rpos.show()
+      rpos.set_tooltip_text("Title of position/job")
       rpos.set_text(value)
       rpos.set_width_chars(16)
       r.pack_start(rpos,0,0,2)
@@ -857,6 +860,7 @@ def buildaposition(scroll,data,fileid,key,ar,alts): #only applicable to people, 
         value = data['info'][key]['events'][str(i)].get("date","")
         if value: value = value[0]
         rda = gtk.Entry()
+        rda.set_tooltip_text("When did this milestone happen?")
         extraargs = ["events",str(i),"date"]
         activateInfoEntry(rda,ar,alts,scroll,data,fileid,key,len(extraargs),extraargs)
         rda.show()
@@ -865,6 +869,7 @@ def buildaposition(scroll,data,fileid,key,ar,alts): #only applicable to people, 
         r.pack_start(rda,1,1,2)
         datebut = gtk.Button()
         datebut.show()
+        datebut.set_tooltip_text("Click to choose date from calendar")
         datebut.unset_flags(gtk.CAN_FOCUS)
         image = gtk.Image()
         image.set_from_file("img/date.png")
@@ -880,6 +885,7 @@ def buildaposition(scroll,data,fileid,key,ar,alts): #only applicable to people, 
         rev.show()
         rev.set_width_chars(18)
         rev.set_text(value)
+        rda.set_tooltip_text("What happened? (e.g., hired)")
         r.pack_start(rev,1,1,2)
         t.pack_start(r,False,False,1)
 #        print str(t.size_request())
@@ -894,6 +900,7 @@ def buildaspectrow(scroll,data,fileid,ar,alts,display = 0):
   row.label.set_width_chars(20)
   row.label.set_alignment(1,0)
   row.show()
+  row.set_tooltip_text("A word or phrase that typifies the subject")
   row.col.show()
   row.label.show()
   row.pack_start(row.label,False,False,2)
