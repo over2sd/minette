@@ -179,6 +179,7 @@ def connectToPlace(parent,target,tabs,scroll,fileid,ar,plalts,title = ""):
 def displayPlace(callingWidget,fileid, tabrow):
   global places
   plalts = []
+  ar = gtk.Label()
   warnme = False
   if places.get(fileid,None):
     tab = places[fileid].get("tab")
@@ -198,14 +199,13 @@ def displayPlace(callingWidget,fileid, tabrow):
     places[fileid]['relat'] = L[1]
     places[fileid]['changed'] = False
     places[fileid]['cat'] = 'l'
-  displayStage1(tabrow,fileid,'l',saveThisL,showPlace,preClose,displayPlace,plalts)
+  displayStage1(tabrow,fileid,'l',saveThisL,showPlace,preClose,displayPlace,ar,plalts)
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.labelr = gtk.Label("Connections")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  ar = gtk.Label()
   ar.show()
   ar.set_alignment(0.5,0.5)
   setRuletext(ar,len(plalts))

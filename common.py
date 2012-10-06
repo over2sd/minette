@@ -230,7 +230,7 @@ def dateChoose(caller,target,data,path,alts,kwargs = {}):
   if not nomark:
     checkForChange(target,None,data,path,ar,alts)
 
-def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener,altList):
+def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener,ar,altList):
   target.vbox = gtk.VBox()
   target.vbox.show()
   target.vbox.ftabs = gtk.Notebook()
@@ -243,7 +243,7 @@ def displayStage1(target,fileid,cat,saveFunc,showFunc,preCloser,opener,altList):
   image.set_from_file("img/save.png")
   save.set_image(image)
   save.connect("clicked",saveFunc,fileid)
-  save.connect("clicked",markSaved,altList)
+  save.connect("clicked",markSaved,ar,altList)
   save.show()
   bbar.pack_start(save)
   if config['debug'] > 0:

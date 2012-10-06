@@ -1,3 +1,6 @@
+2012-10-05:
+- Save button now properly sets #-of-changes marker.
+
 2012-10-04:
 - Added end-of-record markers.
 - Added #-of-changes counter.

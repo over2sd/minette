@@ -141,6 +141,7 @@ def chooseCity(parent,target,tabs,scroll,data,statef,ar,stalts,title = ""):
 def displayState(callingWidget,fileid, tabrow):
   global states
   stalts = []
+  ar = gtk.Label()
   warnme = False
   if states.get(fileid,None):
     tab = states[fileid].get("tab")
@@ -158,14 +159,13 @@ def displayState(callingWidget,fileid, tabrow):
     states[fileid]['info'] = loadState(fileid)
     states[fileid]['changed'] = False
     states[fileid]['cat'] = 's'
-  displayStage1(tabrow,fileid,'s',saveThisS,showState,preClose,displayState,stalts) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
+  displayStage1(tabrow,fileid,'s',saveThisS,showState,preClose,displayState,ar,stalts) # creates tabrow.vbox and tabrow.vbox.ftabs, et al
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.labelm = gtk.Label("Milestones")
   tabrow.vbox.ftabs.milepage = displayStage2(tabrow.vbox.ftabs,tabrow.labelm)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  ar = gtk.Label()
   ar.show()
   ar.set_alignment(0.5,0.5)
   setRuletext(ar,len(stalts))

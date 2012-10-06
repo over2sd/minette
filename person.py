@@ -309,6 +309,7 @@ def initPrels(self, fileid,tabs,ar,psalts):
 def displayPerson(callingWidget,fileid, tabrow):
   global people
   psalts = []
+  ar = gtk.Label()
   warnme = False
   if people.get(fileid,None):
     tab = people[fileid].get("tab")
@@ -328,14 +329,13 @@ def displayPerson(callingWidget,fileid, tabrow):
     people[fileid]['relat'] = p[1]
     people[fileid]['changed'] = False
     people[fileid]['cat'] = 'p'
-  displayStage1(tabrow,fileid,'p',saveThisP,showPerson,preClose,displayPerson,psalts)
+  displayStage1(tabrow,fileid,'p',saveThisP,showPerson,preClose,displayPerson,ar,psalts)
   tabrow.vbox.connect("destroy",tabdestroyed,fileid)
   tabrow.labeli = gtk.Label("Information")
   tabrow.labelr = gtk.Label("Relationships")
   tabrow.vbox.ftabs.infpage = displayStage2(tabrow.vbox.ftabs,tabrow.labeli)
   tabrow.vbox.ftabs.relpage = displayStage2(tabrow.vbox.ftabs,tabrow.labelr)
   if config['debug'] > 2: print "Loading " + tabrow.get_tab_label_text(tabrow.vbox)
-  ar = gtk.Label()
   ar.show()
   ar.set_alignment(0.5,0.5)
   setRuletext(ar,len(psalts))
