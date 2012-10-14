@@ -39,7 +39,7 @@ def prettyXML(root):
   out = "\n"
   for i in range(len(root)):
     if root[i].tag is not None:
-      if root[i].tag in ["relat","formocc","currocc","events","aspects","city"]:
+      if root[i].tag in ["relat","formocc","currocc","events","aspects","city","capital"]:
         specialtext = "\n"
         for j in root[i]:
           if j.tag == "events":
@@ -71,7 +71,7 @@ def prettyXML(root):
               specialtext += wrapelement(j.tag,etext,2)
           elif config['printemptyXMLtags'] or len(j.text) > 2:
             specialtext += wrapelement(j.tag,j.text,2)
-          elif j.tag == "city":
+          elif j.tag in ["city","capital"]:
             etext = "\n"
             for k in j:
               mtext = "\n"

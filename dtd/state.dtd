@@ -1,4 +1,4 @@
-<!ELEMENT state ( name, start?, scue?, end?, ecue?, events?, city*, aspects?, update ) >
+<!ELEMENT state ( name, start?, scue?, end?, ecue?, vital?, polit?, culture?, history?, geography?, economy?, demographics?, events?, city*, aspects?, update ) >
 <!ELEMENT start ( #PCDATA )>
 <!ELEMENT scue ( #PCDATA )>
 <!ELEMENT end ( #PCDATA )>
@@ -14,3 +14,22 @@
 <!ELEMENT update ( #CDATA )>
 <!ELEMENT aspects ( text* )>
 <!ELEMENT text ( #CDATA )>
+<!ELEMENT vital (stype?,adj?,people?,head?,capital?,pop?,resource*)>
+<!ELEMENT polit (capgov?,foreign?,orgtype?)>
+<!ELEMENT culture (behave*,rumor*)>
+<!ELEMENT history (#PCDATA)>
+<!ELEMENT geography (#PCDATA)>
+<!ELEMENT economy (#PCDATA)>
+<!ELEMENT demographics (#PCDATA)>
+<!ELEMENT stype (#PCDATA)>
+<!ELEMENT adj (#PCDATA)>
+<!ELEMENT people (#PCDATA)>
+<!ELEMENT head (#PCDATA)>
+<!ELEMENT capital ( name, file, note? )>
+<!ELEMENT pop (#PCDATA)>
+<!ELEMENT resource (#PCDATA)>
+<!ELEMENT capgov (#PCDATA)>
+<!ELEMENT foreign (#PCDATA)>
+<!ELEMENT orgtype (#PCDATA)>
+<!ELEMENT behave (#PCDATA)>
+<!ELEMENT rumor (#PCDATA)>

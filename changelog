@@ -1,3 +1,6 @@
+2012-10-13:
+- States: started work on new fields for states
+
 2012-10-06:
 - Bugfix: packCity not given enough parameters
 - Bugfix: states not saving city list

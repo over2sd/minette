@@ -1018,7 +1018,7 @@ def saveState(fileid,data):
   fn = fileid + ".xml"
   state = etree.Element("state")
   # TODO: put this in a global variable, and make a function to populate it from the DTD.
-  tags = ["name","start","scue","end","ecue","cities","events","aspects","update"]
+  tags = ["name","start","scue","end","ecue","vital","polit","culture","history", "geography","econ","demo","events","cities","aspects","update"]
   for tag in tags:
     if tag == "cities":
       nodes = info.get("cities")
